@@ -52,14 +52,15 @@ void SYSTEM_Initialize(void)
     INTERRUPT_Initialize();
     PMD_Initialize();
     PIN_MANAGER_Initialize();
+    ADC_Initialize();
     OSCILLATOR_Initialize();
     CAN1_Initialize();
 }
 
 void OSCILLATOR_Initialize(void)
 {
-    // NOSC HFINTOSC; NDIV 1; 
-    OSCCON1 = 0x60;
+    // NOSC EXTOSC; NDIV 1; 
+    OSCCON1 = 0x70;
     // CSWHOLD may proceed; SOSCPWR Low power; 
     OSCCON3 = 0x00;
     // MFOEN disabled; LFOEN disabled; ADOEN disabled; PLLEN disabled; SOSCEN disabled; EXTOEN disabled; HFOEN disabled; 

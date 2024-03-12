@@ -1,33 +1,33 @@
 ### HEXMate logfile and output summary ###
 
 ### Command-line arguments ###
- C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o
- -Odist/default/production\can_test.X.production.hex
- -logfile=dist/default/production\can_test.X.production.hxl
+ C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o
+ -Odist/default/production\lv-bms-firmware.X.production.hex
+ -logfile=dist/default/production\lv-bms-firmware.X.production.hxl
  -addressing=1
  -break=300000
 
 ### Memory Usage ###
  Input file ranges:
-  0h - 3h		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  8h - Bh		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  18h - 1Dh		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  3700h - 370Ch		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  370Eh - 43DBh		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  300000h - 300012h		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
-  300017h - 30001Eh		(C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
+  0h - 3h		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  8h - Bh		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  18h - 1Dh		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  3700h - 370Ch		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  370Eh - 44A5h		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  300000h - 300012h		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
+  300017h - 30001Eh		(C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
  Unused ranges:
   4h - 7h
   Ch - 17h
   1Eh - 36FFh
   370Dh - 370Dh
-  43DCh - 2FFFFFh
+  44A6h - 2FFFFFh
   300013h - 300016h
 
 ### Hex Memory Map ###
  Legend:
   -- = Unused memory
-  H1 = Input file             (C:\Users\alexl\AppData\Local\Temp\xcAs3po.\driver_tmp_3.o)
+  H1 = Input file             (C:\Users\alexl\AppData\Local\Temp\xcAsm5k.\driver_tmp_3.o)
 ----------------------------------------------------------
          | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 ----------------------------------------------------------
@@ -239,7 +239,20 @@
 000043A0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 000043B0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 000043C0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-000043D0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 -- -- -- --
+000043D0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000043E0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000043F0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004400 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004410 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004420 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004430 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004440 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004450 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004460 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004470 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004480 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00004490 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000044A0 | H1 H1 H1 H1 H1 H1 -- -- -- -- -- -- -- -- -- --
 ----------------------------------------------------------
 00300000 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 00300010 | H1 H1 H1 -- -- -- -- H1 H1 H1 H1 H1 H1 H1 H1 --

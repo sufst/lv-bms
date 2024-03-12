@@ -42,19 +42,35 @@
 */
 
 #include "mcc_generated_files/mcc.h"
+#include "therm_LUT.h"
 
-volatile uint8_t count = 0;
+#define CELL_COUNT 3
+
+ADC_channel_t bat_v_channels[] = {Bat1V, Bat2V, Bat3V};
+ADC_channel_t bat_t_channels[] = {Therm1V, Therm2V, Therm3V};
+
+static uint16_t cell_voltages[3];
+static int8_t cell_temps[3]; // 'C
 
 void CAN_RX_ISR()
 {
     CAN_MSG_OBJ rx_msg;
     CAN1_ReceiveFrom(FIFO1, &rx_msg);
-    
-    if(rx_msg.data[0] == 0x42)
-    {
-        count = 0;
-    }
 }
+
+
+int8_t adc_to_temp(adc_result_t reading) 
+{
+    // just read from thermistor curve LUT
+	return therm_lut[reading];
+}
+
+uint16_t adc_to_cell_v(adc_result_t reading) 
+{
+    // just read from thermistor curve LUT
+	return maths(reading);
+}
+
 
 
 /*
@@ -76,42 +92,32 @@ void main(void)
     // Enable the Global Interrupts
     INTERRUPT_GlobalInterruptEnable();
 
-    // Disable the Global Interrupts
-    //INTERRUPT_GlobalInterruptDisable();
-
     while (1)
     {
-        // Add your application code
-        __delay_ms(1000);        
-
-        
-        if(CAN_CONFIGURATION_MODE == CAN1_OperationModeGet())
-        { 
-            CAN1_OperationModeSet(CAN_NORMAL_2_0_MODE);
-        }
-
-        if(CAN_NORMAL_2_0_MODE == CAN1_OperationModeGet())
-        {
-            msg.msgId = 0x00001;
-            msg.field.formatType = CAN_2_0_FORMAT;
-            msg.field.brs = CAN_NON_BRS_MODE;
-            msg.field.dlc = DLC_1;
-            msg.field.frameType = CAN_FRAME_DATA;
-            msg.field.idType = CAN_FRAME_EXT;
-            msg.data = &count;
-
-            if(CAN_TX_FIFO_AVAILABLE == (CAN1_TransmitFIFOStatusGet(CAN1_TX_TXQ)))
-            {
-                IO_RC6_SetHigh();
-                CAN1_Transmit(CAN1_TX_TXQ, &msg);
-
-                while(CAN1_TransmitFIFOStatusGet(CAN1_TX_TXQ) == CAN_TX_FIFO_FULL);
-
-                IO_RC6_SetLow();
-            }
+        // read cell voltages
+        for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++)
+		{
+            ADC_StartConversion(bat_v_channels[cell_i]);
+            while(!ADC_IsConversionDone());
+            adc_result_t reading = ADC_GetConversionResult();
+            cell_voltages[cell_i] = adc_to_cell_v(reading);
         }
         
-        count++;
+        // read cell temperatures
+        for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++)
+		{
+            ADC_StartConversion(bat_t_channels[cell_i]);
+            while(!ADC_IsConversionDone());
+            adc_result_t reading = ADC_GetConversionResult();
+            cell_temps[cell_i] = adc_to_temp(reading);
+        }
+        
+        // fault detection
+            // fault: isolate battery
+        
+        // update balance signals
+        
+        // send out state over can
     }
 }
 /**
