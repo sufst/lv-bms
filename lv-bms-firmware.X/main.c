@@ -45,19 +45,34 @@
 #include "therm_LUT.h"
 
 #define CELL_COUNT 3
+#define VOLTAGE_MULTIPLIER 1024
+#define CURRENT_MULTIPLIER 1024
+
+#define V(volt) volt * VOLTAGE_MULTIPLIER
+#define A(curr) curr * CURRENT_MULTIPLIER
+
+#define DISCHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
+#define CHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
+#define CELL_VOLTAGE_MAX V(4.3) // TODO: replace with actual values
+#define CELL_VOLTAGE_MIN V(3.2) // TODO: replace with actual values
+#define CELL_TEMP_MAX 60 // TODO: replace with actual values
+#define CELL_TEMP_MIN 0 // TODO: replace with actual values
 
 ADC_channel_t bat_v_channels[] = {Bat1V, Bat2V, Bat3V};
 ADC_channel_t bat_t_channels[] = {Therm1V, Therm2V, Therm3V};
 
-static uint16_t cell_voltages[3];
+static uint16_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
 static int8_t cell_temps[3]; // 'C
+static int16_t bat_current; //
+bool fault = false;
 
 void CAN_RX_ISR()
 {
     CAN_MSG_OBJ rx_msg;
     CAN1_ReceiveFrom(FIFO1, &rx_msg);
+    
+    // some kind of command interface
 }
-
 
 int8_t adc_to_temp(adc_result_t reading) 
 {
@@ -67,24 +82,45 @@ int8_t adc_to_temp(adc_result_t reading)
 
 uint16_t adc_to_cell_v(adc_result_t reading) 
 {
-    // just read from thermistor curve LUT
-	return maths(reading);
+    // get voltage at ADC input (in uint16 format)
+    // 3.3 is ADC reference voltage
+    // 4095 is ADC reading at reference voltage (it's 12 bit)
+    uint16_t read_voltage = ((uint32_t)reading * VOLTAGE_MULTIPLIER * 3.3) / 4096;
+    
+	return read_voltage * 2; // step down divider in 10k:10k
 }
 
+int16_t adc_to_current(adc_result_t reading)
+{
+    // input: 0 to 4096
+    uint32_t scaled = ((uint32_t)reading * CURRENT_MULTIPLIER * 50) / 4096;
+    // still unsigned but right range: 0 to 50*CURRENT_MULTIPLIER
+    
+    return (int32_t)scaled - (25 * CURRENT_MULTIPLIER);
+}
 
-
+void fault()
+{
+    RelayCtrl_SetLow();
+    while(1){
+        // transmit lvbms error message
+    }
+}
 /*
                          Main application
  */
 void main(void)
 {
-
     CAN_MSG_OBJ msg;
     
     // Initialize the device
     SYSTEM_Initialize();
+    
+    RelayCtrl_SetHigh(); // closes isolation relay
+    
     CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
 
+    
     // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
     // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
     // Use the following macros to:
@@ -112,12 +148,49 @@ void main(void)
             cell_temps[cell_i] = adc_to_temp(reading);
         }
         
-        // fault detection
-            // fault: isolate battery
+        // read current
+        ADC_StartConversion();
+        while(!ADC_IsConversionDone());
+        adc_result_t reading = ADC_GetConversionResult();
+        bat_current = adc_to_current(reading);
+        
+        
+        // checks
+        for(uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++)
+		{
+            if(cell_voltages[cell_i] < CELL_VOLTAGE_MIN) {
+                // send error message over can
+                fault();
+            }
+            if(cell_voltages[cell_i] > CELL_VOLTAGE_MAX) {
+                // send error message over can
+                fault();
+            }
+            if(cell_temps[cell_i] < CELL_TEMP_MIN) {
+                // send error message over can
+                fault();
+            }
+            if(cell_temps[cell_i] > CELL_TEMP_MAX) {
+                // send error message over can
+                fault();
+            }
+        }
+        
+        if(bat_current < -CHARGE_CURRENT_MAX){
+            // send error message
+            fault();
+        }
+        if(bat_current > DISCHARGE_CURRENT_MAX){
+            // send error message
+            fault();
+        }
+        
         
         // update balance signals
         
         // send out state over can
+        
+        // check power off button
     }
 }
 /**
