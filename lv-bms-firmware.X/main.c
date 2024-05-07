@@ -58,13 +58,19 @@
 #define CELL_TEMP_MAX 60 // TODO: replace with actual values
 #define CELL_TEMP_MIN 0 // TODO: replace with actual values
 
+#define BALANCE_START_TH V(0.2)
+#define BALANCE_END_TH V(0.05)
+
+#ifndef min
+#define min(a,b) ((a<b) ?a:b)
+#endif
+
 ADC_channel_t bat_v_channels[] = {Bat1V, Bat2V, Bat3V};
 ADC_channel_t bat_t_channels[] = {Therm1V, Therm2V, Therm3V};
 
 static uint16_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
 static int8_t cell_temps[3]; // 'C
 static int16_t bat_current; //
-bool fault = false;
 
 void CAN_RX_ISR()
 {
@@ -73,6 +79,7 @@ void CAN_RX_ISR()
     
     // some kind of command interface
 }
+
 
 int8_t adc_to_temp(adc_result_t reading) 
 {
@@ -116,6 +123,8 @@ void main(void)
     // Initialize the device
     SYSTEM_Initialize();
     
+    // set up WDT to exit if main loop freezes
+    
     RelayCtrl_SetHigh(); // closes isolation relay
     
     CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
@@ -149,7 +158,7 @@ void main(void)
         }
         
         // read current
-        ADC_StartConversion();
+        ADC_StartConversion(BatCur);
         while(!ADC_IsConversionDone());
         adc_result_t reading = ADC_GetConversionResult();
         bat_current = adc_to_current(reading);
@@ -187,6 +196,34 @@ void main(void)
         
         
         // update balance signals
+        uint16_t min_voltage = UINT16_MAX;
+        for (int i=0; i<3; i++) {
+            min_voltage = min(cell_voltages[i], min_voltage);
+        }
+        // if a cell is too far above min voltage, discharge it
+        if((cell_voltages[0] - min_voltage) > BALANCE_START_TH) {
+            Bat1Ctrl_SetHigh();
+        }
+        if((cell_voltages[1] - min_voltage) > BALANCE_START_TH) {
+            Bat2Ctrl_SetHigh();
+        }
+        if((cell_voltages[2] - min_voltage) > BALANCE_START_TH) {
+            Bat3Ctrl_SetHigh();
+        }
+        
+        // stop if close enough
+        if((cell_voltages[0] - min_voltage) < BALANCE_END_TH) {
+            Bat1Ctrl_SetLow();
+        }
+        if((cell_voltages[1] - min_voltage) < BALANCE_END_TH) {
+            Bat2Ctrl_SetLow();
+        }
+        if((cell_voltages[2] - min_voltage) < BALANCE_END_TH) {
+            Bat3Ctrl_SetLow();
+        }
+        
+        
+        
         
         // send out state over can
         
