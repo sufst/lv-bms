@@ -135,16 +135,23 @@ void main(void)
     // Initialize the device
     SYSTEM_Initialize();
     
-    // set up WDT to exit if main loop freezes
     
     RelayCtrl_SetHigh(); // closes isolation relay
     
+    // can setup
     CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
 
+    // load saved error
     
-    // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts
-    // If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts
-    // Use the following macros to:
+    // check for WDT error
+    if (_BIT_ACCESS(PCON0, WDTWV)) {
+    }
+    
+    // transmit saved error    
+    ////msg = TODO: msg_getter_funct
+    
+ 
+    ADC_SelectContext(CONTEXT_1);
 
     // Enable the Global Interrupts
     INTERRUPT_GlobalInterruptEnable();
@@ -177,8 +184,7 @@ void main(void)
         
         
         // checks
-        for(uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++)
-		{
+        for(uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) {
             if(cell_voltages[cell_i] < CELL_VOLTAGE_MIN) {
                 // send error message over can
                 error_type = FAULT_V;
@@ -209,13 +215,13 @@ void main(void)
             }
         }
         
-        if(bat_current < -CHARGE_CURRENT_MAX){
+        if(bat_current < -CHARGE_CURRENT_MAX) {
             // send error message
             error_type = FAULT_CURR;
             error_param2 = bat_current;
             fault();
         }
-        if(bat_current > DISCHARGE_CURRENT_MAX){
+        if(bat_current > DISCHARGE_CURRENT_MAX) {
             // send error message
             error_type = FAULT_CURR;
             error_param2 = bat_current;
@@ -251,6 +257,20 @@ void main(void)
         }
         
         // send out state over can
+        switch (CAN1_OperationModeGet()){
+            case CAN_CONFIGURATION_MODE:
+                CAN1_OperationModeSet(CAN_NORMAL_2_0_MODE);
+                break;
+            case CAN_NORMAL_2_0_MODE:
+                if(CAN1_TransmitFIFOStatusGet(CAN1_TX_TXQ) == CAN_TX_FIFO_AVAILABLE) {
+                    if (msg) {
+                        CAN1_Transmit(CAN1_TX_TXQ, &msg);
+                        msg = 0; // resets msg so it isn't repeat transmitted
+                    }
+                }
+                break;
+        }
+        
         
         // check power off button
         if (!PowerButton_GetValue()) {
@@ -258,6 +278,9 @@ void main(void)
             RelayCtrl_SetLow();
             while(1);
         }
+        
+        // clear WDT
+        CLRWDT();
     }
 }
 /**
