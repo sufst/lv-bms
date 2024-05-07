@@ -72,6 +72,15 @@ static uint16_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
 static int8_t cell_temps[3]; // 'C
 static int16_t bat_current; //
 
+static enum error_e {  FAULT_NONE, 
+                FAULT_V,
+                FAULT_TEMP, 
+                FAULT_CURR,
+                FAULT_WDT,
+            } error_type = FAULT_NONE;
+static uint8_t error_param1 = 0;
+static uint8_t error_param2 = 0;
+
 void CAN_RX_ISR()
 {
     CAN_MSG_OBJ rx_msg;
@@ -79,7 +88,6 @@ void CAN_RX_ISR()
     
     // some kind of command interface
 }
-
 
 int8_t adc_to_temp(adc_result_t reading) 
 {
@@ -108,6 +116,10 @@ int16_t adc_to_current(adc_result_t reading)
 
 void fault()
 {
+    // store error
+    
+    
+    // shut down
     RelayCtrl_SetLow();
     while(1){
         // transmit lvbms error message
@@ -169,28 +181,44 @@ void main(void)
 		{
             if(cell_voltages[cell_i] < CELL_VOLTAGE_MIN) {
                 // send error message over can
+                error_type = FAULT_V;
+                error_param1 = cell_i;
+                error_param2 = cell_voltages[cell_i];
                 fault();
             }
             if(cell_voltages[cell_i] > CELL_VOLTAGE_MAX) {
                 // send error message over can
+                error_type = FAULT_V;
+                error_param1 = cell_i;
+                error_param2 = cell_voltages[cell_i];
                 fault();
             }
             if(cell_temps[cell_i] < CELL_TEMP_MIN) {
                 // send error message over can
+                error_type = FAULT_TEMP;
+                error_param1 = cell_i;
+                error_param2 = cell_temps[cell_i];
                 fault();
             }
             if(cell_temps[cell_i] > CELL_TEMP_MAX) {
                 // send error message over can
+                error_type = FAULT_TEMP;
+                error_param1 = cell_i;
+                error_param2 = cell_temps[cell_i];
                 fault();
             }
         }
         
         if(bat_current < -CHARGE_CURRENT_MAX){
             // send error message
+            error_type = FAULT_CURR;
+            error_param2 = bat_current;
             fault();
         }
         if(bat_current > DISCHARGE_CURRENT_MAX){
             // send error message
+            error_type = FAULT_CURR;
+            error_param2 = bat_current;
             fault();
         }
         
@@ -222,12 +250,14 @@ void main(void)
             Bat3Ctrl_SetLow();
         }
         
-        
-        
-        
         // send out state over can
         
         // check power off button
+        if (!PowerButton_GetValue()) {
+            // power off
+            RelayCtrl_SetLow();
+            while(1);
+        }
     }
 }
 /**
