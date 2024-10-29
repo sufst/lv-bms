@@ -38715,13 +38715,13 @@ typedef uint16_t adc_result_t;
 
 typedef enum
 {
-    Bat1V = 0x0,
-    Bat2V = 0x1,
-    Bat3V = 0x2,
-    BatCur = 0x8,
-    Therm1V = 0x9,
-    Therm2V = 0xA,
-    Therm3V = 0xB,
+    channel_ANA0 = 0x0,
+    channel_ANA1 = 0x1,
+    channel_ANA2 = 0x2,
+    channel_ANB0 = 0x8,
+    channel_ANB1 = 0x9,
+    channel_ANB2 = 0xA,
+    channel_ANB3 = 0xB,
     channel_VSS = 0x3B,
     channel_Temp = 0x3C,
     channel_DAC1 = 0x3D,

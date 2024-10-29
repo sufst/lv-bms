@@ -37,12 +37,12 @@
 #pragma config XINST = OFF
 
 
-#pragma config WDTCPS = WDTCPS_31
-#pragma config WDTE = OFF
+#pragma config WDTCPS = WDTCPS_7
+#pragma config WDTE = ON
 
 
 #pragma config WDTCWS = WDTCWS_7
-#pragma config WDTCCS = SC
+#pragma config WDTCCS = LFINTOSC
 
 
 #pragma config BBSIZE = BBSIZE_512

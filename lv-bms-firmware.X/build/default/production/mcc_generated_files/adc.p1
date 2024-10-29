@@ -179,7 +179,7 @@ Version 4.0 HI-TECH Software Intermediate Code
 "223 mcc_generated_files/adc.c
 [; ;mcc_generated_files/adc.c: 223: void ADC_StartConversion(ADC_channel_t channel)
 [c E22915 0 1 2 8 9 10 11 59 60 61 62 63 .. ]
-[n E22915 . Bat1V Bat2V Bat3V BatCur Therm1V Therm2V Therm3V channel_VSS channel_Temp channel_DAC1 channel_FVR_Buffer1 channel_FVR_Buffer2  ]
+[n E22915 . channel_ANA0 channel_ANA1 channel_ANA2 channel_ANB0 channel_ANB1 channel_ANB2 channel_ANB3 channel_VSS channel_Temp channel_DAC1 channel_FVR_Buffer1 channel_FVR_Buffer2  ]
 "59042 C:/Users/alexl/.mchp_packs/Microchip/PIC18F-Q_DFP/1.20.405/xc8\pic\include\proc\pic18f47q84.h
 [; ;C:/Users/alexl/.mchp_packs/Microchip/PIC18F-Q_DFP/1.20.405/xc8\pic\include\proc\pic18f47q84.h: 59042:     struct {
 [s S2704 :3 `uc 1 :1 `uc 1 :3 `uc 1 ]

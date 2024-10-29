@@ -54,6 +54,7 @@
 #include <conio.h>
 #include "interrupt_manager.h"
 #include "adc.h"
+#include "memory.h"
 #include "can1.h"
 
 

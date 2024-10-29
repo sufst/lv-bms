@@ -2,8 +2,8 @@ Version 4.0 HI-TECH Software Intermediate Code
 "87 mcc_generated_files/interrupt_manager.h
 [; ;mcc_generated_files/interrupt_manager.h: 87: void INTERRUPT_Initialize (void);
 [v _INTERRUPT_Initialize `(v ~T0 @X0 0 ef ]
-"98 mcc_generated_files/mcc.h
-[; ;mcc_generated_files/mcc.h: 98: void PMD_Initialize(void);
+"99 mcc_generated_files/mcc.h
+[; ;mcc_generated_files/mcc.h: 99: void PMD_Initialize(void);
 [v _PMD_Initialize `(v ~T0 @X0 0 ef ]
 "542 mcc_generated_files/pin_manager.h
 [; ;mcc_generated_files/pin_manager.h: 542: void PIN_MANAGER_Initialize (void);
@@ -11,8 +11,8 @@ Version 4.0 HI-TECH Software Intermediate Code
 "119 mcc_generated_files/adc.h
 [; ;mcc_generated_files/adc.h: 119: void ADC_Initialize(void);
 [v _ADC_Initialize `(v ~T0 @X0 0 ef ]
-"85 mcc_generated_files/mcc.h
-[; ;mcc_generated_files/mcc.h: 85: void OSCILLATOR_Initialize(void);
+"86 mcc_generated_files/mcc.h
+[; ;mcc_generated_files/mcc.h: 86: void OSCILLATOR_Initialize(void);
 [v _OSCILLATOR_Initialize `(v ~T0 @X0 0 ef ]
 "106 mcc_generated_files/can1.h
 [; ;mcc_generated_files/can1.h: 106: void CAN1_Initialize(void);

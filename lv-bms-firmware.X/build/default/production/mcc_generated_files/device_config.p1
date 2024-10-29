@@ -42,13 +42,13 @@ Version 4.0 HI-TECH Software Intermediate Code
 "76
 [p x XINST  =  OFF     ]
 "79
-[p x WDTCPS  =  WDTCPS_31     ]
+[p x WDTCPS  =  WDTCPS_7     ]
 "80
-[p x WDTE  =  OFF     ]
+[p x WDTE  =  ON     ]
 "83
 [p x WDTCWS  =  WDTCWS_7     ]
 "84
-[p x WDTCCS  =  SC     ]
+[p x WDTCCS  =  LFINTOSC     ]
 "87
 [p x BBSIZE  =  BBSIZE_512     ]
 "88

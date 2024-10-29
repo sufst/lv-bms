@@ -38890,13 +38890,13 @@ typedef uint16_t adc_result_t;
 
 typedef enum
 {
-    Bat1V = 0x0,
-    Bat2V = 0x1,
-    Bat3V = 0x2,
-    BatCur = 0x8,
-    Therm1V = 0x9,
-    Therm2V = 0xA,
-    Therm3V = 0xB,
+    channel_ANA0 = 0x0,
+    channel_ANA1 = 0x1,
+    channel_ANA2 = 0x2,
+    channel_ANB0 = 0x8,
+    channel_ANB1 = 0x9,
+    channel_ANB2 = 0xA,
+    channel_ANB3 = 0xB,
     channel_VSS = 0x3B,
     channel_Temp = 0x3C,
     channel_DAC1 = 0x3D,
@@ -39044,6 +39044,27 @@ void ADC_ADCH4_ISR(void);
 # 1179 "mcc_generated_files/adc.h"
 void ADC_SetContext4ThresholdInterruptHandler(void (* InterruptHandler)(void));
 # 56 "mcc_generated_files/mcc.h" 2
+
+# 1 "mcc_generated_files/memory.h" 1
+# 81 "mcc_generated_files/memory.h"
+uint8_t FLASH_ReadByte(uint32_t flashAddr);
+# 94 "mcc_generated_files/memory.h"
+uint16_t FLASH_ReadWord(uint32_t flashAddr);
+# 116 "mcc_generated_files/memory.h"
+void FLASH_ReadPage(uint32_t flashAddr);
+# 138 "mcc_generated_files/memory.h"
+void FLASH_WritePage(uint32_t flashAddr);
+# 151 "mcc_generated_files/memory.h"
+void FLASH_WriteWord(uint32_t flashAddr, uint16_t word);
+# 183 "mcc_generated_files/memory.h"
+int8_t FLASH_WriteBlock(uint32_t flashAddr, uint16_t *flashWrBufPtr);
+# 195 "mcc_generated_files/memory.h"
+void FLASH_EraseBlock(uint32_t flashAddr);
+# 212 "mcc_generated_files/memory.h"
+void DATAEE_WriteByte(uint16_t bAdd, uint8_t bData);
+# 225 "mcc_generated_files/memory.h"
+uint8_t DATAEE_ReadByte(uint16_t bAdd);
+# 57 "mcc_generated_files/mcc.h" 2
 
 # 1 "mcc_generated_files/can1.h" 1
 # 56 "mcc_generated_files/can1.h"
@@ -39203,12 +39224,12 @@ void CAN1_SetTXQnullHandler(void (*handler)(void));
 
 
 void CAN1_RXI_ISR(void);
-# 57 "mcc_generated_files/mcc.h" 2
-# 72 "mcc_generated_files/mcc.h"
+# 58 "mcc_generated_files/mcc.h" 2
+# 73 "mcc_generated_files/mcc.h"
 void SYSTEM_Initialize(void);
-# 85 "mcc_generated_files/mcc.h"
+# 86 "mcc_generated_files/mcc.h"
 void OSCILLATOR_Initialize(void);
-# 98 "mcc_generated_files/mcc.h"
+# 99 "mcc_generated_files/mcc.h"
 void PMD_Initialize(void);
 # 50 "mcc_generated_files/interrupt_manager.c" 2
 

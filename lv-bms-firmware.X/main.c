@@ -42,35 +42,29 @@
 */
 
 #include "mcc_generated_files/mcc.h"
+#include "units.h"
+#include "batt_properties.h"
 #include "therm_LUT.h"
 
 #define CELL_COUNT 3
-#define VOLTAGE_MULTIPLIER 1024
-#define CURRENT_MULTIPLIER 1024
-
-#define V(volt) volt * VOLTAGE_MULTIPLIER
-#define A(curr) curr * CURRENT_MULTIPLIER
-
-#define DISCHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
-#define CHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
-#define CELL_VOLTAGE_MAX V(4.3) // TODO: replace with actual values
-#define CELL_VOLTAGE_MIN V(3.2) // TODO: replace with actual values
-#define CELL_TEMP_MAX 60 // TODO: replace with actual values
-#define CELL_TEMP_MIN 0 // TODO: replace with actual values
-
-#define BALANCE_START_TH V(0.2)
-#define BALANCE_END_TH V(0.05)
 
 #ifndef min
 #define min(a,b) ((a<b) ?a:b)
 #endif
 
-ADC_channel_t bat_v_channels[] = {Bat1V, Bat2V, Bat3V};
-ADC_channel_t bat_t_channels[] = {Therm1V, Therm2V, Therm3V};
+// list of adc channels for each voltage tap: {Bat1V, Bat2V, Bat3V}
+ADC_channel_t bat_v_channels[] = {channel_ANA0, channel_ANA1, channel_ANA2};
 
-static uint16_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
-static int8_t cell_temps[3]; // 'C
-static int16_t bat_current; //
+// list of adc channels for each temperature probe: {Therm1V, Therm2V, Therm3V}
+ADC_channel_t bat_t_channels[] = {channel_ANB1, channel_ANB2, channel_ANB3};
+
+ADC_channel_t bat_c_channels[] = {channel_ANB0};
+
+static voltage_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
+static temp_t cell_temps[3]; // 'C
+static current_t bat_current; // +ve is  charge -ve is discharge
+
+enum  {CHARGING, DISCHARGING} charge_mode = DISCHARGING;
 
 static enum error_e {  FAULT_NONE, 
                 FAULT_V,
@@ -86,32 +80,33 @@ void CAN_RX_ISR()
     CAN_MSG_OBJ rx_msg;
     CAN1_ReceiveFrom(FIFO1, &rx_msg);
     
-    // some kind of command interface
+    // TODO some kind of command interface - emulate the ORION BMS for the LV battery
 }
 
-int8_t adc_to_temp(adc_result_t reading) 
+temp_t adc_to_temp(adc_result_t reading) 
 {
     // just read from thermistor curve LUT
 	return therm_lut[reading];
 }
 
-uint16_t adc_to_cell_v(adc_result_t reading) 
+voltage_t adc_to_cell_v(adc_result_t reading) 
 {
     // get voltage at ADC input (in uint16 format)
     // 3.3 is ADC reference voltage
     // 4095 is ADC reading at reference voltage (it's 12 bit)
-    uint16_t read_voltage = ((uint32_t)reading * VOLTAGE_MULTIPLIER * 3.3) / 4096;
+    voltage_t read_voltage = ((uint32_t)reading * VOLTAGE_MULTIPLIER * 3.3) / 4096;
     
 	return read_voltage * 2; // step down divider in 10k:10k
 }
 
-int16_t adc_to_current(adc_result_t reading)
+current_t adc_to_current(adc_result_t reading)
 {
     // input: 0 to 4096
     uint32_t scaled = ((uint32_t)reading * CURRENT_MULTIPLIER * 50) / 4096;
     // still unsigned but right range: 0 to 50*CURRENT_MULTIPLIER
+    current_t current = (int32_t)scaled - (25 * CURRENT_MULTIPLIER);
     
-    return (int32_t)scaled - (25 * CURRENT_MULTIPLIER);
+    return current;
 }
 
 void fault()
@@ -121,9 +116,6 @@ void fault()
     
     // shut down
     RelayCtrl_SetLow();
-    while(1){
-        // transmit lvbms error message
-    }
 }
 /*
                          Main application
@@ -135,22 +127,23 @@ void main(void)
     // Initialize the device
     SYSTEM_Initialize();
     
-    
     RelayCtrl_SetHigh(); // closes isolation relay
     
     // can setup
     CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
 
     // load saved error
+    enum error_e saved_fault = FAULT_NONE;
+    // TODO load from NVM the fault code
     
     // check for WDT error
-    if (_BIT_ACCESS(PCON0, WDTWV)) {
+    if (WDTWV_bit) {
+        saved_fault = FAULT_WDT;
     }
     
     // transmit saved error    
     ////msg = TODO: msg_getter_funct
     
- 
     ADC_SelectContext(CONTEXT_1);
 
     // Enable the Global Interrupts
@@ -177,36 +170,42 @@ void main(void)
         }
         
         // read current
-        ADC_StartConversion(BatCur);
+        ADC_StartConversion(bat_c_channels[0]);
         while(!ADC_IsConversionDone());
         adc_result_t reading = ADC_GetConversionResult();
         bat_current = adc_to_current(reading);
         
+        if(bat_current < A(0)){
+            charge_mode = DISCHARGING;
+        } else {
+            charge_mode = CHARGING;
+        }
+        
         
         // checks
         for(uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) {
-            if(cell_voltages[cell_i] < CELL_VOLTAGE_MIN) {
+            if(check_over_volt(cell_voltages[cell_i])) {
                 // send error message over can
                 error_type = FAULT_V;
                 error_param1 = cell_i;
                 error_param2 = cell_voltages[cell_i];
                 fault();
             }
-            if(cell_voltages[cell_i] > CELL_VOLTAGE_MAX) {
+            if(check_under_volt(cell_voltages[cell_i])) {
                 // send error message over can
                 error_type = FAULT_V;
                 error_param1 = cell_i;
                 error_param2 = cell_voltages[cell_i];
                 fault();
             }
-            if(cell_temps[cell_i] < CELL_TEMP_MIN) {
+            if(check_under_temp(cell_voltages[cell_i])) {
                 // send error message over can
                 error_type = FAULT_TEMP;
                 error_param1 = cell_i;
                 error_param2 = cell_temps[cell_i];
                 fault();
             }
-            if(cell_temps[cell_i] > CELL_TEMP_MAX) {
+            if(check_over_temp(cell_temps[cell_i])) {
                 // send error message over can
                 error_type = FAULT_TEMP;
                 error_param1 = cell_i;
@@ -215,44 +214,49 @@ void main(void)
             }
         }
         
-        if(bat_current < -CHARGE_CURRENT_MAX) {
+        if((CHARGING == charge_mode) && check_over_current_charge(bat_current)) {
             // send error message
             error_type = FAULT_CURR;
             error_param2 = bat_current;
             fault();
         }
-        if(bat_current > DISCHARGE_CURRENT_MAX) {
+        if((DISCHARGING == charge_mode) && check_over_current_discharge(bat_current)) {
             // send error message
             error_type = FAULT_CURR;
             error_param2 = bat_current;
             fault();
         }
         
-        
-        // update balance signals
-        uint16_t min_voltage = UINT16_MAX;
-        for (int i=0; i<3; i++) {
-            min_voltage = min(cell_voltages[i], min_voltage);
-        }
-        // if a cell is too far above min voltage, discharge it
-        if((cell_voltages[0] - min_voltage) > BALANCE_START_TH) {
-            Bat1Ctrl_SetHigh();
-        }
-        if((cell_voltages[1] - min_voltage) > BALANCE_START_TH) {
-            Bat2Ctrl_SetHigh();
-        }
-        if((cell_voltages[2] - min_voltage) > BALANCE_START_TH) {
-            Bat3Ctrl_SetHigh();
-        }
-        
-        // stop if close enough
-        if((cell_voltages[0] - min_voltage) < BALANCE_END_TH) {
+        if(CHARGING == charge_mode) {
+            // update balance signals
+            voltage_t min_voltage = UINT16_MAX;
+            for (int i=0; i<3; i++) {
+                min_voltage = min(cell_voltages[i], min_voltage);
+            }
+            // if a cell is too far above min voltage, discharge it
+            if((cell_voltages[0] - min_voltage) > BALANCE_START_TH) {
+                Bat1Ctrl_SetHigh();
+            }
+            if((cell_voltages[1] - min_voltage) > BALANCE_START_TH) {
+                Bat2Ctrl_SetHigh();
+            }
+            if((cell_voltages[2] - min_voltage) > BALANCE_START_TH) {
+                Bat3Ctrl_SetHigh();
+            }
+
+            // stop if close enough
+            if((cell_voltages[0] - min_voltage) < BALANCE_END_TH) {
+                Bat1Ctrl_SetLow();
+            }
+            if((cell_voltages[1] - min_voltage) < BALANCE_END_TH) {
+                Bat2Ctrl_SetLow();
+            }
+            if((cell_voltages[2] - min_voltage) < BALANCE_END_TH) {
+                Bat3Ctrl_SetLow();
+            }
+        } else{
             Bat1Ctrl_SetLow();
-        }
-        if((cell_voltages[1] - min_voltage) < BALANCE_END_TH) {
             Bat2Ctrl_SetLow();
-        }
-        if((cell_voltages[2] - min_voltage) < BALANCE_END_TH) {
             Bat3Ctrl_SetLow();
         }
         
@@ -271,10 +275,16 @@ void main(void)
                 break;
         }
         
+        // set indicator LEDs
+        if (CHARGING == charge_mode){
+            
+        }
+        
         
         // check power off button
         if (!PowerButton_GetValue()) {
             // power off
+            CLRWDT();
             RelayCtrl_SetLow();
             while(1);
         }
