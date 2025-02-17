@@ -41,10 +41,13 @@
     SOFTWARE.
 */
 
+#include <xc.h>
 #include "mcc_generated_files/mcc.h"
 #include "units.h"
 #include "batt_properties.h"
 #include "therm_LUT.h"
+#include "millis.h"
+#include "error_load_store.h"
 
 #define CELL_COUNT 3
 
@@ -64,14 +67,10 @@ static voltage_t cell_voltages[3]; // voltage * VOLTAGE_MULTIPLIER
 static temp_t cell_temps[3]; // 'C
 static current_t bat_current; // +ve is  charge -ve is discharge
 
-enum  {CHARGING, DISCHARGING} charge_mode = DISCHARGING;
 
-static enum error_e {  FAULT_NONE, 
-                FAULT_V,
-                FAULT_TEMP, 
-                FAULT_CURR,
-                FAULT_WDT,
-            } error_type = FAULT_NONE;
+bool locked_out = false;
+
+static error_t error_type = FAULT_NONE;
 static uint8_t error_param1 = 0;
 static uint8_t error_param2 = 0;
 
@@ -109,7 +108,7 @@ current_t adc_to_current(adc_result_t reading)
     return current;
 }
 
-void fault()
+    void fault()
 {
     // store error
     
@@ -117,32 +116,41 @@ void fault()
     // shut down
     RelayCtrl_SetLow();
 }
+
 /*
                          Main application
  */
 void main(void)
 {
     CAN_MSG_OBJ msg;
+    error_t saved_fault;
     
     // Initialize the device
     SYSTEM_Initialize();
     
-    RelayCtrl_SetHigh(); // closes isolation relay
+    // start 1 ms timer
+    millis_setup();
+    
+    // check if a watchdog reset just happened
+    if (WDTWV_bit) {
+        saved_fault = FAULT_WDT;
+    } else{
+        saved_fault = load_fault_code(void);   
+    }
+    
     
     // can setup
     CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
 
     // load saved error
-    enum error_e saved_fault = FAULT_NONE;
+    
     // TODO load from NVM the fault code
     
-    // check for WDT error
-    if (WDTWV_bit) {
-        saved_fault = FAULT_WDT;
-    }
     
-    // transmit saved error    
-    ////msg = TODO: msg_getter_funct
+    RelayCtrl_SetHigh(); // closes isolation relay
+    
+    
+    
     
     ADC_SelectContext(CONTEXT_1);
 

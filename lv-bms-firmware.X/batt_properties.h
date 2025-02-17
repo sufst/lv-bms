@@ -31,7 +31,6 @@
 #ifndef BATT_PROPERTIES_H
 #define	BATT_PROPERTIES_H
 
-#include <xc.h> // include processor files - each processor file is guarded.  
 #include "units.h"
 
 #define DISCHARGE_CURRENT_MAX A(25) // TODO: replace with actual values

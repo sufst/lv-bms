@@ -9,10 +9,16 @@
             <make-project-type>0</make-project-type>
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
-            <sourceRootList/>
+            <sourceRootList>
+                <sourceRootElem>tests</sourceRootElem>
+            </sourceRootList>
             <confList>
                 <confElem>
-                    <name>default</name>
+                    <name>Full_firmware</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>indicator_test</name>
                     <type>2</type>
                 </confElem>
             </confList>
