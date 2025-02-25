@@ -1,1 +1,3 @@
-lv-bms-firmware.X/build
+/lv-bms-firmware.X/dist/*
+/lv-bms-firmware.X/debug/*
+/lv-bms-firmware.X/build/*

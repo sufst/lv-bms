@@ -87,8 +87,8 @@ void UART1_Initialize(void)
     // P3H 0; 
     U1P3H = 0x00;
 
-    // BRGS high speed; MODE Asynchronous 8-bit mode; RXEN enabled; TXEN enabled; ABDEN disabled; 
-    U1CON0 = 0xB0;
+    // BRGS high speed; MODE Asynchronous 8-bit mode with 9th bit even parity; RXEN enabled; TXEN enabled; ABDEN disabled; 
+    U1CON0 = 0xB3;
 
     // RXBIMD Set RXBKIF on rising RX input; BRKOVR disabled; WUE disabled; SENDB disabled; ON enabled; 
     U1CON1 = 0x80;
@@ -96,11 +96,11 @@ void UART1_Initialize(void)
     // TXPOL not inverted; FLO off; C0EN Checksum Mode 0; RXPOL not inverted; RUNOVF RX input shifter stops all activity; STP Transmit 1Stop bit, receiver verifies first Stop bit; 
     U1CON2 = 0x00;
 
-    // BRGL 17; 
-    U1BRGL = 0x11;
+    // BRGL 8; 
+    U1BRGL = 0x08;
 
-    // BRGH 4; 
-    U1BRGH = 0x04;
+    // BRGH 2; 
+    U1BRGH = 0x02;
 
     // STPMD in middle of first Stop bit; TXWRE No error; 
     U1FIFO = 0x00;
@@ -178,7 +178,7 @@ void UART1_Write(uint8_t txData)
 
 int getch(void)
 {
-    return (int)UART1_Read();
+    return UART1_Read();
 }
 
 void putch(char txData)

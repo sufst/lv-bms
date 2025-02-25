@@ -10,6 +10,10 @@
 
 void millis_setup(void);
 uint64_t millis(void);
+void delay(uint64_t delay_ms);
+
+void start_timer(uint64_t length_ms);
+bool time_up();
 
 #endif	/* MILLIS_H */
 

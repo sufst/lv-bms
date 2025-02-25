@@ -15,10 +15,10 @@
 extern "C" {
 #endif
     #define NUM_LEDS 5
-#define CHARGE_ANIM_STEP_TIME_MS 600
+#define CHARGE_ANIM_STEP_TIME_MS 300
 #define EMPTY_ANIM_STEP_TIME_MS 300
 #define CRITICAL_ANIM_BLINK_TIME_MS 100
-#define CRITICAL_ANIM_BLINK_SPACING_MS 2000
+#define CRITICAL_ANIM_BLINK_SPACING_MS 800
     
     typedef enum {DISP_SOC, DISP_NUM} disp_mode_e;
     

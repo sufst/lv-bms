@@ -166,14 +166,14 @@ static void CAN1_TX_FIFO_Configuration(void)
 
 static void CAN1_BitRateConfiguration(void)
 {
-    // SJW 15; 
-    C1NBTCFGL = 0x0F;
+    // SJW 7; 
+    C1NBTCFGL = 0x07;
     
-    // TSEG2 15; 
-    C1NBTCFGH = 0x0F;
+    // TSEG2 7; 
+    C1NBTCFGH = 0x07;
     
-    // TSEG1 62; 
-    C1NBTCFGU = 0x3E;
+    // TSEG1 30; 
+    C1NBTCFGU = 0x1E;
     
     // BRP 0; 
     C1NBTCFGT = 0x00;

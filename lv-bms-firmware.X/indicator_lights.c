@@ -18,11 +18,12 @@ extern "C" {
     disp_mode_e _mode = DISP_NUM;
     int anim_state = 0;
     uint64_t _anim_timestamp = 0;
+    uint64_t critical_timestamp = 0;
     uint8_t _soc = 0;
     uint8_t _num = 0;
-    bool charging = false;
-    bool critical = false;
-    bool empty = false;
+    bool _charging = false;
+    bool _critical = false;
+    bool _empty = false;
     
     uint64_t _init_start_time = 0;
     bool init = false;
@@ -53,6 +54,15 @@ extern "C" {
                 break;
         }
     }
+    // used for advancing onto the next step of an animation if the delay has passed. time is 
+    // kept track of using the timestamp
+    void _anim_advance(int next_state, uint64_t delay_until_next_state, uint64_t* timestamp ) {
+        uint64_t now = millis();
+        if ((now - *timestamp) > delay_until_next_state) {
+            anim_state = next_state;
+            *timestamp = now;
+        }
+    }
     
     uint8_t disp_get_led_bars() {
         uint8_t led_bars = 0x00;
@@ -61,19 +71,19 @@ extern "C" {
         
         // store what the pattern in the led bar graph should be
         for (int led_no = 0; led_no < NUM_LEDS; led_no++) {
-            if(_soc > (led_no * (100/NUM_LEDS))) {
+            if(_soc > ((led_no) * (100/NUM_LEDS))) {
                 led_bars |= 1 << led_no;
             }
         }
 
-        if(charging) {
+        if(_charging) {
             // Charging animation
             // apply charging mask where the bar scans upwards
 
             // update animation state
             if ((now - _anim_timestamp) > CHARGE_ANIM_STEP_TIME_MS) {
                 anim_state++;
-                if(anim_state == NUM_LEDS)
+                if(anim_state == (NUM_LEDS + 1))
                     anim_state = 0;
                 _anim_timestamp = now;
             }
@@ -83,9 +93,10 @@ extern "C" {
             for(int i = 0; i < anim_state; i++) {
                 charging_mask |= 1 << i;
             }
+            led_bars |= 0x01;
             led_bars &= charging_mask;
 
-        } else if (empty) {
+        } else if (_empty) {
             // empty animation
             // update anim state
             if ((now - _anim_timestamp) > EMPTY_ANIM_STEP_TIME_MS) {
@@ -94,24 +105,34 @@ extern "C" {
             }
 
             // update led bars
+            led_bars |= 0x01; // set the lowest LED so it blinks when close to empty regardless of soc
             led_bars = (anim_state) ? led_bars : 0;
 
-        } else if (critical) {
+        } 
+        
+        if (_critical) {
             // critical animation
-            if(anim_state == 0) { // high section
-                // don't affect led_bars
-                // start blink
-                if ((now -_anim_timestamp) > CRITICAL_ANIM_BLINK_SPACING_MS) {
-                    anim_state = 1;
-                    _anim_timestamp = now;
-                }
-            } else if (anim_state == 1) { // low blink
-                // blink led bars
-                led_bars = 0;
-                if((now - _anim_timestamp) > CRITICAL_ANIM_BLINK_TIME_MS) {
-                    anim_state = 0;
-                    _anim_timestamp = now;
-                }
+            switch (anim_state){
+                case 0:
+                    // don't do anything to the leds
+                    _anim_advance(1, CRITICAL_ANIM_BLINK_SPACING_MS, &critical_timestamp);
+                    break;
+                case 1:
+                    led_bars = 0x0A; // flashing pattern
+                    _anim_advance(2, CRITICAL_ANIM_BLINK_TIME_MS, &critical_timestamp);
+                    break;
+                case 2:
+                    led_bars = 0x15;
+                    _anim_advance(3, CRITICAL_ANIM_BLINK_TIME_MS, &critical_timestamp);
+                    break;
+                case 3:
+                    led_bars = 0x0A;
+                    _anim_advance(4, CRITICAL_ANIM_BLINK_TIME_MS, &critical_timestamp);
+                    break;
+                case 4:
+                    led_bars = 0x15;
+                    _anim_advance(0, CRITICAL_ANIM_BLINK_TIME_MS, &critical_timestamp);
+                    break;
             }
         }
         return led_bars;
@@ -183,7 +204,7 @@ extern "C" {
             
             // render the LED bars onto the leds:
             for (char bit = 0; bit < 5; bit++) {
-                set_led(bit, _num & (1<<(bit)));
+                set_led(bit, led_bars & (1<<(bit)));
             }
         }
     }
@@ -198,28 +219,30 @@ extern "C" {
     //// displaying state of charge
     // displays an SOC value from 0 - 100 
     void disp_set_soc(uint8_t soc) {
+        if (_mode != DISP_SOC){
+            set_disp_mode(DISP_SOC);
+        }
         _soc = soc;
-        set_disp_mode(DISP_SOC);
         disp_update();
     }
     
     // enables charging animation
     void disp_set_charging(bool charging) {
-        charging = charging;
+        _charging = charging;
         set_disp_mode(_mode);
         disp_update();
     }
     
     // enable critical level animation
     void disp_set_critical(bool critical) {
-        critical = critical;
+        _critical = critical;
         set_disp_mode(_mode);
         disp_update();
     }
     
     // enable empty level animation 
     void disp_set_empty(bool empty) {
-        empty = empty;
+        _empty = empty;
         set_disp_mode(_mode);
         disp_update();
     }
