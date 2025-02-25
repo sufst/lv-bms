@@ -7,9 +7,9 @@
 
 
 #include <xc.h>
-#include "../indicator_lights.h"
-#include "../mcc_generated_files/mcc.h"
-#include "../millis.h"
+#include "indicator_lights.h"
+#include "mcc.h"
+#include "millis.h"
 #include "stdio.h"
 
 void millis_hook (uint64_t uptime) {
@@ -43,7 +43,7 @@ void main(void) {
     disp_set_charging(false);
     disp_set_empty(false);
     for (int soc = 100; soc >= 0; soc -= 10) {
-        disp_set_soc(soc);
+        disp_set_soc((uint8_t)soc);
         printf("    discharge: %d%%\n", soc);
         delay(1500);
     }
@@ -54,7 +54,7 @@ void main(void) {
     disp_set_charging(true);
     disp_set_empty(false);
     for (int soc = 0; soc <= 100; soc += 10) {
-        disp_set_soc(soc);
+        disp_set_soc((uint8_t)soc);
         printf("    charge: %d\n", soc);
         delay(2000);
     }
@@ -66,7 +66,7 @@ void main(void) {
     disp_set_charging(false);
     disp_set_empty(true);
     for (int soc = 100; soc >= 0; soc -= 10) {
-        disp_set_soc(soc);
+        disp_set_soc((uint8_t)soc);
         printf("    empty: %d\n", soc);
         delay(1000);
     }
@@ -77,7 +77,7 @@ void main(void) {
     disp_set_charging(false);
     disp_set_empty(false);
     for (int soc = 100; soc >= 0; soc -= 10) {
-        disp_set_soc(soc);
+        disp_set_soc((uint8_t)soc);
         printf("    critical: %d\n", soc);
         delay(1000);
     }

@@ -6,7 +6,7 @@
  */
 
 #include <xc.h>
-#include "mcc_generated_files/mcc.h"
+#include "mcc.h"
 #include "error_load_store.h"
 
 

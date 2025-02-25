@@ -6,7 +6,7 @@
  */
 
 #include <xc.h>  
-#include "mcc_generated_files/mcc.h"
+#include "mcc.h"
 #include "millis.h"
 
  void millis_hook(uint64_t uptime);// define this in main to run a task once per ms

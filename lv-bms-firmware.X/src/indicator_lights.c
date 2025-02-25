@@ -6,9 +6,9 @@
  */
 
 #include <xc.h>
-#include "mcc_generated_files/mcc.h"
+#include "mcc.h"
 #include "indicator_lights.h"
-#include "mcc_generated_files/pin_manager.h"
+#include "pin_manager.h"
 #include "millis.h"
 
 #ifdef	__cplusplus

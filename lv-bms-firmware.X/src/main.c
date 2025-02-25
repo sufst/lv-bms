@@ -42,7 +42,7 @@
 */
 
 #include <xc.h>
-#include "mcc_generated_files/mcc.h"
+#include "mcc.h"
 #include "units.h"
 #include "batt_properties.h"
 #include "therm_LUT.h"
@@ -117,6 +117,14 @@ current_t adc_to_current(adc_result_t reading)
     RelayCtrl_SetLow();
 }
 
+// milisecond timer hook  - runs the display
+void millis_hook (uint64_t uptime) {
+    if ((uptime % 64) == 0) {
+        disp_update();
+    }
+}
+
+    
 /*
                          Main application
  */

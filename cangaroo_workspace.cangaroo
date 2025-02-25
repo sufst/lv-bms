@@ -1,0 +1,16 @@
+<cangaroo-workspace>
+ <tabs>
+  <tab title="Trace" mode="aggregated" type="TraceWindow" TimestampMode="2">
+   <LinearTraceView AutoScroll="0"/>
+   <AggregatedTraceView SortColumn="-1"/>
+  </tab>
+ </tabs>
+ <setup>
+  <network name="Network 1">
+   <interfaces>
+    <interface triple-sampling="0" bitrate-fd="4000000" can-fd="0" sample-point-fd="875" auto-restart="0" auto-restart-time="100" type="can" driver="CandleAPI" bitrate="500000" name="candle0" configure="1" sample-point="875" listen-only="0" one-shot="0"/>
+   </interfaces>
+   <databases/>
+  </network>
+ </setup>
+</cangaroo-workspace>

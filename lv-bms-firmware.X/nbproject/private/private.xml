@@ -3,12 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/main.c</file>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/indicator_lights.c</file>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/indicator_lights.h</file>
             <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/tests/indicator_test_main.c</file>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/nbproject/project.xml</file>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/nbproject/configurations.xml</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/mcc_generated_files/interrupt_manager.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/mcc_generated_files/uart1.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/millis.c</file>
         </group>
     </open-files>
 </project-private>
