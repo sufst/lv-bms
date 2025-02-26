@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=lv-bms-firmware.X
 
 # Active Configuration
-DEFAULTCONF=indicator_test
+DEFAULTCONF=CAN_test
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Full_firmware indicator_test 
+ALLCONFS=Full_firmware indicator_test CAN_test 
 
 
 # build
@@ -47,6 +47,7 @@ ALLCONFS=Full_firmware indicator_test
 .clobber-impl: .clobber-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Full_firmware clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=indicator_test clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=CAN_test clean
 
 
 
@@ -54,6 +55,7 @@ ALLCONFS=Full_firmware indicator_test
 .all-impl: .all-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Full_firmware build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=indicator_test build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=CAN_test build
 
 
 

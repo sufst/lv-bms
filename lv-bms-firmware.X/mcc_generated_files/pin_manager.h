@@ -473,46 +473,6 @@
 #define RD1_SetAnalogMode()         do { ANSELDbits.ANSELD1 = 1; } while(0)
 #define RD1_SetDigitalMode()        do { ANSELDbits.ANSELD1 = 0; } while(0)
 
-// get/set Extra1 aliases
-#define Extra1_TRIS                 TRISDbits.TRISD4
-#define Extra1_LAT                  LATDbits.LATD4
-#define Extra1_PORT                 PORTDbits.RD4
-#define Extra1_WPU                  WPUDbits.WPUD4
-#define Extra1_OD                   ODCONDbits.ODCD4
-#define Extra1_ANS                  ANSELDbits.ANSELD4
-#define Extra1_SetHigh()            do { LATDbits.LATD4 = 1; } while(0)
-#define Extra1_SetLow()             do { LATDbits.LATD4 = 0; } while(0)
-#define Extra1_Toggle()             do { LATDbits.LATD4 = ~LATDbits.LATD4; } while(0)
-#define Extra1_GetValue()           PORTDbits.RD4
-#define Extra1_SetDigitalInput()    do { TRISDbits.TRISD4 = 1; } while(0)
-#define Extra1_SetDigitalOutput()   do { TRISDbits.TRISD4 = 0; } while(0)
-#define Extra1_SetPullup()          do { WPUDbits.WPUD4 = 1; } while(0)
-#define Extra1_ResetPullup()        do { WPUDbits.WPUD4 = 0; } while(0)
-#define Extra1_SetPushPull()        do { ODCONDbits.ODCD4 = 0; } while(0)
-#define Extra1_SetOpenDrain()       do { ODCONDbits.ODCD4 = 1; } while(0)
-#define Extra1_SetAnalogMode()      do { ANSELDbits.ANSELD4 = 1; } while(0)
-#define Extra1_SetDigitalMode()     do { ANSELDbits.ANSELD4 = 0; } while(0)
-
-// get/set Extra2 aliases
-#define Extra2_TRIS                 TRISDbits.TRISD5
-#define Extra2_LAT                  LATDbits.LATD5
-#define Extra2_PORT                 PORTDbits.RD5
-#define Extra2_WPU                  WPUDbits.WPUD5
-#define Extra2_OD                   ODCONDbits.ODCD5
-#define Extra2_ANS                  ANSELDbits.ANSELD5
-#define Extra2_SetHigh()            do { LATDbits.LATD5 = 1; } while(0)
-#define Extra2_SetLow()             do { LATDbits.LATD5 = 0; } while(0)
-#define Extra2_Toggle()             do { LATDbits.LATD5 = ~LATDbits.LATD5; } while(0)
-#define Extra2_GetValue()           PORTDbits.RD5
-#define Extra2_SetDigitalInput()    do { TRISDbits.TRISD5 = 1; } while(0)
-#define Extra2_SetDigitalOutput()   do { TRISDbits.TRISD5 = 0; } while(0)
-#define Extra2_SetPullup()          do { WPUDbits.WPUD5 = 1; } while(0)
-#define Extra2_ResetPullup()        do { WPUDbits.WPUD5 = 0; } while(0)
-#define Extra2_SetPushPull()        do { ODCONDbits.ODCD5 = 0; } while(0)
-#define Extra2_SetOpenDrain()       do { ODCONDbits.ODCD5 = 1; } while(0)
-#define Extra2_SetAnalogMode()      do { ANSELDbits.ANSELD5 = 1; } while(0)
-#define Extra2_SetDigitalMode()     do { ANSELDbits.ANSELD5 = 0; } while(0)
-
 // get/set Extra3 aliases
 #define Extra3_TRIS                 TRISDbits.TRISD6
 #define Extra3_LAT                  LATDbits.LATD6

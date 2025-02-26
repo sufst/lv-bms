@@ -176,16 +176,6 @@ void UART1_Write(uint8_t txData)
     U1TXB = txData;    // Write the data byte to the USART.
 }
 
-int getch(void)
-{
-    return UART1_Read();
-}
-
-void putch(char txData)
-{
-    UART1_Write(txData);
-}
-
 
 
 

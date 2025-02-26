@@ -10,6 +10,8 @@
 
 #define SHUTDOWN_REASON_ADDR TODO
 
+#include "can_interface.h"
+
 typedef enum { 
     SHUTDOWN_REASON_NONE, 
     SHUTDOWN_REASON_UNDER_V,
@@ -20,13 +22,6 @@ typedef enum {
     SHUTDOWN_REASON_WDT,
 } shutdown_reason_t;
              
-typedef enum {  
-    LOCKOUT_REASON_NONE,
-    LOCKOUT_REASON_OVER_V,
-    LOCKOUT_REASON_UNDER_V,
-    LOCKOUT_REASON_OVER_T,
-} lockout_reason_t;
-
 /**
  * save_shutdown_reason
  * @param err

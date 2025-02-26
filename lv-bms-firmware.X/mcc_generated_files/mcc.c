@@ -55,6 +55,7 @@ void SYSTEM_Initialize(void)
     PIN_MANAGER_Initialize();
     OSCILLATOR_Initialize();
     TMR0_Initialize();
+    UART2_Initialize();
     UART1_Initialize();
     CAN1_Initialize();
 }
