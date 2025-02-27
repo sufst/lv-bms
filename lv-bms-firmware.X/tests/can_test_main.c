@@ -42,7 +42,8 @@ void main(void) {
     can_register_temps(temps);
     can_register_current(&current);
     
-    can_set_status(CAN_DISCHARING);
+    
+    can_set_status(CAN_POWERED_DOWN);
     can_set_charge_cycles(123);
     can_set_lockout_count(6);
     can_set_shutdown_count(2093);
@@ -55,6 +56,7 @@ void main(void) {
         SOC = (SOC < 100) ? SOC+1 : 0;
         disp_set_soc(SOC);
         printf("SOC: %d\n", SOC);
+        send_critical_warning(CAN_CRITICAL_TEMP, 2, 70);
         delay(100);
     }
     

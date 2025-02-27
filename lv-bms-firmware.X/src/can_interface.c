@@ -103,8 +103,8 @@ void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index
     uint8_t critical_message[4];
     critical_message[0] = critical_byte;
     critical_message[1] = cell_index;
-    critical_message[2] = critical_value >> 8;
-    critical_message[3] = critical_value & 0xff;
+    critical_message[2] = critical_value & 0xff;
+    critical_message[3] = critical_value >> 8;
     tx_message(CAN_CRITICAL_WARNING_OFFSET, critical_message, 4);
 }
 

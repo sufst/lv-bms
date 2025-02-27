@@ -62,9 +62,9 @@ BO_ 2217873412 Empty_warning: 0 LVBMS
 	SG_ t : 0|1@1+ (0,0) [0|0] "" LVBMS
 
 BO_ 2217873413 Critical_warning: 4 LVBMS
-	SG_ Critical_byte : 0|1@1+ (1,0) [0|0] "" LVBMS
-	SG_ critical_cell : 1|1@1+ (1,0) [0|0] "" LVBMS
-	SG_ Critical_value : 2|2@1+ (1,0) [0|0] "" LVBMS
+	SG_ Critical_byte : 0|8@1+ (1,0) [0|0] "" LVBMS
+	SG_ critical_cell : 8|8@1+ (1,0) [0|0] "" LVBMS
+	SG_ Critical_value : 16|16@1+ (1,0) [0|0] "" LVBMS
 
 BO_ 2217873414 Locked_out: 4 LVBMS
 	SG_ lockout_reason : 0|8@1+ (1,0) [0|0] "" LVBMS
@@ -94,3 +94,6 @@ BA_ "SPN" SG_ 2364540158 EngineSpeed 190;
 BA_ "SPN" SG_ 2566844926 WheelBasedVehicleSpeed 84;
 
 CM_ SG_ 2217873414 sad_value "temp: *1, Current *0.000977-32.768, Voltage: *0.000977";
+CM_ SG_ 2217873411 status "0 - Powered down, 1 - Discharging, 2 - Charging, 3 - Empty, 4 - Fully charged,5 - Locked out";
+CM_ SG_ 2217873413 Critical_byte "1 - voltage, 2 - temp, 3 - current";
+CM_ SG_ 2217873413 Critical_value "temp: *1, Current *0.000977-32.768, Voltage: *0.000977";
