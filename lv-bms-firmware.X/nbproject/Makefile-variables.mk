@@ -16,3 +16,7 @@ CND_ARTIFACT_PATH_indicator_test=dist/indicator_test/production/lv-bms-firmware.
 CND_ARTIFACT_DIR_CAN_test=dist/CAN_test/production
 CND_ARTIFACT_NAME_CAN_test=lv-bms-firmware.X.production.hex
 CND_ARTIFACT_PATH_CAN_test=dist/CAN_test/production/lv-bms-firmware.X.production.hex
+# BQ79600_test configuration
+CND_ARTIFACT_DIR_BQ79600_test=dist/BQ79600_test/production
+CND_ARTIFACT_NAME_BQ79600_test=lv-bms-firmware.X.production.hex
+CND_ARTIFACT_PATH_BQ79600_test=dist/BQ79600_test/production/lv-bms-firmware.X.production.hex

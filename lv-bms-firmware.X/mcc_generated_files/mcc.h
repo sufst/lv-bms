@@ -56,8 +56,8 @@
 #include "adc.h"
 #include "memory.h"
 #include "tmr0.h"
+#include "uart4.h"
 #include "uart2.h"
-#include "uart1.h"
 #include "can1.h"
 
 

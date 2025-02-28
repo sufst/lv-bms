@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "ti_drivers_config.h": "c",
+        "ti_drivers_open_close.h": "c"
+    }
+}

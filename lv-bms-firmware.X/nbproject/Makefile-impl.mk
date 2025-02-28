@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=lv-bms-firmware.X
 
 # Active Configuration
-DEFAULTCONF=CAN_test
+DEFAULTCONF=BQ79600_test
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Full_firmware indicator_test CAN_test 
+ALLCONFS=Full_firmware indicator_test CAN_test BQ79600_test 
 
 
 # build
@@ -48,6 +48,7 @@ ALLCONFS=Full_firmware indicator_test CAN_test
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Full_firmware clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=indicator_test clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=CAN_test clean
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=BQ79600_test clean
 
 
 
@@ -56,6 +57,7 @@ ALLCONFS=Full_firmware indicator_test CAN_test
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Full_firmware build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=indicator_test build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=CAN_test build
+	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=BQ79600_test build
 
 
 

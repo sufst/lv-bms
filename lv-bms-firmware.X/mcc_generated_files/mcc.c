@@ -56,7 +56,7 @@ void SYSTEM_Initialize(void)
     OSCILLATOR_Initialize();
     TMR0_Initialize();
     UART2_Initialize();
-    UART1_Initialize();
+    UART4_Initialize();
     CAN1_Initialize();
 }
 

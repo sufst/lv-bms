@@ -87,8 +87,8 @@ void UART2_Initialize(void)
     // P3H 0; 
     U2P3H = 0x00;
 
-    // BRGS high speed; MODE Asynchronous 8-bit mode with 9th bit even parity; RXEN enabled; TXEN enabled; ABDEN disabled; 
-    U2CON0 = 0xB3;
+    // BRGS high speed; MODE Asynchronous 8-bit mode with 9th bit even parity; RXEN disabled; TXEN enabled; ABDEN disabled; 
+    U2CON0 = 0xA3;
 
     // RXBIMD Set RXBKIF on rising RX input; BRKOVR disabled; WUE disabled; SENDB disabled; ON enabled; 
     U2CON1 = 0x80;

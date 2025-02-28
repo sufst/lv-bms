@@ -75,7 +75,6 @@ typedef enum
     channel_ANA1 =  0x1,
     channel_ANA2 =  0x2,
     channel_ANB0 =  0x8,
-    channel_ANB1 =  0x9,
     channel_ANB2 =  0xA,
     channel_ANB3 =  0xB,
     channel_VSS =  0x3B,

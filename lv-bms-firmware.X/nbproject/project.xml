@@ -26,6 +26,10 @@
                     <name>CAN_test</name>
                     <type>2</type>
                 </confElem>
+                <confElem>
+                    <name>BQ79600_test</name>
+                    <type>2</type>
+                </confElem>
             </confList>
             <formatting>
                 <project-formatting-style>false</project-formatting-style>
