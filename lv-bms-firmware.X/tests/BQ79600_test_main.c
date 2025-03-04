@@ -61,28 +61,33 @@ void main(void) {
 //    CLRWDT();
 //    }
     
-    uint8_t* part_id;
+    uint8_t part_id[30] = {0};
     
     Wake796XX(); 
 //    StA796XX();
-
-    INTERRUPT_GlobalInterruptDisable();
-//    WriteRegUART(0, CONTROL1, 1<<3, 1, FRMWRT_ALL_W); // works
-//        WriteRegUART(1, CONTROL1, 1<<3, 1, FRMWRT_SGL_W); 
-    int read = ReadRegUART(1, PARTID, part_id, 1, 1000, FRMWRT_SGL_R);
-    INTERRUPT_GlobalInterruptEnable();
+    
+    
+//  WriteRegUART(1, CONTROL1, 1<<3, 1, FRMWRT_SGL_W); 
+    
+//    WriteRegUART(1, 0x701, 1<<4, 1, FRMWRT_SGL_W); // works
+    int read = ReadRegUART(1, PARTID, part_id, 8, 50, FRMWRT_SGL_R);
     
     
     printf("read %d bytes\n", read);
-    printf("parti d: %02x\n", *part_id);
+    
+//    printf("partid: %02x\n", part_id[4]);
+    for(int i=0; i<16; i++) {
+        printf("read: %02d : %02x\n", i, part_id[i]);
+    }
+    
     
     delay(5000);
     SD796XX();
             
     while(1){
         CLRWDT();
-        printf("no more tests\n");
-        delay(1000);
+        printf(".");
+        delay(5000);
     }
     
     return;

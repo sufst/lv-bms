@@ -18,6 +18,7 @@
         <itemPath>mcc_generated_files/tmr0.h</itemPath>
         <itemPath>mcc_generated_files/uart2.h</itemPath>
         <itemPath>mcc_generated_files/uart4.h</itemPath>
+        <itemPath>mcc_generated_files/dma1.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Project Headers"
                      displayName="Project Headers"
@@ -62,6 +63,7 @@
         <itemPath>mcc_generated_files/tmr0.c</itemPath>
         <itemPath>mcc_generated_files/uart2.c</itemPath>
         <itemPath>mcc_generated_files/uart4.c</itemPath>
+        <itemPath>mcc_generated_files/dma1.c</itemPath>
       </logicalFolder>
       <logicalFolder name="Project Source"
                      displayName="Project Source"

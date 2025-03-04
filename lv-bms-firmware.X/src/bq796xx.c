@@ -46,6 +46,7 @@
 
 
 //#include "bq796xx_spiMaster.h"
+#include <xc.h>
 #include "bq796xx.h"
 #include "millis.h"
 #include "uart4.h"
@@ -118,18 +119,76 @@ extern int ReadType;
 //extern int UART_RX_RDY;
 extern int RTI_TIMEOUT;
 
+// sets up the dma to read from uart into buffer. blocks until timeout or rx_len bytes have been read
+// returns number of bytes read
+int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout) {
+    // naive implementaton - too slow so we have to use DMA
+//    for(int bRes = 0; bRes < rx_len; bRes++) {
+//        while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
+//        if(count == 0) break;
+//        rx_data_buff[bRes] = UART4_Read();
+//    }
+//    return bRes;
+    
+    DMASELECT = 0;
+    // set destination       
+    DMA1_SetDestinationAddress((uint24_t)rx_data_buff);
+    DMA1_SetDestinationSize(rx_len);
+    
+    // have to manually trigger first as the first trigger does some sort of 
+    // setup but doesn't transfer any data
+    DMA1_StartTransfer();
+    
+    // enable triggering from the uart interrupt
+    DMA1_StartTransferWithTrigger();
+    // wait for the length of message to be received
+    uint32_t count = timeout;
+    while(DMAnCON0bits.SIRQEN && count > 0) count--;
+    DMA1_StopTransfer();
+    
+    // debugging gubbins
+//    printf("count: %d\n", count);
+//    DMASELECT = 0;
+//    
+//    printf("DMA CON0: 0x%02x\n", DMAnCON0);
+//    printf("DMA CON1: 0x%02x\n", DMAnCON1);
+//    printf("DMA BUF: 0x%02x\n", DMAnBUF);
+//    
+//    printf("DMA SOURCE ADDR : 0x%p\n", DMAnSSA);
+//    printf("DMA SOURCE PTR : 0x%p\n", DMAnSPTR);
+//    printf("DMA SOURCE size : %d\n", DMAnSSZ);
+//    printf("DMA SOURCE count : %d\n", DMAnSCNT);
+//    
+//    printf("DMA DEST ADDR : 0x%p\n", DMAnDSA);
+//    printf("DMA DEST PTR : 0x%p\n", DMAnDPTR);
+//    printf("DMA DEST size : %d\n", DMAnDSZ);
+//    printf("DMA DEST count : %d\n", DMAnDCNT);
+//    
+//    printf("DMA start ISR source: 0x%04x\n", DMAnSIRQ);
+    
+    // if the correct number of bytes are RX'ed, then the DMAnDCNT resets back 
+    // to rx_len, so we can't always use it to tell how many were RX'ed
+    if (count > 0) {
+        return rx_len; // everything expected received
+    } else {
+        return rx_len - DMAnDCNT; // timed out
+    }
+}
+
 #if 1
 
 void Wake796XX(void) {
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
 //    sciREG->PIO3 &= ~(1U << 2U); // set output to low
-    
+    INTERRUPT_GlobalInterruptDisable();
     // toggle uart TX low for 2.5ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(2); // WAKE ping = 2ms to 2.5ms
     for(int _ = 0; _ <100; _++ ); // little more delay
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
+    
+    INTERRUPT_GlobalInterruptEnable();
     
     // wait 12 ms for the device to power up
     delay(12);
@@ -153,10 +212,15 @@ void StA796XX(void) {
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
 //    sciREG->PIO3 &= ~(1U << 2U); // set output to low
+    INTERRUPT_GlobalInterruptDisable();
+    
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL    
     for(int _ = 0; _ <90; _++ );  // StA ping = 250us to 300us
 //    RD5_SetDigitalOutput();
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
+
+    INTERRUPT_GlobalInterruptEnable();
+    
 //    sciInit();
 //    sciSetBaudrate(sciREG, BAUDRATE);
 }
@@ -164,7 +228,7 @@ void StA796XX(void) {
 void HWRST796XX(void) {
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
-//    sciREG->PIO3 &= ~(1U << 2U); // set output to low
+//    sciREG->PIO3 &= ~(1U << 2U); // set output to low 
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(36); // StA ping = 36ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
@@ -176,10 +240,13 @@ void HWRST796XX(void) {
 
 // reset uart engine on the bq79616
 void COM_CLR_796XX(void) {
+    INTERRUPT_GlobalInterruptDisable();
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     // 15-20 bit periods @ 1Mb/s = 15-20 us 
     for(int _ = 0; _ <6; _++ );  
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
+    INTERRUPT_GlobalInterruptEnable();
+    
 }
 #endif
 //**********
@@ -329,19 +396,16 @@ int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOu
     bRes = 0;
     count = dwTimeOut; //timeout after this many attempts
     if (bWriteType == ReadType) {
-        ReadFrameReq(bID, wAddr, bLen, bWriteType);
         memset(pData, 0, sizeof(pData));
-        for(bRes = 0; bRes < bLen + 6; bRes++) {
-            while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-            if(count == 0 ) return bRes; // timed out
-            pData[bRes] = UART4_Read();
-        }
+        ReadFrameReq(bID, wAddr, bLen, bWriteType);
+        bRes = dma1_read_from_uart(pData, bLen + 6, dwTimeOut);
+                
     } else if (bWriteType == FRMWRT_STK_R) {
         bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
         memset(pData, 0, sizeof(pData));
         for(bRes = 0; bRes < (bLen + 6) * (TOTALBOARDS - 1); bRes++) {
             while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-            if(count == 0 ) return bRes; // timed out
+            if(count == 0) return bRes;
             pData[bRes] = UART4_Read();
         }
     } else if (bWriteType == ReadType) {
@@ -349,7 +413,7 @@ int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOu
         memset(pData, 0, sizeof(pData));
         for(bRes = 0; bRes < (bLen + 6) * TOTALBOARDS; bRes++) {
             while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-            if(count == 0 ) return bRes; // timed out
+            if(count == 0) return bRes;
             pData[bRes] = UART4_Read();
         }
     } else {
