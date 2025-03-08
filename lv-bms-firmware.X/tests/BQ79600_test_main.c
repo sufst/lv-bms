@@ -66,7 +66,6 @@ void main(void) {
     Wake796XX(); 
 //    StA796XX();
     
-    
 //  WriteRegUART(1, CONTROL1, 1<<3, 1, FRMWRT_SGL_W); 
     
 //    WriteRegUART(1, 0x701, 1<<4, 1, FRMWRT_SGL_W); // works
@@ -79,7 +78,6 @@ void main(void) {
     for(int i=0; i<16; i++) {
         printf("read: %02d : %02x\n", i, part_id[i]);
     }
-    
     
     delay(5000);
     SD796XX();

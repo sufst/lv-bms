@@ -428,8 +428,7 @@ int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOu
             printf("BAD CRC\n");
         }
     }
-
-
+    
     return bRes;
 }
 
