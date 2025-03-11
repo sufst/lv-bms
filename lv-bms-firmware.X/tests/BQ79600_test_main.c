@@ -68,7 +68,7 @@ void main(void) {
     
 //  WriteRegUART(1, CONTROL1, 1<<3, 1, FRMWRT_SGL_W); 
     
-//    WriteRegUART(1, 0x701, 1<<4, 1, FRMWRT_SGL_W); // works
+     WriteRegUART(1, 0x701, 1<<4, 1, FRMWRT_SGL_W); // works
     int read = ReadRegUART(1, PARTID, part_id, 8, 50, FRMWRT_SGL_R);
     
     

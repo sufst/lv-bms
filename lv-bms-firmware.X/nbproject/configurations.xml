@@ -35,6 +35,7 @@
         <itemPath>inc/bq79631_debug_types.h</itemPath>
         <itemPath>inc/bq796xx.h</itemPath>
         <itemPath>inc/bq796xx_spiSlave.h</itemPath>
+        <itemPath>inc/bms_interface.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -76,6 +77,7 @@
         <itemPath>src/can_interface.c</itemPath>
         <itemPath>src/bq796xx.c</itemPath>
         <itemPath>src/bq797xx_spiSlave.c</itemPath>
+        <itemPath>src/bms_interface.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
@@ -1193,7 +1195,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="3.3"/>
+        <property key="voltagevalue" value="5"/>
       </Tool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
@@ -1279,7 +1281,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="3.3"/>
+        <property key="voltagevalue" value="5"/>
       </pk4hybrid>
       <item path="src/main.c" ex="true" overriding="false">
         <HI-TECH-COMP>

@@ -3,9 +3,19 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/tests/can_test_main.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/can_interface.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/mcc_generated_files/can1.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/inc/can_interface.h</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/inc/units.h</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/inc/error_load_store.h</file>
             <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/tests/BQ79600_test_main.c</file>
             <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/bq796xx.c</file>
-            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/inc/bq796xx.h</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/mcc_generated_files/interrupt_manager.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/indicator_lights.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/bms_interface.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/src/batt_properties.c</file>
+            <file>file:/C:/Users/alexl/sufst/23/lv-bms/lv-bms-firmware.X/tests/bms_interface.h</file>
         </group>
     </open-files>
 </project-private>
