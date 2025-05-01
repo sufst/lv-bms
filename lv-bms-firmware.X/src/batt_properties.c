@@ -49,4 +49,5 @@ bool check_over_current_discharge(current_t cell_curr) {
 
 uint8_t get_SOC(voltage_t cell_voltage) {
     // TODO cell discharge curve LUT (or approximation thereof) here please
+    return 0;
 }

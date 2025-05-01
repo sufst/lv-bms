@@ -42,7 +42,7 @@ extern "C" {
     void disp_set_empty(bool empty);
     
     //// displays a binary number on the digits
-    void disp_set_number(int num);
+    void disp_set_number(uint8_t num);
 
 
 #ifdef	__cplusplus

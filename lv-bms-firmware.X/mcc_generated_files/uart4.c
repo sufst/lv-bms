@@ -87,8 +87,8 @@ void UART4_Initialize(void)
     // TXPOL not inverted; FLO off; RXPOL not inverted; RUNOVF RX input shifter stops all activity; STP Transmit 1Stop bit, receiver verifies first Stop bit; 
     U4CON2 = 0x00;
 
-    // BRGL 4; 
-    U4BRGL = 0x04;
+    // BRGL 15; 
+    U4BRGL = 0x0F;
 
     // BRGH 0; 
     U4BRGH = 0x00;

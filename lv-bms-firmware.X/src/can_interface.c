@@ -68,22 +68,22 @@ void send_sensor_message() {
     // temperatures
     uint8_t temp_message[6];
     for (int i = 0; i < 3; i++) {
-        voltage_t t = *(temps_p + i);
-        temp_message[i * 2] = t & 0xff ;
-        temp_message[i * 2 + 1] = t >> 8;
+        temp_t t = *(temps_p + i);
+        temp_message[i * 2] = (uint8_t)(t & 0xff);
+        temp_message[i * 2 + 1] = (uint8_t)(t >> 8);
     }
     tx_message(CAN_TEMPS_MESSAGE_OFFSET, temp_message, 6);
     
     // current
     uint8_t current_message[2]; 
     current_t c = *curr_p;
-    current_message[0] = c & 0xff;
-    current_message[1] = c >> 8 ;
+    current_message[0] = (uint8_t)(c & 0xff);
+    current_message[1] = (uint8_t)(c >> 8);
     tx_message(CAN_CURR_MESSAGE_OFFSET, current_message, 2);
     
     // status
     uint8_t status_message[8];
-    status_message[0] = status_byte;
+    status_message[0] = (uint8_t)status_byte;
     status_message[1] = *SOC_p;
     status_message[2] = charge_cycles & 0xff;
     status_message[3] = charge_cycles >> 8;
@@ -101,7 +101,7 @@ void send_empty_warning() {
 
 void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value){
     uint8_t critical_message[4];
-    critical_message[0] = critical_byte;
+    critical_message[0] = (uint8_t)critical_byte;
     critical_message[1] = cell_index;
     critical_message[2] = critical_value & 0xff;
     critical_message[3] = critical_value >> 8;
@@ -110,7 +110,7 @@ void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index
 
 void send_lockout_message() {
     uint8_t lockout_message[4];
-    lockout_message[0] = lockout_reason;
+    lockout_message[0] = (uint8_t)lockout_reason;
     lockout_message[1] = lockout_cell_index;
     lockout_message[2] = lockout_cell_value >> 8;
     lockout_message[3] = lockout_cell_value & 0xff;

@@ -18,13 +18,14 @@ void millis_hook (uint64_t uptime) {
     }
 }
 
-void main(void) {
+void bms_main(void) {
     SYSTEM_Initialize();
     millis_setup();
     disp_init();
     INTERRUPT_GlobalInterruptEnable();
-            
-    printf("indicator tests\n");
+    
+
+    printf("indicator test starting\n");
     disp_set_number(0xaa);
        
     delay(1000);

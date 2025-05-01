@@ -15,7 +15,8 @@ void save_shutdown_reason(shutdown_reason_t sd_reason) {
 }
 
 shutdown_reason_t load_shutdown_reason(void) {
-    
+    // dummy
+    return SHUTDOWN_REASON_NONE;
 }
 
 void save_lockout_reason(lockout_reason_t lo_reason) {
@@ -23,5 +24,6 @@ void save_lockout_reason(lockout_reason_t lo_reason) {
 }
 
 lockout_reason_t load_lockout_reason(void) {
-    
+    // dummy
+    return LOCKOUT_OVERVOLT;
 }

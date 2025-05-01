@@ -248,7 +248,7 @@ extern "C" {
     }
     
     //// displays a binary number on the digits
-    void disp_set_number(int num) {
+    void disp_set_number(uint8_t num) {
         _num = num;
         set_disp_mode(DISP_NUM);
         disp_update();

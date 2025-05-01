@@ -27,7 +27,7 @@ voltage_t voltages[3] = {V(3.6), V(3.7), V(3.8)};
 temp_t temps[3] = {25,26,27};
 current_t current = A(-5);
 
-void main(void) {
+void bms_main(void) {
     SYSTEM_Initialize();
     millis_setup();
     disp_init();

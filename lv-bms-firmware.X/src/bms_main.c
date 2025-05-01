@@ -128,7 +128,7 @@ void millis_hook (uint64_t uptime) {
 /*
                          Main application
  */
-void main(void)
+void bms_main(void)
 {
     CAN_MSG_OBJ msg;
     error_t saved_fault;

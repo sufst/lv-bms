@@ -22,7 +22,6 @@
 #include "string.h"
 #include <stdio.h>
 #include <math.h>
-#include "bq796xx_spiSlave.h"
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -38,13 +37,7 @@
 #define FALSE 0
 /* Set SPI_COMM  to 'TRUE' if the communication type used is SPI, for UART keep it 'FALSE' */
 #define SPI_COMM      FALSE
-
-/* **** NO NEED TO CHANGE 'UART_COMM', setting the value of 'SPI_COMM' is enough */
-#if SPI_COMM == FALSE
 #define UART_COMM     TRUE
-#else
-#define UART_COMM     FALSE
-#endif
 
 #define BYTE uint8_t
 #define uint16 uint16_t
@@ -62,16 +55,17 @@
 #define TOTALBOARDS 1       //boards in stack
 #endif
 
-#define FRMWRT_SGL_R	0x00    //single device READ
-#define FRMWRT_SGL_W	0x10    //single device WRITE
-#define FRMWRT_STK_R	0x20    //stack READ
-#define FRMWRT_STK_W	0x30    //stack WRITE
-#define FRMWRT_ALL_R	0x40    //broadcast READ
-#define FRMWRT_ALL_W	0x50    //broadcast WRITE
-#define FRMWRT_REV_ALL_W 0x60   //broadcast WRITE reverse direction
-int WriteRegUART(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteType);
-int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOut,
-        BYTE bWriteType);
+
+typedef enum {
+    FRMWRT_SGL_R     = 0x00,   //single device READ
+    FRMWRT_SGL_W	 = 0x10,   //single device WRITE
+    FRMWRT_STK_R	 = 0x20,   //stack READ
+    FRMWRT_STK_W	 = 0x30,   //stack WRITE
+    FRMWRT_ALL_R	 = 0x40,   //broadcast READ
+    FRMWRT_ALL_W	 = 0x50,   //broadcast WRITE
+    FRMWRT_REV_ALL_W = 0x60,   //broadcast WRITE reverse direction
+} FRMWRT_RW_TYPE_t;
+
 #if SPI_COMM == TRUE
 #define ReadReg(bID,  wAddr, pData,  bLen,  dwTimeOut, bWriteType) \
                   SpiReadReg(bID, wAddr, pData, bLen, dwTimeOut, bWriteType);
@@ -96,6 +90,11 @@ uint16 CRC16(BYTE *pBuf, int nLen);
 
 //int  WriteReg(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteType);
 //int  ReadReg(BYTE bID, uint16 wAddr, uint16 * pData, BYTE bLen, uint32 dwTimeOut, BYTE bWriteType);
+
+int WriteRegUART(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteType);
+int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOut, FRMWRT_RW_TYPE_t bWriteType);
+
+
 
 int  WriteFrame(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, BYTE bWriteType);
 int  ReadFrameReq(BYTE bID, uint16 wAddr, BYTE bByteToReturn,BYTE bWriteType);

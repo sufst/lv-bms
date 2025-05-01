@@ -114,12 +114,10 @@ char resultNames[24][10] =
  "GPIO15"
 };
 
-extern int WriteType;
-extern int ReadType;
-//extern int UART_RX_RDY;
-extern int RTI_TIMEOUT;
+int WriteType = FRMWRT_SGL_W; 
+int ReadType = FRMWRT_SGL_R;
 
-// sets up the dma to read from uart into buffer. blocks until timeout or rx_len bytes have been read
+// read from uart into buffer using DMA. blocks until timeout or rx_len bytes have been read
 // returns number of bytes read
 int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout) {
     // naive implementaton - too slow so we have to use DMA
@@ -130,14 +128,15 @@ int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout
 //    }
 //    return bRes;
     
+    // ensure we're accessing the right DMA channel
     DMASELECT = 0;
     // set destination       
     DMA1_SetDestinationAddress((uint24_t)rx_data_buff);
     DMA1_SetDestinationSize(rx_len);
     
-    // have to manually trigger first as the first trigger does some sort of 
-    // setup but doesn't transfer any data
-    DMA1_StartTransfer();
+    // load dest and dest len into the DMA's internal registers by turning it off and on again
+    DMAnCON0bits.EN=0; // turn it off
+    DMAnCON0bits.EN=1; // turn it on
     
     // enable triggering from the uart interrupt
     DMA1_StartTransferWithTrigger();
@@ -145,6 +144,7 @@ int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout
     uint32_t count = timeout;
     while(DMAnCON0bits.SIRQEN && count > 0) count--;
     DMA1_StopTransfer();
+    
     
     // debugging gubbins
 //    printf("count: %d\n", count);
@@ -390,34 +390,36 @@ int WriteRegUART(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteTy
 }
 
 //GENERATE READ COMMAND FRAME AND THEN WAIT FOR RESPONSE DATA (INTERRUPT MODE FOR SCIRX)
-int ReadRegUART(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, uint32 dwTimeOut,
-        BYTE bWriteType) {
-    // device address, register start address, byte frame pointer to store data, data length, read type (single, broadcast, stack)
+int ReadRegUART(BYTE bID,                   // device id
+                uint16 wAddr,               // register address
+                BYTE * pData,               // rx data buffer
+                BYTE bLen,                  // rx data buffer len
+                uint32 dwTimeOut,           // timeout for the rx operation (cpu cycles)
+                FRMWRT_RW_TYPE_t bWriteType // what type of read is this
+                ) {
     bRes = 0;
     count = dwTimeOut; //timeout after this many attempts
-    if (bWriteType == ReadType) {
-        memset(pData, 0, sizeof(pData));
-        ReadFrameReq(bID, wAddr, bLen, bWriteType);
-        bRes = dma1_read_from_uart(pData, bLen + 6, dwTimeOut);
-                
-    } else if (bWriteType == FRMWRT_STK_R) {
-        bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
-        memset(pData, 0, sizeof(pData));
-        for(bRes = 0; bRes < (bLen + 6) * (TOTALBOARDS - 1); bRes++) {
-            while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-            if(count == 0) return bRes;
-            pData[bRes] = UART4_Read();
-        }
-    } else if (bWriteType == ReadType) {
-        bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
-        memset(pData, 0, sizeof(pData));
-        for(bRes = 0; bRes < (bLen + 6) * TOTALBOARDS; bRes++) {
-            while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-            if(count == 0) return bRes;
-            pData[bRes] = UART4_Read();
-        }
-    } else {
-        bRes = 0;
+    
+    switch (bWriteType){
+        case FRMWRT_SGL_R:
+            memset(pData, 0, sizeof(pData));
+            ReadFrameReq(bID, wAddr, bLen, bWriteType);
+            bRes = dma1_read_from_uart(pData, bLen + 6, dwTimeOut);
+            break;
+            
+        case FRMWRT_STK_R:
+            bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
+            memset(pData, 0, sizeof(pData));
+            for(bRes = 0; bRes < (bLen + 6) * (TOTALBOARDS - 1); bRes++) {
+                while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
+                if(count == 0) return bRes;
+                pData[bRes] = UART4_Read();
+            }
+            break;
+            
+        default:
+            bRes = 0;
+            break;
     }
 
     //CHECK IF CRC IS CORRECT
