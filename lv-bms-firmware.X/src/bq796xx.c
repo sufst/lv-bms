@@ -128,7 +128,9 @@ void log_dbg( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_DBG) {
         va_list args;
         va_start( args, format );
-        vfprintf(format, args );
+        printf("DBG : ");
+        vprintf(format, args );
+        putchar('\n');
         va_end( args );
     }
 }
@@ -137,7 +139,9 @@ void log_info( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_INFO) {
         va_list args;
         va_start( args, format );
-        vfprintf(format, args );
+        printf("INFO: ");
+        vprintf(format, args );
+        putchar('\n');
         va_end( args );
     }
 }
@@ -146,7 +150,9 @@ void log_warn( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_WARN) {
         va_list args;
         va_start( args, format );
-        vfprintf(format, args );
+        printf("WARN: ");
+        vprintf(format, args );
+        putchar('\n');
         va_end( args );
     }
 }
@@ -155,7 +161,9 @@ void log_err( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_ERR) {
         va_list args;
         va_start( args, format );
-        vfprintf(format, args );
+        printf("ERR : ");
+        vprintf(format, args );
+        putchar('\n');
         va_end( args );
     }
 }
@@ -165,7 +173,7 @@ void log_err( const char* format, ... ) {
 //  power state management
 // *****************************************************************************
 void Wake796XX(void) {
-    log_info("wake\n");
+    log_info("wake");
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
 //    sciREG->PIO3 &= ~(1U << 2U); // set output to low
@@ -183,19 +191,19 @@ void Wake796XX(void) {
     
 //    sciInit();
 //    sciSetBaudrate(sciREG, BAUDRATE);
-    log_dbg("wake done\n");
+    log_dbg("wake done");
 }
 
 void SD796XX(void) {
-    log_info("shutdown\n");
+    log_info("shutdown");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(7); // SD ping = 7ms to 10ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
-    log_dbg("shutdown done\n");
+    log_dbg("shutdown done");
 }
 
 void StA796XX(void) {
-    log_info("sleep to active\n");
+    log_info("sleep to active");
     INTERRUPT_GlobalInterruptDisable();
     
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL    
@@ -203,64 +211,50 @@ void StA796XX(void) {
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
 
     INTERRUPT_GlobalInterruptEnable();
-    log_dbg("sleep to active done\n");
+    log_dbg("sleep to active done");
 }
 
 void HWRST796XX(void) {
-    log_info("HW reset\n");
+    log_info("HW reset");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(36); // reset ping = 36ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     
     delay(75); // wait for reset
-    log_dbg("HW reset done\n");
+    log_dbg("HW reset done");
 }
 
 // *****************************************************************************
 //  generic config 
 // *****************************************************************************
-void set_config(uint8_t bID,
-                bool no_adjacent_balancing, 
-                bool multidrop_en,
-                bool fcomm_en,
-                bool two_stop_en,
-                bool nfault_en,
-                bool ftone_en,
-                bool hb_en) {
-    uint8_t data;
-    data |= no_adjacent_balancing   ? 1 << 6 : 0;
-    data |= multidrop_en            ? 1 << 5 : 0;
-    data |= fcomm_en                ? 1 << 4 : 0;
-    data |= two_stop_en             ? 1 << 3 : 0;
-    data |= nfault_en               ? 1 << 2 : 0;
-    data |= ftone_en                ? 1 << 1 : 0;
-    data |= hb_en                   ? 1 << 0 : 0;
-    log_info("set config 0x%02x\n", data);
-    set_reg_value(bID, DEV_CONF, data);
-    log_dbg("set config done\n");
+void set_config(uint8_t bID, dev_conf_t conf) {
+    log_info("set config 0x%02x", conf);
+    set_reg_value(bID, DEV_CONF, conf);
+    log_dbg("set config done");
 }
 
-void set_active_cells(uint8_t bID, unsigned int cell_count) {
-    log_info("set active cells %d\n", cell_count);
+void set_active_cells(uint8_t bID, uint8_t cell_count) {
+    log_info("set active cells %d", cell_count);
     
     if(cell_count > 16) {
-        log_err("invalid cell count: %d\n", cell_count);
+        log_err("invalid cell count: %d", cell_count);
         return;
     }
     
     if(cell_count < 6) {
-        log_warn("cell count of %d requested, capping to min of 6\n", cell_count);
+        log_warn("cell count of %d requested, capping to min of 6", cell_count);
         cell_count = 6;
     }
     
     set_reg_value(bID, ACTIVE_CELL, cell_count-6);
     
-    log_dbg("set active cells done\n");
+    log_dbg("set active cells done");
 }
 
-void set_bb_loc(uint8_t bID, uint8_t loc); // BBP_LOC register - datasheet P130
-
-
+void set_bb_loc(uint8_t bID, uint8_t loc) { // BBP_LOC register - datasheet P130
+    log_info("set BBP_loc 0x%02x", loc);
+    set_reg_value(bID, BBP_LOC, loc);
+}
 
 // *****************************************************************************
 //  communications
@@ -268,16 +262,19 @@ void set_bb_loc(uint8_t bID, uint8_t loc); // BBP_LOC register - datasheet P130
 
 // reset uart engine on the bq79616
 void COM_CLR_796XX(void) {
+    log_info("com clear");
     INTERRUPT_GlobalInterruptDisable();
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     // 15-20 bit periods @ 1Mb/s = 15-20 us 
     for(int _ = 0; _ <6; _++ );  
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     INTERRUPT_GlobalInterruptEnable();
+    log_dbg("com clear done");
 }
 
 int AutoAddress(COMM_DIR_t dir)
 {
+    log_info("auto addressing");
     uint8_t autoaddr_response_frame[64+5];
     //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
         WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
@@ -323,7 +320,117 @@ int AutoAddress(COMM_DIR_t dir)
         //OPTIONAL: read register address 0x2001 and verify that the value is 0x14
         ReadReg(0, 0x2001, autoaddr_response_frame, 1, 0, FRMWRT_SGL_R);
 
+        log_dbg("auto addressing done");
         return -1;
+}
+
+//RUN BASIC REVERSE ADDRESSING SEQUENCE
+void ReverseAddressing()
+{
+    log_info("reverse addressing");
+    //CHANGE BASE DEVICE DIRECTION
+    WriteReg(0, CONTROL1, 0x80, 1, FRMWRT_SGL_W);
+
+    //CHANGE REST OF STACK DIRECTION
+    WriteReg(0, CONTROL1, 0x80, 1, FRMWRT_REV_ALL_W);
+
+    delayus(50);
+
+    WriteReg(0, COMM_CTRL, 0x00, 1, FRMWRT_ALL_W);
+
+    //DO NORMAL AUTO ADDRESS SEQUENCE, BUT FOR DIR1_ADDR
+    //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
+    WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN2, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN3, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN4, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN5, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN6, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN7, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN8, 0X00, 1, FRMWRT_STK_W);
+
+    //ENABLE AUTO ADDRESSING MODE, WHILE KEEPING REVERSE DIRECTION
+    WriteReg(0, CONTROL1, 0X81, 1, FRMWRT_ALL_W);
+
+    //SET ADDRESSES FOR EVERY BOARD (REVERSE DIRECTION)
+    for(currentBoard=0; currentBoard<TOTALBOARDS; currentBoard++)
+    {
+        WriteReg(0, DIR1_ADDR, currentBoard, 1, FRMWRT_ALL_W);
+        delayus(50);
+        //ReadReg(currentBoard, DIR1_ADDR, response_frame2, 1, 0, FRMWRT_SGL_R);
+        delayus(50);
+    }
+
+    WriteReg(0, COMM_CTRL, 0x02, 1, FRMWRT_ALL_W); //set everything as a stack device first
+
+    if(TOTALBOARDS==1) //if there's only 1 board, it's the base AND top of stack, so change it to those
+    {
+        WriteReg(0, COMM_CTRL, 0x01, 1, WriteType);
+    }
+    else //otherwise set the base and top of stack individually
+    {
+
+        WriteReg(TOTALBOARDS-1, COMM_CTRL, 0x03, 1, FRMWRT_SGL_W);
+    }
+
+    //SYNCRHONIZE THE DLL WITH A THROW-AWAY READ
+    ReadReg(0, OTP_ECC_DATAIN1, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN2, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN3, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN4, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN5, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN6, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN7, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN8, response_frame2, 1, 0, FRMWRT_STK_R);
+
+    ////OPTIONAL: read back all device addresses
+    //for(currentBoard=0; currentBoard<TOTALBOARDS; currentBoard++)
+    //{
+    //    ReadReg(currentBoard, DIR0_ADDR, response_frame2, 1, 0, ReadType);
+    //    printf("board %d\n",response_frame2[4]);
+    //}
+
+    //RESET ANY COMM FAULT CONDITIONS FROM STARTUP
+    WriteReg(0, FAULT_RST2, 0x03, 1, WriteType);
+    log_dbg("reverse addressing done");
+}
+
+void enable_daisy_chain() {
+    log_info("enable daisy chain");
+    Wake796XX();
+    dev_conf_t conf = get_reg_value(0, DEV_CONF);
+    conf &= !DEV_CONF_MULTIDROP_EN;
+    conf |= DEV_CONF_FCOMM_EN;
+    WriteReg(0, DEV_CONF, conf, 1, FRMWRT_ALL_W);
+    
+    log_info("enable daisy chain done");
+}
+
+void daisy_chain_dll_sync() {
+    log_info("daisy chain dll sync");
+    
+    //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
+    log_dbg("syncing write (up stack)");
+    WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN2, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN3, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN4, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN5, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN6, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN7, 0X00, 1, FRMWRT_STK_W);
+    WriteReg(0, OTP_ECC_DATAIN8, 0X00, 1, FRMWRT_STK_W);
+    
+    log_dbg("syncing read (down stack)");
+    ReadReg(0, OTP_ECC_DATAIN1, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN2, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN3, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN4, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN5, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN6, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN7, response_frame2, 1, 0, FRMWRT_STK_R);
+    ReadReg(0, OTP_ECC_DATAIN8, response_frame2, 1, 0, FRMWRT_STK_R);
+    
+    log_dbg("daisy chain dll sync done");
 }
 
 // *****************************************************************************
@@ -780,9 +887,9 @@ void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle);
 void disable_auto_balancing(uint8_t bID);
 bool get_balancing_running(uint8_t bID);
 
-void set_balancing_timer(uint8_t bID, int cell_number, BAL_TIME_t time); 
-BAL_TIME_t get_balancing_timer(uint8_t bID, int cell_number); 
-bool get_balancing_done(uint8_t bID, int cell_number);
+void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time); 
+BAL_TIME_t get_balancing_timer(uint8_t bID, uint8_t cell_number); 
+bool get_balancing_done(uint8_t bID, uint8_t cell_number);
 
 void set_module_balancing_timer(uint8_t bID, BAL_TIME_t time);
 BAL_TIME_t get_module_balancing_timer(uint8_t bID);
@@ -798,11 +905,14 @@ bool get_OTCB_running(uint8_t bID);
 // *****************************************************************************
 //  Reading voltages and temperatures
 // *****************************************************************************
-int16_t get_cell_voltage(uint8_t bID, int cell_number);
-int16_t get_cell_voltage_aux(uint8_t bID, int cell_number);
+int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number) {
+    
+}
+
+int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number);
 int16_t get_BB_voltage(uint8_t bID); 
 int16_t get_BB_voltage_aux(uint8_t bID); 
-int16_t get_temp(uint8_t bID, int therm_number);
+int16_t get_temp(uint8_t bID, uint8_t therm_number);
 int16_t get_die_temp_1(uint8_t bID);
 int16_t get_die_temp_2(uint8_t bID);
 
@@ -827,74 +937,7 @@ void RunCB()
     WriteReg(0, BAL_CTRL2, 0x03, 1, WriteType); //auto balance and BAL_GO
 }
 */
-//RUN BASIC REVERSE ADDRESSING SEQUENCE
-void ReverseAddressing()
-{
-    //CHANGE BASE DEVICE DIRECTION
-    WriteReg(0, CONTROL1, 0x80, 1, FRMWRT_SGL_W);
 
-    //CHANGE REST OF STACK DIRECTION
-    WriteReg(0, CONTROL1, 0x80, 1, FRMWRT_REV_ALL_W);
-
-    delayus(50);
-
-    WriteReg(0, COMM_CTRL, 0x00, 1, FRMWRT_ALL_W);
-
-    //DO NORMAL AUTO ADDRESS SEQUENCE, BUT FOR DIR1_ADDR
-    //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
-    WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN2, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN3, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN4, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN5, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN6, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN7, 0X00, 1, FRMWRT_STK_W);
-    WriteReg(0, OTP_ECC_DATAIN8, 0X00, 1, FRMWRT_STK_W);
-
-    //ENABLE AUTO ADDRESSING MODE, WHILE KEEPING REVERSE DIRECTION
-    WriteReg(0, CONTROL1, 0X81, 1, FRMWRT_ALL_W);
-
-    //SET ADDRESSES FOR EVERY BOARD (REVERSE DIRECTION)
-    for(currentBoard=0; currentBoard<TOTALBOARDS; currentBoard++)
-    {
-        WriteReg(0, DIR1_ADDR, currentBoard, 1, FRMWRT_ALL_W);
-        delayus(50);
-        //ReadReg(currentBoard, DIR1_ADDR, response_frame2, 1, 0, FRMWRT_SGL_R);
-        delayus(50);
-    }
-
-    WriteReg(0, COMM_CTRL, 0x02, 1, FRMWRT_ALL_W); //set everything as a stack device first
-
-    if(TOTALBOARDS==1) //if there's only 1 board, it's the base AND top of stack, so change it to those
-    {
-        WriteReg(0, COMM_CTRL, 0x01, 1, WriteType);
-    }
-    else //otherwise set the base and top of stack individually
-    {
-
-        WriteReg(TOTALBOARDS-1, COMM_CTRL, 0x03, 1, FRMWRT_SGL_W);
-    }
-
-    //SYNCRHONIZE THE DLL WITH A THROW-AWAY READ
-    ReadReg(0, OTP_ECC_DATAIN1, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN2, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN3, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN4, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN5, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN6, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN7, response_frame2, 1, 0, FRMWRT_STK_R);
-    ReadReg(0, OTP_ECC_DATAIN8, response_frame2, 1, 0, FRMWRT_STK_R);
-
-    ////OPTIONAL: read back all device addresses
-    //for(currentBoard=0; currentBoard<TOTALBOARDS; currentBoard++)
-    //{
-    //    ReadReg(currentBoard, DIR0_ADDR, response_frame2, 1, 0, ReadType);
-    //    printf("board %d\n",response_frame2[4]);
-    //}
-
-    //RESET ANY COMM FAULT CONDITIONS FROM STARTUP
-    WriteReg(0, FAULT_RST2, 0x03, 1, WriteType);
-}
 #if 0
 /** @fn int ReadDeviceStat2(uint8_t *)
 *   @brief Read the device stat register 

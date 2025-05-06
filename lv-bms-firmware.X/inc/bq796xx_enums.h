@@ -291,4 +291,15 @@ typedef enum {
 
 }FAULT_MASK_t;
 
+// datasheet p128 - 9.5.4.3.1 DEV_CONF
+typedef enum {
+    DEV_CONF_NO_ADJACENT_BALANCING   = 1 << 6,
+    DEV_CONF_MULTIDROP_EN            = 1 << 5,
+    DEV_CONF_FCOMM_EN                = 1 << 4,
+    DEV_CONF_TWO_STOP_EN             = 1 << 3,
+    DEV_CONF_NFAULT_EN               = 1 << 2,
+    DEV_CONF_FTONE_EN                = 1 << 1,
+    DEV_CONF_HB_EN                   = 1 << 0,
+} dev_conf_t;
+
 #endif

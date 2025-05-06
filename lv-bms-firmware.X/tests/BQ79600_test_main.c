@@ -35,7 +35,7 @@ void bms_main(void) {
     can_init();
     INTERRUPT_GlobalInterruptEnable();
     
-    printThis("\nCAN tests \n");
+    printf("\nCAN tests \n");
     disp_set_number(0x55);
 //    delay(1000);
     
@@ -66,15 +66,15 @@ void bms_main(void) {
     int new = get_reg_value(1, OTP_SPARE1);
     printf("writting 0xab to the OTP_SPARE1, was before write: 0x%02x, is after write: 0x%02x\n", original, new);
     
-    // try to read cell voltages
-    set_reg_value(1, DEV_CONF, 0x0a);
-    set_reg_value(1, ADC_CTRL1, 0x06);
-    set_reg_value(1, ADC_CTRL1, 0x06);
-    
+    // initial test configuration
+    set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
+    set_active_cells(1, 3);
+            
+            
     delay(1);
     
     while(1) {
-        int v0 = (uint16_t)get_reg_value(1, VCELL1_HI) << 8 | get_reg_value(1, VCELL1_LO);
+        int v0 = get_cell_voltage(1,1);
         printf("v0: %d = %fV\n", v0, v0*190.73f*0.000001);
         delay(50);
         CLRWDT();

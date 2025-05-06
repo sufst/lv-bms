@@ -14,6 +14,16 @@
 **
 ******************************************************************************/
 
+/*****************************************************************************
+__        ___    ____  _   _ ___ _   _  ____ _  
+\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| | 
+ \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| | 
+  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_| 
+   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_) 
+ * cell and thermistor indexes are 1 based
+******************************************************************************/
+
+
 #ifndef BQ796xx_H_
 #define BQ796xx_H_
 
@@ -44,24 +54,17 @@
 
 // debug logging - split into levels
 typedef enum {BQ_LOG_ERR, BQ_LOG_WARN, BQ_LOG_INFO, BQ_LOG_DBG} bq796xx_log_level_t;
-bq796xx_log_level_t bq796xx_log_level = BQ_LOG_DBG; // all the logging by default
+bq796xx_log_level_t bq796xx_log_level = BQ_LOG_INFO; // all the logging by default
 
 // power state control
 void Wake796XX(void);
-void StA796XX();        // sleep to active
+void StA796XX(void);        // sleep to active
 void SD796XX(void);     // shutdown
 void HWRST796XX(void);  // hardware reset
 
 // generic config - datasheet (P128 - DEV_CONF)
-void set_config(uint8_t bID,
-                bool no_adjacent_balancing, 
-                bool multidrop_en,
-                bool fcomm_en,
-                bool two_stop_en,
-                bool nfault_en,
-                bool ftone_en,
-                bool hb_en);
-void set_active_cells(uint8_t bID, unsigned int cell_count);
+void set_config(uint8_t bID, dev_conf_t conf);
+void set_active_cells(uint8_t bID, uint8_t cell_count);
 void set_bb_loc(uint8_t bID, uint8_t loc); // BBP_LOC register - datasheet P130
 
 // communication 
@@ -153,9 +156,9 @@ void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle); // automatically
 void disable_auto_balancing(uint8_t bID);
 bool get_balancing_running(uint8_t bID);
 
-void set_balancing_timer(uint8_t bID, int cell_number, BAL_TIME_t time); 
-BAL_TIME_t get_balancing_timer(uint8_t bID, int cell_number); 
-bool get_balancing_done(uint8_t bID, int cell_number);
+void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time); 
+BAL_TIME_t get_balancing_timer(uint8_t bID, uint8_t cell_number); 
+bool get_balancing_done(uint8_t bID, uint8_t cell_number);
 
 // uses GPIO3 for balancing the whole module
 void set_module_balancing_timer(uint8_t bID, BAL_TIME_t time);
@@ -173,11 +176,11 @@ void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percen
 bool get_OTCB_running(uint8_t bID);
 
 // reading voltages and temperatures
-int16_t get_cell_voltage(uint8_t bID, int cell_number);
-int16_t get_cell_voltage_aux(uint8_t bID, int cell_number);
+int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number);
+int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number);
 int16_t get_BB_voltage(uint8_t bID); // bus bar (current measurement)
 int16_t get_BB_voltage_aux(uint8_t bID); // bus bar (current measurement)
-int16_t get_temp(uint8_t bID, int therm_number);
+int16_t get_temp(uint8_t bID, uint8_t therm_number);
 int16_t get_die_temp_1(uint8_t bID);
 int16_t get_die_temp_2(uint8_t bID);
 
