@@ -6,7 +6,6 @@
  * Created on February 11, 2025, 8:51 PM
  */
 
-
 #include <xc.h>
 #include "indicator_lights.h"
 #include "mcc.h"
@@ -17,7 +16,7 @@
 #include "error_load_store.h"
 #include "bq796xx.h"
 
-void millis_hook (uint64_t uptime) {
+void millis_hook(uint64_t uptime) {
     if ((uptime % 64) == 0) {
         disp_update();
         can_update();
@@ -36,7 +35,7 @@ void bms_main(void) {
     can_init();
     INTERRUPT_GlobalInterruptEnable();
     
-    printf("\nCAN tests \n");
+    printThis("\nCAN tests \n");
     disp_set_number(0x55);
 //    delay(1000);
     
@@ -52,35 +51,35 @@ void bms_main(void) {
     can_set_shutdown_count(2093);
     
     can_sending_enable(true);
-   
-//    while(1){
-//    while (!UART4_is_tx_ready()) {
-//    }
-//    UART4_Write(0xAB);
-//    printf("sent\n");
-//    CLRWDT();
-//    }
-    uint8_t rx_buff[30] = {0};
     
     Wake796XX(); 
-//    StA796XX();
+    //StA796XX();
     
     // test comms and get ID
-    int read = ReadRegUART(1, PARTID, rx_buff, 1, 100, FRMWRT_SGL_R);
-    printf("partid: 0x%02x (should be 0x21 for bq79616)\n",  rx_buff[4]);
+    printf("partid: 0x%02x (should be 0x21 for bq79616)\n",  get_reg_value(1, PARTID));
     
-    read = ReadRegUART(1, TAPEOUT_REV, rx_buff, 1, 100, FRMWRT_SGL_R);
-    printf("TAPEOUT_REV: 0x%02x\n",  rx_buff[4]);
+    printf("DIE_ID1: 0x%02x\n",  get_reg_value(1, DIE_ID1));
     
-//     try a read write read test
-    int rx_size_1 = ReadRegUART(1, OTP_SPARE1, rx_buff, 1, 100, FRMWRT_SGL_R);
-    int original = rx_buff[4];
-    int tx_size_1 = WriteRegUART(1, OTP_SPARE1, 0xab, 1, FRMWRT_SGL_W);
-    int rx_size_2 = ReadRegUART(1, OTP_SPARE1, rx_buff, 1, 100, FRMWRT_SGL_R);
-    int new = rx_buff[4];
+    // try a read write read test
+    int original = get_reg_value(1, OTP_SPARE1);
+    set_reg_value(1, OTP_SPARE1, 0xab);
+    int new = get_reg_value(1, OTP_SPARE1);
     printf("writting 0xab to the OTP_SPARE1, was before write: 0x%02x, is after write: 0x%02x\n", original, new);
-    printf("rx1: %d, tx1: %d, rx2: %d\n", rx_size_1, tx_size_1, rx_size_2);
     
+    // try to read cell voltages
+    set_reg_value(1, DEV_CONF, 0x0a);
+    set_reg_value(1, ADC_CTRL1, 0x06);
+    set_reg_value(1, ADC_CTRL1, 0x06);
+    
+    delay(1);
+    
+    while(1) {
+        int v0 = (uint16_t)get_reg_value(1, VCELL1_HI) << 8 | get_reg_value(1, VCELL1_LO);
+        printf("v0: %d = %fV\n", v0, v0*190.73f*0.000001);
+        delay(50);
+        CLRWDT();
+    }
+
     delay(5000);
     SD796XX();
             

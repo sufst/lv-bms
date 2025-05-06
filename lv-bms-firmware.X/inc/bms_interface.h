@@ -34,19 +34,8 @@
 #include <xc.h> // include processor files - each processor file is guarded.  
 #include "bq796xx.h"
 
-
-#ifdef	__cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
- // add functions to manipulate the bms chip here:
-
- 
-    
-
-#ifdef	__cplusplus
-}
-#endif /* __cplusplus */
+//void bms_chip_init();
+//void bms_chip_update();
 
 #endif	/* XC_HEADER_TEMPLATE_H */
 

@@ -43,14 +43,13 @@
 */
 
 
-
-
 //#include "bq796xx_spiMaster.h"
 #include <xc.h>
 #include "bq796xx.h"
 #include "millis.h"
 #include "uart4.h"
 #include "mcc.h"
+#include "BQ796XXA0_reg.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -68,22 +67,22 @@
 //GLOBAL VARIABLES (use these to avoid stack overflows by creating too many function variables)
 //avoid creating variables/arrays in functions, or you will run out of stack space quickly
 #if UART_COMM == TRUE
-BYTE response_frame2[(MAXBYTES+6)*TOTALBOARDS]; //response frame to be used by every read
-BYTE fault_frame[39*TOTALBOARDS]; //hold fault frame if faults are printed
+uint8_t response_frame2[(MAXBYTES+6)*TOTALBOARDS]; //response frame to be used by every read
+uint8_t fault_frame[39*TOTALBOARDS]; //hold fault frame if faults are printed
 #elif SPI_COMM == TRUE
-uint16 response_frame2[(MAXBYTES+6)*TOTALBOARDS]; //response frame to be used by every read
-uint16 fault_frame[39*TOTALBOARDS]; //hold fault frame if faults are printed
+uint16_t response_frame2[(MAXBYTES+6)*TOTALBOARDS]; //response frame to be used by every read
+uint16_t fault_frame[39*TOTALBOARDS]; //hold fault frame if faults are printed
 #endif
 
 int currentCell = 0;
 int currentBoard = 0;
-BYTE bReturn = 0;
+uint8_t bReturn = 0;
 int bRes = 0;
 int count = 10000;
-BYTE bBuf[8];
-uint8 pFrame[64];
-uint16 wCRC = 0;
-uint16 wCRC16 = 0;
+uint8_t bBuf[8];
+uint8_t pFrame[64];
+uint16_t wCRC = 0;
+uint16_t wCRC16 = 0;
 int crc_i = 0;
 static volatile unsigned int delayval = 0; //for delayms and delayus functions
 char resultNames[24][10] =
@@ -114,70 +113,59 @@ char resultNames[24][10] =
  "GPIO15"
 };
 
-int WriteType = FRMWRT_SGL_W; 
-int ReadType = FRMWRT_SGL_R;
+FRMWRT_RW_TYPE_t WriteType = FRMWRT_SGL_W; 
+FRMWRT_RW_TYPE_t ReadType = FRMWRT_SGL_R;
 
-// read from uart into buffer using DMA. blocks until timeout or rx_len bytes have been read
-// returns number of bytes read
-int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout) {
-    // naive implementaton - too slow so we have to use DMA
-//    for(int bRes = 0; bRes < rx_len; bRes++) {
-//        while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-//        if(count == 0) break;
-//        rx_data_buff[bRes] = UART4_Read();
-//    }
-//    return bRes;
-    
-    // ensure we're accessing the right DMA channel
-    DMASELECT = 0;
-    // set destination       
-    DMA1_SetDestinationAddress((uint24_t)rx_data_buff);
-    DMA1_SetDestinationSize(rx_len);
-    
-    // load dest and dest len into the DMA's internal registers by turning it off and on again
-    DMAnCON0bits.EN=0; // turn it off
-    DMAnCON0bits.EN=1; // turn it on
-    
-    // enable triggering from the uart interrupt
-    DMA1_StartTransferWithTrigger();
-    // wait for the length of message to be received
-    uint32_t count = timeout;
-    while(DMAnCON0bits.SIRQEN && count > 0) count--;
-    DMA1_StopTransfer();
-    
-    
-    // debugging gubbins
-//    printf("count: %d\n", count);
-//    DMASELECT = 0;
-//    
-//    printf("DMA CON0: 0x%02x\n", DMAnCON0);
-//    printf("DMA CON1: 0x%02x\n", DMAnCON1);
-//    printf("DMA BUF: 0x%02x\n", DMAnBUF);
-//    
-//    printf("DMA SOURCE ADDR : 0x%p\n", DMAnSSA);
-//    printf("DMA SOURCE PTR : 0x%p\n", DMAnSPTR);
-//    printf("DMA SOURCE size : %d\n", DMAnSSZ);
-//    printf("DMA SOURCE count : %d\n", DMAnSCNT);
-//    
-//    printf("DMA DEST ADDR : 0x%p\n", DMAnDSA);
-//    printf("DMA DEST PTR : 0x%p\n", DMAnDPTR);
-//    printf("DMA DEST size : %d\n", DMAnDSZ);
-//    printf("DMA DEST count : %d\n", DMAnDCNT);
-//    
-//    printf("DMA start ISR source: 0x%04x\n", DMAnSIRQ);
-    
-    // if the correct number of bytes are RX'ed, then the DMAnDCNT resets back 
-    // to rx_len, so we can't always use it to tell how many were RX'ed
-    if (count > 0) {
-        return rx_len; // everything expected received
-    } else {
-        return rx_len - DMAnDCNT; // timed out
+// internal register access function declarations
+int WriteReg(uint8_t bID, uint16_t wAddr, uint64_t dwData, uint8_t bLen, FRMWRT_RW_TYPE_t bWriteType);
+int ReadReg(uint8_t bID, uint16_t wAddr, uint8_t * pData, uint8_t bLen, uint32_t dwTimeOut, FRMWRT_RW_TYPE_t bWriteType);
+int WriteFrame(uint8_t bID, uint16_t wAddr, uint8_t * pData, uint8_t bLen, FRMWRT_RW_TYPE_t bWriteType);
+int ReadFrameReq(uint8_t bID, uint16_t wAddr, uint8_t bByteToReturn, FRMWRT_RW_TYPE_t bWriteType);
+int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout);
+
+// debug logging
+void log_dbg( const char* format, ... ) {
+    if (bq796xx_log_level >= BQ_LOG_DBG) {
+        va_list args;
+        va_start( args, format );
+        vfprintf(format, args );
+        va_end( args );
     }
 }
 
-#if 1
+void log_info( const char* format, ... ) {
+    if (bq796xx_log_level >= BQ_LOG_INFO) {
+        va_list args;
+        va_start( args, format );
+        vfprintf(format, args );
+        va_end( args );
+    }
+}
 
+void log_warn( const char* format, ... ) {
+    if (bq796xx_log_level >= BQ_LOG_WARN) {
+        va_list args;
+        va_start( args, format );
+        vfprintf(format, args );
+        va_end( args );
+    }
+}
+
+void log_err( const char* format, ... ) {
+    if (bq796xx_log_level >= BQ_LOG_ERR) {
+        va_list args;
+        va_start( args, format );
+        vfprintf(format, args );
+        va_end( args );
+    }
+}
+
+
+// *****************************************************************************
+//  power state management
+// *****************************************************************************
 void Wake796XX(void) {
+    log_info("wake\n");
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
 //    sciREG->PIO3 &= ~(1U << 2U); // set output to low
@@ -195,48 +183,88 @@ void Wake796XX(void) {
     
 //    sciInit();
 //    sciSetBaudrate(sciREG, BAUDRATE);
+    log_dbg("wake done\n");
 }
 
 void SD796XX(void) {
-//    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
-//    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
-//    sciREG->PIO3 &= ~(1U << 2U); // set output to low
+    log_info("shutdown\n");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(7); // SD ping = 7ms to 10ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
-//    sciInit();
-//    sciSetBaudrate(sciREG, BAUDRATE);
+    log_dbg("shutdown done\n");
 }
 
 void StA796XX(void) {
-//    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
-//    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
-//    sciREG->PIO3 &= ~(1U << 2U); // set output to low
+    log_info("sleep to active\n");
     INTERRUPT_GlobalInterruptDisable();
     
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL    
     for(int _ = 0; _ <90; _++ );  // StA ping = 250us to 300us
-//    RD5_SetDigitalOutput();
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
 
     INTERRUPT_GlobalInterruptEnable();
-    
-//    sciInit();
-//    sciSetBaudrate(sciREG, BAUDRATE);
+    log_dbg("sleep to active done\n");
 }
 
 void HWRST796XX(void) {
-//    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
-//    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
-//    sciREG->PIO3 &= ~(1U << 2U); // set output to low 
+    log_info("HW reset\n");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
-    delay(36); // StA ping = 36ms
+    delay(36); // reset ping = 36ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     
     delay(75); // wait for reset
-//    sciInit();
-//    sciSetBaudrate(sciREG, BAUDRATE);
+    log_dbg("HW reset done\n");
 }
+
+// *****************************************************************************
+//  generic config 
+// *****************************************************************************
+void set_config(uint8_t bID,
+                bool no_adjacent_balancing, 
+                bool multidrop_en,
+                bool fcomm_en,
+                bool two_stop_en,
+                bool nfault_en,
+                bool ftone_en,
+                bool hb_en) {
+    uint8_t data;
+    data |= no_adjacent_balancing   ? 1 << 6 : 0;
+    data |= multidrop_en            ? 1 << 5 : 0;
+    data |= fcomm_en                ? 1 << 4 : 0;
+    data |= two_stop_en             ? 1 << 3 : 0;
+    data |= nfault_en               ? 1 << 2 : 0;
+    data |= ftone_en                ? 1 << 1 : 0;
+    data |= hb_en                   ? 1 << 0 : 0;
+    log_info("set config 0x%02x\n", data);
+    set_reg_value(bID, DEV_CONF, data);
+    log_dbg("set config done\n");
+}
+
+void set_active_cells(uint8_t bID, unsigned int cell_count) {
+    log_info("set active cells %d\n", cell_count);
+    
+    if(cell_count > 16) {
+        log_err("invalid cell count: %d\n", cell_count);
+        return;
+    }
+    
+    if(cell_count < 6) {
+        log_warn("cell count of %d requested, capping to min of 6\n", cell_count);
+        cell_count = 6;
+    }
+    
+    set_reg_value(bID, ACTIVE_CELL, cell_count-6);
+    
+    log_dbg("set active cells done\n");
+}
+
+void set_bb_loc(uint8_t bID, uint8_t loc); // BBP_LOC register - datasheet P130
+
+
+
+// *****************************************************************************
+//  communications
+// *****************************************************************************
 
 // reset uart engine on the bq79616
 void COM_CLR_796XX(void) {
@@ -246,19 +274,11 @@ void COM_CLR_796XX(void) {
     for(int _ = 0; _ <6; _++ );  
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     INTERRUPT_GlobalInterruptEnable();
-    
 }
-#endif
-//**********
-//END PINGS
-//**********
 
-
-//**********************
-//AUTO ADDRESS SEQUENCE
-//**********************
-void AutoAddress(BYTE * autoaddr_response_frame)
+int AutoAddress(COMM_DIR_t dir)
 {
+    uint8_t autoaddr_response_frame[64+5];
     //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
         WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
         WriteReg(0, OTP_ECC_DATAIN2, 0X00, 1, FRMWRT_STK_W);
@@ -303,22 +323,26 @@ void AutoAddress(BYTE * autoaddr_response_frame)
         //OPTIONAL: read register address 0x2001 and verify that the value is 0x14
         ReadReg(0, 0x2001, autoaddr_response_frame, 1, 0, FRMWRT_SGL_R);
 
-        return;
+        return -1;
 }
 
-//**************************
-//END AUTO ADDRESS SEQUENCE
-//**************************
+// *****************************************************************************
+//  Register write and read functions
+// *****************************************************************************
 
+uint8_t get_reg_value(uint8_t bID, uint16_t addr) {
+    uint8_t rx_buff[7] = {0};
+    ReadReg(bID, addr, rx_buff, 1, 100, FRMWRT_SGL_R);
+    return rx_buff[4];
+}
 
-
-//************************
-//WRITE AND READ FUNCTIONS
-//************************
+void set_reg_value(uint8_t bID, uint16_t addr, uint8_t data) {
+    WriteReg(bID, addr, data, 1, FRMWRT_SGL_W);
+}
 
 //FORMAT WRITE DATA, SEND TO
 //BE COMBINED WITH REST OF FRAME
-int WriteRegUART(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteType) {
+int WriteReg(uint8_t bID, uint16_t wAddr, uint64_t dwData, uint8_t bLen, FRMWRT_RW_TYPE_t bWriteType) {
     // device address, register start address, data bytes, data length, write type (single, broadcast, stack)
     bRes = 0;
     memset(bBuf,0,sizeof(bBuf));
@@ -390,11 +414,11 @@ int WriteRegUART(BYTE bID, uint16 wAddr, uint64 dwData, BYTE bLen, BYTE bWriteTy
 }
 
 //GENERATE READ COMMAND FRAME AND THEN WAIT FOR RESPONSE DATA (INTERRUPT MODE FOR SCIRX)
-int ReadRegUART(BYTE bID,                   // device id
-                uint16 wAddr,               // register address
-                BYTE * pData,               // rx data buffer
-                BYTE bLen,                  // rx data buffer len
-                uint32 dwTimeOut,           // timeout for the rx operation (cpu cycles)
+int ReadReg(uint8_t bID,                   // device id
+                uint16_t wAddr,               // register address
+                uint8_t * pData,               // rx data buffer
+                uint8_t bLen,                  // rx data buffer len
+                uint32_t dwTimeOut,           // timeout for the rx operation (cpu cycles)
                 FRMWRT_RW_TYPE_t bWriteType // what type of read is this
                 ) {
     bRes = 0;
@@ -434,14 +458,10 @@ int ReadRegUART(BYTE bID,                   // device id
     return bRes;
 }
 
-
-
-
-
 //GENERATE COMMAND FRAME
-int WriteFrame(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, BYTE bWriteType) {
+int WriteFrame(uint8_t bID, uint16_t wAddr, uint8_t * pData, uint8_t bLen, FRMWRT_RW_TYPE_t bWriteType) {
     int bPktLen = 0;
-    uint8 * pBuf = pFrame;
+    uint8_t * pBuf = pFrame;
     memset(pFrame, 0x7F, sizeof(pFrame));
     *pBuf++ = 0x80 | (bWriteType) | ((bWriteType & 0x10) ? bLen - 0x01 : 0x00); //Only include blen if it is a write; Writes are 0x90, 0xB0, 0xD0
     if (bWriteType == FRMWRT_SGL_R || bWriteType == FRMWRT_SGL_W)
@@ -473,10 +493,7 @@ int WriteFrame(BYTE bID, uint16 wAddr, BYTE * pData, BYTE bLen, BYTE bWriteType)
     return bPktLen;
 }
 
-
-
-
-int ReadFrameReq(BYTE bID, uint16 wAddr, BYTE bByteToReturn, BYTE bWriteType) {
+int ReadFrameReq(uint8_t bID, uint16_t wAddr, uint8_t bByteToReturn, FRMWRT_RW_TYPE_t bWriteType) {
     bReturn = bByteToReturn - 1;
 
     if (bReturn > 127)
@@ -484,9 +501,51 @@ int ReadFrameReq(BYTE bID, uint16 wAddr, BYTE bByteToReturn, BYTE bWriteType) {
 
     return WriteFrame(bID, wAddr, &bReturn, 1, bWriteType);
 }
+
+// read from uart into buffer using DMA. blocks until timeout or rx_len bytes have been read
+// returns number of bytes read
+int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout) {
+    // naive implementaton - too slow so we have to use DMA
+//    for(int bRes = 0; bRes < rx_len; bRes++) {
+//        while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
+//        if(count == 0) break;
+//        rx_data_buff[bRes] = UART4_Read();
+//    }
+//    return bRes;
+    
+    // ensure we're accessing the right DMA channel
+    DMASELECT = 0;
+    // set destination       
+    DMA1_SetDestinationAddress((uint16_t)rx_data_buff);
+    DMA1_SetDestinationSize(rx_len);
+    
+    // load dest and dest len into the DMA's internal registers by turning it off and on again
+    DMAnCON0bits.EN=0; // turn it off
+    DMAnCON0bits.EN=1; // turn it on
+    
+    // enable triggering from the uart interrupt
+    DMA1_StartTransferWithTrigger();
+    // wait for the length of message to be received
+    uint32_t count = timeout;
+    while(DMAnCON0bits.SIRQEN && count > 0) count--;
+    DMA1_StopTransfer();
+    
+    // if the correct number of bytes are RX'ed, then the DMAnDCNT resets back 
+    // to rx_len, so we can't always use it to tell how many were RX'ed
+    if (count > 0) {
+        return rx_len; // everything expected received
+    } else {
+        return rx_len - DMAnDCNT; // timed out
+    }
+}
+
+// *****************************************************************************
+// utilities
+// *****************************************************************************
+
 // CRC16 TABLE
 // ITU_T polynomial: x^16 + x^15 + x^2 + 1
-const uint16 crc16_table[256] = { 0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301,
+const uint16_t crc16_table[256] = { 0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301,
         0x03C0, 0x0280, 0xC241, 0xC601, 0x06C0, 0x0780, 0xC741, 0x0500, 0xC5C1,
         0xC481, 0x0440, 0xCC01, 0x0CC0, 0x0D80, 0xCD41, 0x0F00, 0xCFC1, 0xCE81,
         0x0E40, 0x0A00, 0xCAC1, 0xCB81, 0x0B40, 0xC901, 0x09C0, 0x0880, 0xC841,
@@ -516,8 +575,8 @@ const uint16 crc16_table[256] = { 0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301,
         0x8C41, 0x4400, 0x84C1, 0x8581, 0x4540, 0x8701, 0x47C0, 0x4680, 0x8641,
         0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040 };
 
-uint16 CRC16(BYTE *pBuf, int nLen) {
-    uint16 wCRC = 0xFFFF;
+uint16_t CRC16(uint8_t *pBuf, int nLen) {
+    uint16_t wCRC = 0xFFFF;
     int i;
 
     for (i = 0; i < nLen; i++) {
@@ -531,9 +590,10 @@ uint16 CRC16(BYTE *pBuf, int nLen) {
 //END WRITE AND READ FUNCTIONS
 //****************************
 
-//************************
-//MISCELLANEOUS FUNCTIONS
-//************************
+;
+// *****************************************************************************
+//  fault handling
+// *****************************************************************************
 
 uint8_t GetFaultStat() {
 
@@ -545,7 +605,7 @@ uint8_t GetFaultStat() {
 }
 
 
-void ResetAllFaults(BYTE bID, BYTE bWriteType)
+void ResetAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType)
 {
     //BROADCAST INCLUDES EXTRA FUNCTIONALITY TO OVERWRITE THE CUST_CRC WITH THE CURRENT SETTINGS
     if(bWriteType==WriteType)
@@ -575,7 +635,7 @@ void ResetAllFaults(BYTE bID, BYTE bWriteType)
     }
 }
 
-void MaskAllFaults(BYTE bID, BYTE bWriteType)
+void MaskAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType)
 {
     if(bWriteType==WriteType)
     {
@@ -595,7 +655,7 @@ void MaskAllFaults(BYTE bID, BYTE bWriteType)
     }
 }
 
-void PrintAllFaults(BYTE bID, BYTE bWriteType)
+void PrintAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType)
 {
     //PRINT 39 REGISTERS STARTING FROM FAULT_SUMMARY (INCLUDES RESERVED REGISTERS)
     printf("\n");
@@ -644,6 +704,109 @@ void PrintAllFaults(BYTE bID, BYTE bWriteType)
     }
     printf("\n");
 }
+
+void set_fault_msk(uint8_t bID, FAULT_MASK_t mask);
+void reset_faults(uint8_t bID, FAULT_MASK_t mask);
+
+fault_summary_t get_fault_summary(uint8_t bID);
+pwr_faults_t get_pwr_faults(uint8_t bID);
+sys_faults_t get_sys_faults(uint8_t bID);
+ovuv_faults_t get_ovuv_faults(uint8_t bID);
+otut_faults_t get_otut_faults(uint8_t bID);
+comm_faults_t get_comm_faults(uint8_t bID);
+otp_faults_t get_otp_faults(uint8_t bID);
+comp_adc_faults_t get_comp_adc_faults(uint8_t bID);
+prot_fault_t get_prot_faults(uint8_t bID);
+
+
+// *****************************************************************************
+//  thermistor config
+// *****************************************************************************
+void enable_therm_power(uint8_t bID);
+void disable_therm_power(uint8_t bID);
+void set_GPIO_as_therm(uint8_t bID, uint8_t gpioNum);
+
+
+
+// *****************************************************************************
+//  ADC control
+// *****************************************************************************
+void main_ADC_start(uint8_t bID);
+void main_ADC_run_once(uint8_t bID);
+void main_ADC_stop(uint8_t bID);
+void aux_ADC_start(uint8_t bID);
+void aux_ADC_run_once(uint8_t bID);
+void aux_ADC_stop(uint8_t bID);
+bool get_main_ADC_running(uint8_t bID); 
+bool get_main_ADC_RR_complete(uint8_t bID); // has the main ADC read each channel at least once
+bool get_aux_ADC_running(uint8_t bID); 
+bool get_aux_ADC_RR_complete(uint8_t bID); // has the aux ADC read each channel at least once
+void enable_LPF_cells(uint8_t bID, LPF_CUTOFF_t freq);
+void enable_LPF_BB(uint8_t bID, LPF_CUTOFF_t freq);
+void disable_LPF_cells(uint8_t bID);
+void disable_LPF_BB(uint8_t bID);
+
+
+
+// *****************************************************************************
+//  voltage comparators
+// *****************************************************************************
+void OVUV_config(OV_THRESH_t OV_thresh, UV_THRESH_t UV_thresh, int cell_count);
+void OVUV_start(); // configure before starting!!
+void OVUV_stop();
+bool get_OVUV_running();
+
+
+
+// *****************************************************************************
+//  Temperature comparators
+// *****************************************************************************
+void OTUT_config(uint8_t OT_thr_percent, uint8_t UT_thr_percent);
+void OTUT_start(); // configure before starting!!
+void OTUT_stop();
+bool get_OTUT_running();
+
+
+
+// *****************************************************************************
+//  balancing
+// *****************************************************************************
+void balancing_start(uint8_t bID); 
+void balancing_stop(uint8_t bID);
+void balancing_pause(bool paused);
+bool get_bal_paused();
+
+void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle); 
+void disable_auto_balancing(uint8_t bID);
+bool get_balancing_running(uint8_t bID);
+
+void set_balancing_timer(uint8_t bID, int cell_number, BAL_TIME_t time); 
+BAL_TIME_t get_balancing_timer(uint8_t bID, int cell_number); 
+bool get_balancing_done(uint8_t bID, int cell_number);
+
+void set_module_balancing_timer(uint8_t bID, BAL_TIME_t time);
+BAL_TIME_t get_module_balancing_timer(uint8_t bID);
+bool get_module_balancing_done(uint8_t bID);
+
+void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr);
+void enable_VMB_stop_thres(uint8_t vmb_thr);
+
+void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent);
+bool get_OTCB_running(uint8_t bID);
+
+
+// *****************************************************************************
+//  Reading voltages and temperatures
+// *****************************************************************************
+int16_t get_cell_voltage(uint8_t bID, int cell_number);
+int16_t get_cell_voltage_aux(uint8_t bID, int cell_number);
+int16_t get_BB_voltage(uint8_t bID); 
+int16_t get_BB_voltage_aux(uint8_t bID); 
+int16_t get_temp(uint8_t bID, int therm_number);
+int16_t get_die_temp_1(uint8_t bID);
+int16_t get_die_temp_2(uint8_t bID);
+
+
 
 //RUN BASIC CELL BALANCING FOR ALL DEVICES
 /*
@@ -733,7 +896,7 @@ void ReverseAddressing()
     WriteReg(0, FAULT_RST2, 0x03, 1, WriteType);
 }
 #if 0
-/** @fn int ReadDeviceStat2(BYTE *)
+/** @fn int ReadDeviceStat2(uint8_t *)
 *   @brief Read the device stat register 
 *   @note This function is empty by default.
 *
@@ -742,9 +905,9 @@ void ReverseAddressing()
 *   feature is enabled.
 */
 #if UART_COMM == TRUE
-int ReadDeviceStat2(uint8 *response_frame)
+int ReadDeviceStat2(uint8_t *response_frame)
 #else
-int ReadDeviceStat2(uint8 *response_frame)
+int ReadDeviceStat2(uint8_t *response_frame)
 #endif
 {
    int retval = 0U;
@@ -764,7 +927,7 @@ int ReadDeviceStat2(uint8 *response_frame)
    return retval;
 }
 
-/** @fn void ReadCoulumbCount(BYTE *)
+/** @fn void ReadCoulumbCount(uint8_t *)
 *   @brief Read the coulomb count accumulation data value 
 *   @note This function is empty by default.
 *
@@ -773,14 +936,14 @@ int ReadDeviceStat2(uint8 *response_frame)
 */
 
 #if UART_COMM == TRUE
-void ReadCoulumbCount(uint8 *response_frame, BYTE rshunt_u8)
+void ReadCoulumbCount(uint8_t *response_frame, uint8_t rshunt_u8)
 #else
-void ReadCoulumbCount(uint8 *response_frame, BYTE rshunt_u8)
+void ReadCoulumbCount(uint8_t *response_frame, uint8_t rshunt_u8)
 #endif
 {
     int i = 0U;
     uint32 cc_acc_val_u32;
-    uint8 cc_cnt_u8;
+    uint8_t cc_cnt_u8;
 
     /* Do CC_CLR */
     WriteReg(0, CC_CTRL, 0x07, 1, WriteType);
@@ -825,7 +988,7 @@ void ConfigureOverCurrent()
     WriteReg(0, DIAG_OC_CTRL2, 0x03, 1, WriteType);
 }
 
-/** @fn void ReadDebugRegisters(BYTE *)
+/** @fn void ReadDebugRegisters(uint8_t *)
 *   @brief Read the debug register values and prints its value
 *   @note This function is empty by default.
 *
@@ -834,9 +997,9 @@ void ConfigureOverCurrent()
 */
 
 #if UART_COMM == TRUE
-void ReadDebugRegisters(BYTE *response_frame)
+void ReadDebugRegisters(uint8_t *response_frame)
 #elif SPI_COMM == TRUE
-void ReadDebugRegisters(uint8 *response_frame)
+void ReadDebugRegisters(uint8_t *response_frame)
 #endif
 {
    fault_summary_t flt_summary;
@@ -854,7 +1017,7 @@ void ReadDebugRegisters(uint8 *response_frame)
    fault_adc_dig1_t flt_adc_dig1;
    fault_adc_dig2_t flt_adc_dig2;
    fault_oc_t flt_oc;
-   BYTE i = 0;
+   uint8_t i = 0;
 
 
    ReadReg(0, FAULT_SUMMARY, response_frame, 1, 0, ReadType);
@@ -1077,12 +1240,12 @@ void ReadDebugRegisters(uint8 *response_frame)
    }
 }
 
-/** @fn void set_SW_CTRL(BYTE pinNum, BYTE value)
+/** @fn void set_SW_CTRL(uint8_t pinNum, uint8_t value)
 *   @brief set the value of SW_CTRL register 
 *   takes the SW pin number and the value to set the pin high / low
 */
 
-void set_SW_CTRL(BYTE pinNum, BYTE value )
+void set_SW_CTRL(uint8_t pinNum, uint8_t value )
 {
     printf("Writing SW_CTRL with value %x\n", (value << ((pinNum - 1U) * 2)));
 
@@ -1098,14 +1261,14 @@ void set_SW_CTRL(BYTE pinNum, BYTE value )
     }
 }
 
-/** @fn void set_GPIO_Out_Val(BYTE pinNum, boolean value)
+/** @fn void set_GPIO_Out_Val(uint8_t pinNum, boolean value)
 *   @brief set the value of GPIO[1 - 15] output High / Low 
 *   takes the gpio number and the value its output to high / low
 */
 
-void set_GPIO_Out_Val(BYTE gpioNum, uint8_t val )
+void set_GPIO_Out_Val(uint8_t gpioNum, uint8_t val )
 {
-   BYTE value = 0;
+   uint8_t value = 0;
    if ( gpioNum > 8U )
    {
        /*  decrement gpioNum with 9 to index bit 0 to bit 6 to represent 
@@ -1124,14 +1287,14 @@ void set_GPIO_Out_Val(BYTE gpioNum, uint8_t val )
 
 }
 
-/** @fn void set_GPIO_As_PWM(BYTE gpioNum, boolean val)
+/** @fn void set_GPIO_As_PWM(uint8_t gpioNum, boolean val)
 *   @brief set GPIO[12 - 15] as PWM or GPIO 
 *   takes the gpio number and the value representing PWM / GPIO 
 */
 
-void set_GPIO_As_PWM(BYTE gpioNum, uint8_t val )
+void set_GPIO_As_PWM(uint8_t gpioNum, uint8_t val )
 {
-   BYTE value = 0;
+   uint8_t value = 0;
    if ( (gpioNum >= 12U) && (gpioNum < 16U)  )
    {
        /*  decrement gpioNum with 9 to index bit 0 to bit 6 to represent 

@@ -1,5 +1,5 @@
-#ifndef B0_REG_H_
-#define B0_REG_H_
+#ifndef A0_REG_H_
+#define A0_REG_H_
 
 #define DIR0_ADDR_OTP           0x0
 #define DIR1_ADDR_OTP           0x1
@@ -308,4 +308,4 @@
 #define DEBUG_COML_VALID_LO     0x791
 #define DEBUG_OTP_SEC_BLK       0x7A0
 #define DEBUG_OTP_DED_BLK       0x7A1
-#endif /* B0_REG_H_ */
+#endif /* A0_REG_H_ */

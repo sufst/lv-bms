@@ -56,59 +56,59 @@ enum {
     CAN_LOCKOUT_OFFSET = 0x06,
 } CAN_MESSAGE_ID_OFFSETS;
     
-    typedef enum  {
-        CAN_POWERED_DOWN = 0x00,
-        CAN_DISCHARING = 0x01,
-        CAN_CHARING = 0x02,
-        CAN_EMPTY = 0x03,
-        CAN_FULL = 0x04,
-        CAN_LOCKED_OUT = 0x05
-    } can_status_byte_t;
-    
-    typedef enum {
-        CAN_CRITICIAL_VOLGAGE = 0x01,
-        CAN_CRITICAL_TEMP = 0x02,
-        CAN_CRITICAL_CURRENT = 0x03,
-    } can_critical_byte_t;
-    
-    typedef enum {
-        LOCKOUT_OVERVOLT = 0x01,
-        LOCKOUT_UNDERVOLT = 0x02,
-        LOCKOUT_OVERTEMP = 0x03,
-        LOCKOUT_UNDERTEMP = 0x04,
-        LOCKOUT_OVERCURRENT = 0x05,
-    } lockout_reason_t;
-            
-    // initialise the can interface
-    void can_init();
-    
-    // updates can interface
-    void can_update();
-    
-    void send_sensor_message();
-    
-    // these give the can interface pointers to the variables 
-    // that it will read to build the can messages
-    void can_register_voltages(voltage_t* voltages);
-    void can_register_temps(temp_t* temps);
-    void can_register_current(current_t* current);
-    void can_register_SOC(uint8_t* soc);
-    
-    // update some fields in the status
-    void can_set_status(can_status_byte_t status_byte);
-    void can_set_charge_cycles(uint16_t charge_cycles);
-    void can_set_shutdown_count(uint16_t shutdown_count);
-    void can_set_lockout_count(uint16_t lockout_count);
-    
-    // turns on and off the data sending
-    void can_sending_enable(bool enabled);
-   
-    // sends a critical warning
-    void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value);
-    
-    // enabled the lockout message
-    void set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
-    void clear_lockout();
+typedef enum  {
+    CAN_POWERED_DOWN = 0x00,
+    CAN_DISCHARING = 0x01,
+    CAN_CHARING = 0x02,
+    CAN_EMPTY = 0x03,
+    CAN_FULL = 0x04,
+    CAN_LOCKED_OUT = 0x05
+} can_status_byte_t;
+
+typedef enum {
+    CAN_CRITICIAL_VOLGAGE = 0x01,
+    CAN_CRITICAL_TEMP = 0x02,
+    CAN_CRITICAL_CURRENT = 0x03,
+} can_critical_byte_t;
+
+typedef enum {
+    LOCKOUT_OVERVOLT = 0x01,
+    LOCKOUT_UNDERVOLT = 0x02,
+    LOCKOUT_OVERTEMP = 0x03,
+    LOCKOUT_UNDERTEMP = 0x04,
+    LOCKOUT_OVERCURRENT = 0x05,
+} lockout_reason_t;
+
+// initialise the can interface
+void can_init();
+
+// updates can interface
+void can_update();
+
+void send_sensor_message();
+
+// these give the can interface pointers to the variables 
+// that it will read to build the can messages
+void can_register_voltages(voltage_t* voltages);
+void can_register_temps(temp_t* temps);
+void can_register_current(current_t* current);
+void can_register_SOC(uint8_t* soc);
+
+// update some fields in the status
+void can_set_status(can_status_byte_t status_byte);
+void can_set_charge_cycles(uint16_t charge_cycles);
+void can_set_shutdown_count(uint16_t shutdown_count);
+void can_set_lockout_count(uint16_t lockout_count);
+
+// turns on and off the data sending
+void can_sending_enable(bool enabled);
+
+// sends a critical warning
+void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value);
+
+// enabled the lockout message
+void set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
+void clear_lockout();
 
 #ifdef	__cplusplus
 }

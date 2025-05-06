@@ -29,12 +29,11 @@
         <itemPath>inc/units.h</itemPath>
         <itemPath>inc/millis.h</itemPath>
         <itemPath>inc/can_interface.h</itemPath>
-        <itemPath>inc/B0_reg.h</itemPath>
         <itemPath>inc/BQ796XXA0_reg.h</itemPath>
-        <itemPath>inc/bq79631_debug_reg.h</itemPath>
-        <itemPath>inc/bq79631_debug_types.h</itemPath>
         <itemPath>inc/bq796xx.h</itemPath>
         <itemPath>inc/bms_interface.h</itemPath>
+        <itemPath>inc/bq796xx_fault_types.h</itemPath>
+        <itemPath>inc/bq796xx_enums.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
