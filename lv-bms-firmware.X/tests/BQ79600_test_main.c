@@ -69,16 +69,28 @@ void bms_main(void) {
     // initial test configuration
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_active_cells(1, 3);
-            
+    main_ADC_start(1);
             
     delay(1);
     
-    while(1) {
+    int i = 10;
+    
+    while(i--) {
         int v0 = get_cell_voltage(1,1);
-        printf("v0: %d = %fV\n", v0, v0*190.73f*0.000001);
-        delay(50);
+        delay(500);
         CLRWDT();
     }
+    
+    i = 10;
+    main_ADC_stop(1);
+    
+    while(i--) {
+        int v0 = get_cell_voltage(1,1);
+        delay(500);
+        CLRWDT();
+    }
+    
+    
 
     delay(5000);
     SD796XX();

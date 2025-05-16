@@ -53,8 +53,8 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #define BAUDRATE 1000000    //device + uC baudrate
 
 // debug logging - split into levels
-typedef enum {BQ_LOG_ERR, BQ_LOG_WARN, BQ_LOG_INFO, BQ_LOG_DBG} bq796xx_log_level_t;
-bq796xx_log_level_t bq796xx_log_level = BQ_LOG_INFO; // all the logging by default
+typedef enum {BQ_LOG_ERR, BQ_LOG_WARN, BQ_LOG_INFO, BQ_LOG_DBG, BQ_LOG_REG} bq796xx_log_level_t;
+bq796xx_log_level_t bq796xx_log_level = BQ_LOG_DBG; // all the logging by default
 
 // power state control
 void Wake796XX(void);

@@ -124,6 +124,17 @@ int ReadFrameReq(uint8_t bID, uint16_t wAddr, uint8_t bByteToReturn, FRMWRT_RW_T
 int dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout);
 
 // debug logging
+void log_reg( const char* format, ... ) {
+    if (bq796xx_log_level >= BQ_LOG_REG) {
+        va_list args;
+        va_start( args, format );
+        printf("REG : ");
+        vprintf(format, args );
+        putchar('\n');
+        va_end( args );
+    }
+}
+
 void log_dbg( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_DBG) {
         va_list args;
@@ -395,12 +406,17 @@ void ReverseAddressing()
     log_dbg("reverse addressing done");
 }
 
-void enable_daisy_chain() {
-    log_info("enable daisy chain");
+void enable_daisy_chain(bool en) {
+    log_info("enable daisy chain: %d", en);
     Wake796XX();
     dev_conf_t conf = get_reg_value(0, DEV_CONF);
-    conf &= !DEV_CONF_MULTIDROP_EN;
-    conf |= DEV_CONF_FCOMM_EN;
+    if(en) {
+        conf &= !DEV_CONF_MULTIDROP_EN;
+        conf |= DEV_CONF_FCOMM_EN;
+    } else {
+        conf |= !DEV_CONF_MULTIDROP_EN;
+        conf &= !DEV_CONF_FCOMM_EN;
+    }
     WriteReg(0, DEV_CONF, conf, 1, FRMWRT_ALL_W);
     
     log_info("enable daisy chain done");
@@ -440,10 +456,12 @@ void daisy_chain_dll_sync() {
 uint8_t get_reg_value(uint8_t bID, uint16_t addr) {
     uint8_t rx_buff[7] = {0};
     ReadReg(bID, addr, rx_buff, 1, 100, FRMWRT_SGL_R);
+    log_reg("reading dev: %d, reg 0x%02x = 0x%02x", bID, addr, rx_buff[4]);
     return rx_buff[4];
 }
 
 void set_reg_value(uint8_t bID, uint16_t addr, uint8_t data) {
+    log_reg("writting dev: %d, reg 0x%02x = 0x%02x", bID, addr, data);
     WriteReg(bID, addr, data, 1, FRMWRT_SGL_W);
 }
 
@@ -834,13 +852,39 @@ void disable_therm_power(uint8_t bID);
 void set_GPIO_as_therm(uint8_t bID, uint8_t gpioNum);
 
 
-
 // *****************************************************************************
 //  ADC control
 // *****************************************************************************
-void main_ADC_start(uint8_t bID);
-void main_ADC_run_once(uint8_t bID);
-void main_ADC_stop(uint8_t bID);
+void main_ADC_start(uint8_t bID) {
+    uint8_t d =  get_reg_value(bID, ADC_CTRL1);
+    
+    d &= 0b11111100;
+    d |= 0b00000110;
+    
+    set_reg_value(bID, ADC_CTRL1, d);
+    log_info("starting main ADC");
+}
+
+void main_ADC_run_once(uint8_t bID) {
+    uint8_t d =  get_reg_value(bID, ADC_CTRL1);
+    
+    d &= 0b11111100;
+    d |= 0b00000101;
+    
+    set_reg_value(bID, ADC_CTRL1, d);
+    log_info("running main ADC once");
+}
+
+void main_ADC_stop(uint8_t bID){
+    uint8_t d =  get_reg_value(bID, ADC_CTRL1);
+    
+    d &= 0b11111100;
+    d |= 0b00000100;
+    
+    set_reg_value(bID, ADC_CTRL1, d);
+    log_info("stopping main ADC");
+}
+
 void aux_ADC_start(uint8_t bID);
 void aux_ADC_run_once(uint8_t bID);
 void aux_ADC_stop(uint8_t bID);
@@ -906,7 +950,14 @@ bool get_OTCB_running(uint8_t bID);
 //  Reading voltages and temperatures
 // *****************************************************************************
 int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number) {
+    log_dbg("reading cell voltage: %d", cell_number);
     
+    int16_t lo = get_reg_value(bID, VCELL1_LO - 2 * (cell_number - 1));
+    int16_t hi = get_reg_value(bID, VCELL1_HI - 2 * (cell_number - 1));
+    int16_t v = lo + (hi << 8);
+    
+    log_info("v%d: %d = %fV", cell_number, v, v*190.73f*0.000001);
+    return v;
 }
 
 int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number);
