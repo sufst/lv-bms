@@ -263,7 +263,7 @@ typedef struct {
         } bits;
     }fault_comp_vcow;
     
-    // fault_comp_vbow
+    // fault_comp_cbow
     union {
         struct {
             uint8_t high;
@@ -288,7 +288,7 @@ typedef struct {
             bool cell_7  : 1; // bit 6
             bool cell_8  : 1; // bit 7
         } bits;
-    }fault_comp_vbow;
+    }fault_comp_cbow;
     
     // fault_comp_cbfet
     union {

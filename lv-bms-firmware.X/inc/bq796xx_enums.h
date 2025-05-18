@@ -286,8 +286,8 @@ typedef enum {
     MSK_OTP_CRC         = 1 << 14,
     MSK_ALL =   MSK_PWR         | MSK_SYS       | MSK_COMP      | MSK_OV | 
                 MSK_UV          | MSK_OT        | MSK_UT        | MSK_PROT |
-                MSK_COMM1       | MSK_COMM2     | MSK_COMM3_HB  | MSK_COMM3_HB |
-                MSK_COMM3_FTONE |MSK_COMM3_FCOMM| MSK_OTP_DATA  | MSK_OTP_CRC,  
+                MSK_COMM1       | MSK_COMM2     | MSK_COMM3_HB  | MSK_COMM3_FTONE |
+                MSK_COMM3_FCOMM | MSK_OTP_DATA  | MSK_OTP_CRC,  
 
 }FAULT_MASK_t;
 
@@ -301,5 +301,17 @@ typedef enum {
     DEV_CONF_FTONE_EN                = 1 << 1,
     DEV_CONF_HB_EN                   = 1 << 0,
 } dev_conf_t;
+
+// datasheet p162 - 9.5.4.9.1 GPIO_CONF1
+typedef enum {
+    GPIO_CONF_DISABLED         = 0b000, // High-Z (disabled)
+    GPIO_CONF_ADC_OTUT_INPUT   = 0b001, // ADC and OTUT inputs
+    GPIO_CONF_ADC_ONLY         = 0b010, // ADC only input
+    GPIO_CONF_DIGITAL_INPUT    = 0b011, // Digital input
+    GPIO_CONF_OUTPUT_HIGH      = 0b100, // Output high
+    GPIO_CONF_OUTPUT_LOW       = 0b101, // Output low
+    GPIO_CONF_ADC_PULLUP       = 0b110, // ADC input with weak pull-up
+    GPIO_CONF_ADC_PULLDOWN     = 0b111  // ADC input with weak pull-down
+} gpio_conf_t;
 
 #endif

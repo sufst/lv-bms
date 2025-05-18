@@ -52,6 +52,8 @@ void bms_main(void) {
     
     can_sending_enable(true);
     
+    HWRST796XX();
+    
     Wake796XX(); 
     //StA796XX();
     
@@ -69,28 +71,44 @@ void bms_main(void) {
     // initial test configuration
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_active_cells(1, 3);
-    main_ADC_start(1);
-            
+    enable_LPF_cells(1, LPF_6_5Hz);
+    set_gpio_conf(1, 1, GPIO_CONF_ADC_OTUT_INPUT);
     delay(1);
+    main_ADC_start(1);
+    aux_ADC_start(1);
+            
+    enable_tsref(1);
+    delay(1);
+    get_tsref_voltage(1);
     
-    int i = 10;
+    OVUV_config(1, OV_THRESH_4200mV, UV_THRESH_3100mV, 3);
+    OVUV_start(1);
+    get_OVUV_running(1);
+    get_ovuv_faults(1);
     
-    while(i--) {
-        int v0 = get_cell_voltage(1,1);
-        delay(500);
-        CLRWDT();
+    OTUT_config(1, 39, 80);
+    OTUT_start(1);
+    get_otut_faults(1);
+    get_OTUT_running(1);
+    
+    
+//    for(int i = 100; i ; i--) {
+////        int v0 = get_cell_voltage(1,1);
+////        get_cell_voltage_aux(1, 1);
+//        get_tsref_voltage(1);
+//        get_gpio_voltage(1, 1);
+////        get_die_temp_1(1);
+////        get_die_temp_2(1);
+//        delay(500);
+//        CLRWDT();
+//    }
+
+    while(1){
+        reset_faults(1, MSK_ALL);
+//        printf("V1: %fV, V2: %fV, V3: %fV\n", get_cell_voltage(1,1) * V_LSB_ADC, get_cell_voltage(1,2) * V_LSB_ADC, get_cell_voltage(1,3) * V_LSB_ADC );
+        get_gpio_voltage(1, 1);
+        get_otut_faults(1);
     }
-    
-    i = 10;
-    main_ADC_stop(1);
-    
-    while(i--) {
-        int v0 = get_cell_voltage(1,1);
-        delay(500);
-        CLRWDT();
-    }
-    
-    
 
     delay(5000);
     SD796XX();

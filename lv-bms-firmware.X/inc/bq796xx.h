@@ -47,14 +47,18 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #define TRUE 1
 #define FALSE 0
 #define UART_COMM     TRUE
+#define BQ796XX_FAULT_PRINTS // enables the debug prints for the faults 
 #define TOTALBOARDS 1       //boards in stack
+#define V_LSB_ADC 190.73f*0.000001 // mV/LSB
+#define V_LSB_DIETEMP 0.025 // *C/LSB
 
 #define MAXBYTES (16*2)     //maximum number of bytes to be read from the devices (for array creation)
 #define BAUDRATE 1000000    //device + uC baudrate
 
 // debug logging - split into levels
 typedef enum {BQ_LOG_ERR, BQ_LOG_WARN, BQ_LOG_INFO, BQ_LOG_DBG, BQ_LOG_REG} bq796xx_log_level_t;
-bq796xx_log_level_t bq796xx_log_level = BQ_LOG_DBG; // all the logging by default
+//bq796xx_log_level_t bq796xx_log_level = BQ_LOG_WARN;
+bq796xx_log_level_t bq796xx_log_level = BQ_LOG_INFO; 
 
 // power state control
 void Wake796XX(void);
@@ -86,36 +90,40 @@ void set_reg_value(uint8_t bID, uint16_t addr, uint8_t data);
 uint16_t CRC16(uint8_t *pBuf, int nLen);
 
 // fault handing
-void ResetAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType);
-void MaskAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType);
-uint8_t GetFaultStat();
-
+bool GetFaultStat();
 void set_fault_msk(uint8_t bID, FAULT_MASK_t mask);
 void reset_faults(uint8_t bID, FAULT_MASK_t mask);
 
-fault_summary_t get_fault_summary(uint8_t bID);
-pwr_faults_t get_pwr_faults(uint8_t bID);
-sys_faults_t get_sys_faults(uint8_t bID);
-ovuv_faults_t get_ovuv_faults(uint8_t bID);
-otut_faults_t get_otut_faults(uint8_t bID);
-comm_faults_t get_comm_faults(uint8_t bID);
-otp_faults_t get_otp_faults(uint8_t bID);
-comp_adc_faults_t get_comp_adc_faults(uint8_t bID);
-prot_fault_t get_prot_faults(uint8_t bID);
+fault_summary_t get_fault_summary(uint8_t bID);         
+pwr_faults_t get_pwr_faults(uint8_t bID);               
+sys_faults_t get_sys_faults(uint8_t bID);               
+ovuv_faults_t get_ovuv_faults(uint8_t bID);             
+otut_faults_t get_otut_faults(uint8_t bID);             
+comm_faults_t get_comm_faults(uint8_t bID);             
+otp_faults_t get_otp_faults(uint8_t bID);               
+comp_adc_faults_t get_comp_adc_faults(uint8_t bID);     
+prot_fault_t get_prot_faults(uint8_t bID);              
 
-// odds
-void ConfigureOverCurrent(uint8_t bID);                             // untested
-void set_SW_CTRL(uint8_t bID, uint8_t pinNum, uint8_t value);       // untested
-void set_GPIO_Out_Val(uint8_t bID, uint8_t gpioNum, uint8_t val);   // untested
-void set_GPIO_As_PWM(uint8_t bID, uint8_t gpioNum, uint8_t val);    // untested
+int snprint_fault_summary(char * s, size_t n, fault_summary_t fs);      // len ~~ 85 chars
+int snprint_pwr_faults(char * s, size_t n, pwr_faults_t pf);            // len ~~ 205 chars
+int snprint_sys_faults(char * s, size_t n, sys_faults_t sf);            // len ~~ 70 chars
+int snprint_ovuv_faults(char * s, size_t n, ovuv_faults_t vf);          // len ~~ 255 chars
+int snprint_otut_faults(char * s, size_t n, otut_faults_t tf);          // len ~~ 130 chars
+int snprint_comm_faults(char * s, size_t n, comm_faults_t cf);          // len ~~ 210 chars
+int snprint_otp_faults(char * s, size_t n, otp_faults_t of);            // len ~~ 100 chars
+int snprint_adc_comp_faults(char * s, size_t n, comp_adc_faults_t cf);  // len ~~ 780 chars
+int snprint_prot_faults(char * s, size_t n, prot_fault_t pf);           // len ~~ 150 chars
+
+// gpio
+void set_gpio_conf(uint8_t bID, uint8_t gpioNum, gpio_conf_t conf);
+gpio_conf_t get_gpio_conf(uint8_t bID, uint8_t gpioNum);
 
 // thermistor config
-void enable_therm_power(uint8_t bID);
-void disable_therm_power(uint8_t bID);
-void set_GPIO_as_therm(uint8_t bID, uint8_t gpioNum);
+void enable_tsref(uint8_t bID);
+void disable_tsref(uint8_t bID);
 
-// ADC control
-void main_ADC_start(uint8_t bID);
+// ADC control - always start it AFTER configuring everything
+void main_ADC_start(uint8_t bID); 
 void main_ADC_run_once(uint8_t bID);
 void main_ADC_stop(uint8_t bID);
 void aux_ADC_start(uint8_t bID);
@@ -125,32 +133,34 @@ bool get_main_ADC_running(uint8_t bID);
 bool get_main_ADC_RR_complete(uint8_t bID); // has the main ADC read each channel at least once
 bool get_aux_ADC_running(uint8_t bID); 
 bool get_aux_ADC_RR_complete(uint8_t bID); // has the aux ADC read each channel at least once
-void enable_LPF_cells(uint8_t bID, LPF_CUTOFF_t freq);
-void enable_LPF_BB(uint8_t bID, LPF_CUTOFF_t freq);
+
+// require the ADC be restarted to take affect
+void enable_LPF_cells(uint8_t bID, LPF_CUTOFF_t freq); 
+void enable_LPF_BB(uint8_t bID, LPF_CUTOFF_t freq); 
 void disable_LPF_cells(uint8_t bID);
 void disable_LPF_BB(uint8_t bID);
 
 // voltage comparators
-void OVUV_config(OV_THRESH_t OV_thresh, UV_THRESH_t UV_thresh, int cell_count);
-void OVUV_start(); // configure before starting!!
-void OVUV_stop();
-bool get_OVUV_running();
+void OVUV_config(uint8_t bID, OV_THRESH_t OV_thresh, UV_THRESH_t UV_thresh, uint8_t cell_count);
+void OVUV_start(uint8_t bID); // configure before starting!!
+void OVUV_stop(uint8_t bID);
+bool get_OVUV_running(uint8_t bID);
 
 // Temp comparators
 // UT_thresh:
 //  Range from 66% to 80% in steps of 2% sourced from TSREF regulator voltage.
 // OT_thresh:
 //  Range from 10% to 39% in steps of 1% sourced from TSREF regulator voltage.
-void OTUT_config(uint8_t OT_thr_percent, uint8_t UT_thr_percent);
-void OTUT_start(); // configure before starting!!
-void OTUT_stop();
-bool get_OTUT_running();
+void OTUT_config(uint8_t bID, uint8_t OT_thr_percent, uint8_t UT_thr_percent);
+void OTUT_start(uint8_t bID); // configure before starting!!
+void OTUT_stop(uint8_t bID);
+bool get_OTUT_running(uint8_t bID);
 
 // balancing
 void balancing_start(uint8_t bID); // configure before starting!!
 void balancing_stop(uint8_t bID);
-void balancing_pause(bool paused);
-bool get_bal_paused();
+void balancing_pause(uint8_t bID, bool paused);
+bool get_bal_paused(uint8_t bID);
 
 void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle); // automatically cycle between odd and even cells so they can all be set to balance at once
 void disable_auto_balancing(uint8_t bID);
@@ -166,13 +176,12 @@ BAL_TIME_t get_module_balancing_timer(uint8_t bID);
 bool get_module_balancing_done(uint8_t bID);
 
 // stop balancing based on cell voltage
-//  requires OVUV detector is running
-void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr);
-void enable_VMB_stop_thres(uint8_t vmb_thr); // thr in volts (18V to 65V)
+void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr); // must restart OVUV detector after changing these
+void enable_VMB_stop_thres(uint8_t bID, uint8_t vmb_thr); // thr in volts (18V to 65V)
 
 // balancing can be paused if the chip or external thermistors get too hot
 //  requires OTUT detector is running
-void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent);
+void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent); // must restart OTUT after changing these
 bool get_OTCB_running(uint8_t bID);
 
 // reading voltages and temperatures
@@ -180,7 +189,8 @@ int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number);
 int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number);
 int16_t get_BB_voltage(uint8_t bID); // bus bar (current measurement)
 int16_t get_BB_voltage_aux(uint8_t bID); // bus bar (current measurement)
-int16_t get_temp(uint8_t bID, uint8_t therm_number);
+int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number);
+int16_t get_tsref_voltage(uint8_t bID);
 int16_t get_die_temp_1(uint8_t bID);
 int16_t get_die_temp_2(uint8_t bID);
 
