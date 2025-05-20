@@ -126,55 +126,55 @@ int ReadFrameReq(uint8_t bID, uint16_t wAddr, uint8_t bByteToReturn, FRMWRT_RW_T
 uint16_t dma1_read_from_uart(uint8_t* rx_data_buff, uint16_t rx_len, uint32_t timeout);
 
 // debug logging
-void log_reg( const char* format, ... ) {
+void bq_log_reg( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_REG) {
         va_list args;
         va_start( args, format );
-        printf("REG : ");
+        printf("BQ_REG : ");
         vprintf(format, args );
         putchar('\n');
         va_end( args );
     }
 }
 
-void log_dbg( const char* format, ... ) {
+void bq_log_dbg( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_DBG) {
         va_list args;
         va_start( args, format );
-        printf("DBG : ");
+        printf("BQ_DBG : ");
         vprintf(format, args );
         putchar('\n');
         va_end( args );
     }
 }
 
-void log_info( const char* format, ... ) {
+void bq_log_info( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_INFO) {
         va_list args;
         va_start( args, format );
-        printf("INFO: ");
+        printf("BQ_INFO: ");
         vprintf(format, args );
         putchar('\n');
         va_end( args );
     }
 }
 
-void log_warn( const char* format, ... ) {
+void bq_log_warn( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_WARN) {
         va_list args;
         va_start( args, format );
-        printf("WARN: ");
+        printf("BQ_WARN: ");
         vprintf(format, args );
         putchar('\n');
         va_end( args );
     }
 }
 
-void log_err( const char* format, ... ) {
+void bq_log_err( const char* format, ... ) {
     if (bq796xx_log_level >= BQ_LOG_ERR) {
         va_list args;
         va_start( args, format );
-        printf("ERR : ");
+        printf("BQ_ERR : ");
         vprintf(format, args );
         putchar('\n');
         va_end( args );
@@ -186,7 +186,7 @@ void log_err( const char* format, ... ) {
 //  power state management
 // *****************************************************************************
 void Wake796XX(void) {
-    log_info("wake");
+    bq_log_info("wake");
 //    sciREG->GCR1 &= ~(1U << 7U); // put SCI into reset
 //    sciREG->PIO0 &= ~(1U << 2U); // disable transmit function - now a GPIO
 //    sciREG->PIO3 &= ~(1U << 2U); // set output to low
@@ -204,19 +204,19 @@ void Wake796XX(void) {
     
 //    sciInit();
 //    sciSetBaudrate(sciREG, BAUDRATE);
-    log_dbg("wake done");
+    bq_log_dbg("wake done");
 }
 
 void SD796XX(void) {
-    log_info("shutdown");
+    bq_log_info("shutdown");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(7); // SD ping = 7ms to 10ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
-    log_dbg("shutdown done");
+    bq_log_dbg("shutdown done");
 }
 
 void StA796XX(void) {
-    log_info("sleep to active");
+    bq_log_info("sleep to active");
     INTERRUPT_GlobalInterruptDisable();
     
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL    
@@ -224,53 +224,53 @@ void StA796XX(void) {
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
 
     INTERRUPT_GlobalInterruptEnable();
-    log_dbg("sleep to active done");
+    bq_log_dbg("sleep to active done");
 }
 
 void HWRST796XX(void) {
-    log_info("HW reset");
+    bq_log_info("HW reset");
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     delay(36); // reset ping = 36ms
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     
     delay(75); // wait for reset
-    log_dbg("HW reset done");
+    bq_log_dbg("HW reset done");
 }
 
 // *****************************************************************************
 //  generic config 
 // *****************************************************************************
 void set_config(uint8_t bID, dev_conf_t conf) {
-    log_info("set config 0x%02x", conf);
+    bq_log_info("set config 0x%02x", conf);
     set_reg_value(bID, DEV_CONF, (uint8_t)conf);
-    log_dbg("set config done");
+    bq_log_dbg("set config done");
 }
 
 void set_active_cells(uint8_t bID, uint8_t cell_count) {
-    log_info("set active cells %d", cell_count);
+    bq_log_info("set active cells %d", cell_count);
     
     if(cell_count > 16) {
-        log_err("invalid cell count: %d", cell_count);
+        bq_log_err("invalid cell count: %d", cell_count);
         return;
     }
     
     if(cell_count < 6) {
-        log_warn("cell count of %d requested, capping to min of 6", cell_count);
+        bq_log_warn("cell count of %d requested, capping to min of 6", cell_count);
         cell_count = 6;
     }
     
     set_reg_value(bID, ACTIVE_CELL, cell_count-6);
     
-    log_dbg("set active cells done");
+    bq_log_dbg("set active cells done");
 }
 
 void set_bb_loc(uint8_t bID, uint8_t loc) { // BBP_LOC register - datasheet P130
     if (loc > 0x10) {
-        log_err("invalid BBP_LOC value requested: 0x%02x", loc);
+        bq_log_err("invalid BBP_LOC value requested: 0x%02x", loc);
         return;
     }
     
-    log_info("set BBP_loc 0x%02x", loc);
+    bq_log_info("set BBP_loc 0x%02x", loc);
     set_reg_value(bID, BBP_LOC, loc);
 }
 
@@ -280,19 +280,19 @@ void set_bb_loc(uint8_t bID, uint8_t loc) { // BBP_LOC register - datasheet P130
 
 // reset uart engine on the bq79616
 void COM_CLR_796XX(void) {
-    log_info("com clear");
+    bq_log_info("com clear");
     INTERRUPT_GlobalInterruptDisable();
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     // 15-20 bit periods @ 1Mb/s = 15-20 us 
     for(int _ = 0; _ <6; _++ );  
     U4CON2 = U4CON2 ^ (1 << 2); // invert TXPOL
     INTERRUPT_GlobalInterruptEnable();
-    log_dbg("com clear done");
+    bq_log_dbg("com clear done");
 }
 
 int AutoAddress(COMM_DIR_t dir)
 {
-    log_info("auto addressing");
+    bq_log_info("auto addressing");
     uint8_t autoaddr_response_frame[64+5];
     //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
         WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
@@ -338,14 +338,14 @@ int AutoAddress(COMM_DIR_t dir)
         //OPTIONAL: read register address 0x2001 and verify that the value is 0x14
         ReadReg(0, 0x2001, autoaddr_response_frame, 1, 0, FRMWRT_SGL_R);
 
-        log_dbg("auto addressing done");
+        bq_log_dbg("auto addressing done");
         return -1;
 }
 
 //RUN BASIC REVERSE ADDRESSING SEQUENCE
 void ReverseAddressing()
 {
-    log_info("reverse addressing");
+    bq_log_info("reverse addressing");
     //CHANGE BASE DEVICE DIRECTION
     WriteReg(0, CONTROL1, 0x80, 1, FRMWRT_SGL_W);
 
@@ -410,11 +410,11 @@ void ReverseAddressing()
 
     //RESET ANY COMM FAULT CONDITIONS FROM STARTUP
     WriteReg(0, FAULT_RST2, 0x03, 1, WriteType);
-    log_dbg("reverse addressing done");
+    bq_log_dbg("reverse addressing done");
 }
 
 void enable_daisy_chain(bool en) {
-    log_info("enable daisy chain: %d", en);
+    bq_log_info("enable daisy chain: %d", en);
     Wake796XX();
     dev_conf_t conf = get_reg_value(0, DEV_CONF);
     if(en) {
@@ -426,14 +426,14 @@ void enable_daisy_chain(bool en) {
     }
     WriteReg(0, DEV_CONF, conf, 1, FRMWRT_ALL_W);
     
-    log_info("enable daisy chain done");
+    bq_log_info("enable daisy chain done");
 }
 
 void daisy_chain_dll_sync() {
-    log_info("daisy chain dll sync");
+    bq_log_info("daisy chain dll sync");
     
     //DUMMY WRITE TO SNCHRONIZE ALL DAISY CHAIN DEVICES DLL (IF A DEVICE RESET OCCURED PRIOR TO THIS)
-    log_dbg("syncing write (up stack)");
+    bq_log_dbg("syncing write (up stack)");
     WriteReg(0, OTP_ECC_DATAIN1, 0X00, 1, FRMWRT_STK_W);
     WriteReg(0, OTP_ECC_DATAIN2, 0X00, 1, FRMWRT_STK_W);
     WriteReg(0, OTP_ECC_DATAIN3, 0X00, 1, FRMWRT_STK_W);
@@ -443,7 +443,7 @@ void daisy_chain_dll_sync() {
     WriteReg(0, OTP_ECC_DATAIN7, 0X00, 1, FRMWRT_STK_W);
     WriteReg(0, OTP_ECC_DATAIN8, 0X00, 1, FRMWRT_STK_W);
     
-    log_dbg("syncing read (down stack)");
+    bq_log_dbg("syncing read (down stack)");
     ReadReg(0, OTP_ECC_DATAIN1, response_frame2, 1, 0, FRMWRT_STK_R);
     ReadReg(0, OTP_ECC_DATAIN2, response_frame2, 1, 0, FRMWRT_STK_R);
     ReadReg(0, OTP_ECC_DATAIN3, response_frame2, 1, 0, FRMWRT_STK_R);
@@ -453,7 +453,7 @@ void daisy_chain_dll_sync() {
     ReadReg(0, OTP_ECC_DATAIN7, response_frame2, 1, 0, FRMWRT_STK_R);
     ReadReg(0, OTP_ECC_DATAIN8, response_frame2, 1, 0, FRMWRT_STK_R);
     
-    log_dbg("daisy chain dll sync done");
+    bq_log_dbg("daisy chain dll sync done");
 }
 
 // *****************************************************************************
@@ -463,12 +463,12 @@ void daisy_chain_dll_sync() {
 uint8_t get_reg_value(uint8_t bID, uint16_t addr) {
     uint8_t rx_buff[7] = {0};
     ReadReg(bID, addr, rx_buff, 1, 100, FRMWRT_SGL_R);
-    log_reg("reading dev: %d, reg 0x%02x = 0x%02x", bID, addr, rx_buff[4]);
+    bq_log_reg("reading dev: %d, reg 0x%02x = 0x%02x", bID, addr, rx_buff[4]);
     return rx_buff[4];
 }
 
 void set_reg_value(uint8_t bID, uint16_t addr, uint8_t data) {
-    log_reg("writting dev: %d, reg 0x%02x = 0x%02x", bID, addr, data);
+    bq_log_reg("writting dev: %d, reg 0x%02x = 0x%02x", bID, addr, data);
     WriteReg(bID, addr, data, 1, FRMWRT_SGL_W);
 }
 
@@ -584,7 +584,7 @@ int ReadReg(uint8_t bID,                   // device id
         //CHECK IF CRC IS CORRECT
         for(crc_i=0; crc_i<bRes; crc_i+=(bLen+6)) {
             if(CRC16(&pData[crc_i], bLen+6)!=0) {
-                log_warn("BAD CRC reading reg: 0x%02x, retrying (%d/5)", wAddr, tries);
+                bq_log_warn("BAD CRC reading reg: 0x%02x, retrying (%d/5)", wAddr, tries);
                 break;
             }
         }
@@ -595,7 +595,7 @@ int ReadReg(uint8_t bID,                   // device id
     }
     
     if (!correctly_rxed) {
-        log_err("failed after 5 tries to rx, reset needed");
+        bq_log_err("failed after 5 tries to rx, reset needed");
         while(1);
     }
     
@@ -801,13 +801,13 @@ void PrintAllFaults(uint8_t bID, FRMWRT_RW_TYPE_t bWriteType)
 void set_fault_msk(uint8_t bID, FAULT_MASK_t mask) {
     set_reg_value(bID, FAULT_MSK1, mask & (0x00ff));
     set_reg_value(bID, FAULT_MSK2, mask >> 8);
-    log_info("set fault mask: 0x%04x", mask);
+    bq_log_info("set fault mask: 0x%04x", mask);
 }
 
 void reset_faults(uint8_t bID, FAULT_MASK_t mask) {
     set_reg_value(bID, FAULT_RST1, mask & (0x00ff));
     set_reg_value(bID, FAULT_RST2, mask >> 8);
-    log_info("reset faults: 0x%04x", mask);
+    bq_log_info("reset faults: 0x%04x", mask);
 }
 
 fault_summary_t get_fault_summary(uint8_t bID) {
@@ -816,7 +816,7 @@ fault_summary_t get_fault_summary(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_fault_summary(tmp_string, sizeof tmp_string, fs);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return fs;
@@ -830,7 +830,7 @@ pwr_faults_t get_pwr_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_pwr_faults(tmp_string, sizeof tmp_string, pf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return pf;
@@ -842,7 +842,7 @@ sys_faults_t get_sys_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_sys_faults(tmp_string, sizeof tmp_string, sf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return sf;
@@ -857,7 +857,7 @@ ovuv_faults_t get_ovuv_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_ovuv_faults(tmp_string, sizeof tmp_string, vf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return vf;
@@ -870,7 +870,7 @@ otut_faults_t get_otut_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_otut_faults(tmp_string, sizeof tmp_string, tf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return tf;
@@ -884,7 +884,7 @@ comm_faults_t get_comm_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_comm_faults(tmp_string, sizeof tmp_string, cf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return cf;
@@ -896,7 +896,7 @@ otp_faults_t get_otp_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_otp_faults(tmp_string, sizeof tmp_string, of);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return of;
@@ -917,7 +917,7 @@ comp_adc_faults_t get_comp_adc_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_adc_comp_faults(tmp_string, sizeof tmp_string, af);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return af;
@@ -930,7 +930,7 @@ prot_fault_t get_prot_faults(uint8_t bID) {
     
     if(bq796xx_log_level >= BQ_LOG_INFO) {
         snprint_prot_faults(tmp_string, sizeof tmp_string, pf);
-        log_info(tmp_string);
+        bq_log_info(tmp_string);
     }
     
     return pf;
@@ -1136,7 +1136,7 @@ int snprint_prot_faults(char * s, size_t n, prot_fault_t pf)            { return
 // *****************************************************************************
 void set_gpio_conf(uint8_t bID, uint8_t gpioNum, gpio_conf_t conf) {
     if(gpioNum == 0 || gpioNum > 8) {
-        log_err("tried to set config of invalid gpio: %d", gpioNum);
+        bq_log_err("tried to set config of invalid gpio: %d", gpioNum);
         return;
     }
     
@@ -1150,19 +1150,19 @@ void set_gpio_conf(uint8_t bID, uint8_t gpioNum, gpio_conf_t conf) {
         reg_val |= conf << 3;
     }
     set_reg_value(bID, reg_addr, reg_val);
-    log_info("set gpio%d to conf 0x%02x", gpioNum, conf);
+    bq_log_info("set gpio%d to conf 0x%02x", gpioNum, conf);
 }
 
 gpio_conf_t get_gpio_conf(uint8_t bID, uint8_t gpioNum) {
     if(gpioNum == 0 || gpioNum > 8) {
-        log_err("tried to get config of invalid gpio: %d", gpioNum);
+        bq_log_err("tried to get config of invalid gpio: %d", gpioNum);
         return GPIO_CONF_DISABLED;
     }
     
     // finding the gpio conf is a bit messy, look at datasheet p162 - 9.5.4.9.1 GPIO_CONF1
     // have to find the right register, then shift it if it is even
     gpio_conf_t gpio_conf = get_reg_value(bID, GPIO_CONF1 + (gpioNum-1)/2) >> ((gpioNum % 2)? 0 : 3);
-    log_info("gpio%d conf: 0x%02x", gpioNum, (uint8_t)gpio_conf);
+    bq_log_info("gpio%d conf: 0x%02x", gpioNum, (uint8_t)gpio_conf);
     return gpio_conf;
 }
 
@@ -1172,12 +1172,12 @@ gpio_conf_t get_gpio_conf(uint8_t bID, uint8_t gpioNum) {
 // *****************************************************************************
 void enable_tsref(uint8_t bID) {
     set_reg_value(bID, CONTROL2, get_reg_value(bID, CONTROL2) | BIT(0));
-    log_info("enabled TSREF");
+    bq_log_info("enabled TSREF");
 }
 
 void disable_tsref(uint8_t bID) {
     set_reg_value(bID, CONTROL2, get_reg_value(bID, CONTROL2) & ~BIT(0));
-    log_info("disabled TSREF");
+    bq_log_info("disabled TSREF");
 }
 
 // *****************************************************************************
@@ -1190,7 +1190,7 @@ void main_ADC_start(uint8_t bID) {
     d |= BIT(2) | BIT(1);
     
     set_reg_value(bID, ADC_CTRL1, d);
-    log_info("starting main ADC");
+    bq_log_info("starting main ADC");
 }
 
 void main_ADC_run_once(uint8_t bID) {
@@ -1200,7 +1200,7 @@ void main_ADC_run_once(uint8_t bID) {
     d |= BIT(2) | BIT(0);
     
     set_reg_value(bID, ADC_CTRL1, d);
-    log_info("running main ADC once");
+    bq_log_info("running main ADC once");
 }
 
 void main_ADC_stop(uint8_t bID){
@@ -1210,7 +1210,7 @@ void main_ADC_stop(uint8_t bID){
     d |= BIT(2);
     
     set_reg_value(bID, ADC_CTRL1, d);
-    log_info("stopping main ADC");
+    bq_log_info("stopping main ADC");
 }
 
 void aux_ADC_start(uint8_t bID) {
@@ -1220,7 +1220,7 @@ void aux_ADC_start(uint8_t bID) {
     d |= BIT(2) | BIT(1);
     
     set_reg_value(bID, ADC_CTRL3, d);
-    log_info("starting aux ADC");    
+    bq_log_info("starting aux ADC");    
 }
 
 void aux_ADC_run_once(uint8_t bID) {
@@ -1230,7 +1230,7 @@ void aux_ADC_run_once(uint8_t bID) {
     d |= BIT(2) | BIT(0);
     
     set_reg_value(bID, ADC_CTRL3, d);
-    log_info("running aux ADC once");
+    bq_log_info("running aux ADC once");
 }
 
 void aux_ADC_stop(uint8_t bID) {
@@ -1240,25 +1240,25 @@ void aux_ADC_stop(uint8_t bID) {
     d |= BIT(2);
     
     set_reg_value(bID, ADC_CTRL3, d);
-    log_info("stopping aux ADC");
+    bq_log_info("stopping aux ADC");
 }
 
 bool get_main_ADC_running(uint8_t bID) {
     bool running = get_reg_value(bID, DEV_STAT) & 0x01;
-    log_info("main ADC running: %d", running);
+    bq_log_info("main ADC running: %d", running);
     return running;
 }
 
  // has the main ADC read each channel at least once
 bool get_main_ADC_RR_complete(uint8_t bID) {
     bool run = get_reg_value(bID, ADC_STAT1) & 0x01;
-    log_info("main ADC one RR complete: %d", run);
+    bq_log_info("main ADC one RR complete: %d", run);
     return run;
 }
 
 bool get_aux_ADC_running(uint8_t bID) {
     bool running = get_reg_value(bID, DEV_STAT) & 0x02;
-    log_info("aux ADC running: %d", running);
+    bq_log_info("aux ADC running: %d", running);
     return running;
 }
 
@@ -1266,8 +1266,8 @@ bool get_aux_ADC_running(uint8_t bID) {
 bool get_aux_ADC_RR_complete(uint8_t bID) {
     uint8_t reg = get_reg_value(bID, ADC_STAT1);
     bool run = (reg & BIT(1)) && (reg & BIT(2)) && (reg & BIT(3));
-    log_dbg("aux ADC - DRDY_AUX_GPIO:%d,  DRDY_AUX_CELL:%d,  DRDY_AUX_MISC:%d",  (bool)(reg & BIT(3)), (bool)(reg & BIT(2)), (bool)(reg & BIT(1)));
-    log_info("aux ADC one RR complete: %d", run);
+    bq_log_dbg("aux ADC - DRDY_AUX_GPIO:%d,  DRDY_AUX_CELL:%d,  DRDY_AUX_MISC:%d",  (bool)(reg & BIT(3)), (bool)(reg & BIT(2)), (bool)(reg & BIT(1)));
+    bq_log_info("aux ADC one RR complete: %d", run);
     return run;
 }
 
@@ -1282,7 +1282,7 @@ void enable_LPF_cells(uint8_t bID, LPF_CUTOFF_t freq) {
     ctrl |= BIT(3);
     set_reg_value(bID, ADC_CTRL1, ctrl);
     
-    log_info("enabling cells LPF - cutoff: 0x%02x", freq);
+    bq_log_info("enabling cells LPF - cutoff: 0x%02x", freq);
 }
 
 void enable_LPF_BB(uint8_t bID, LPF_CUTOFF_t freq) {
@@ -1295,21 +1295,21 @@ void enable_LPF_BB(uint8_t bID, LPF_CUTOFF_t freq) {
     uint8_t ctrl = get_reg_value(bID, ADC_CTRL1);
     ctrl |= BIT(4);
     set_reg_value(bID, ADC_CTRL1, ctrl);
-    log_info("enabling BB LPF: - cutoff: 0x%02x", freq);
+    bq_log_info("enabling BB LPF: - cutoff: 0x%02x", freq);
 }
 
 void disable_LPF_cells(uint8_t bID) {
     uint8_t reg = get_reg_value(bID, ADC_CTRL1);
     reg &= ~BIT(3);
     set_reg_value(bID, ADC_CTRL1, reg);
-    log_info("disabling cells LPF");
+    bq_log_info("disabling cells LPF");
 }
 
 void disable_LPF_BB(uint8_t bID) {
     uint8_t reg = get_reg_value(bID, ADC_CTRL1);
     reg &= ~BIT(4);
     set_reg_value(bID, ADC_CTRL1, reg);
-    log_info("disabling BB LPF");
+    bq_log_info("disabling BB LPF");
 }
 
 
@@ -1319,15 +1319,15 @@ void disable_LPF_BB(uint8_t bID) {
 // *****************************************************************************
 void OVUV_config(uint8_t bID, OV_THRESH_t OV_thresh, UV_THRESH_t UV_thresh, uint8_t cell_count) {
     if (OV_thresh < OV_THRESH_2700mV || OV_thresh > OV_THRESH_4475mV) {
-        log_err("tried to start OVUV with invalid OV thresh: 0x%02x", OV_thresh);
+        bq_log_err("tried to start OVUV with invalid OV thresh: 0x%02x", OV_thresh);
         return;
     }
     if (UV_thresh > UV_THRESH_3100mV) {
-        log_err("tried to start OVUV with invalid UV thresh: 0x%02x", UV_thresh);
+        bq_log_err("tried to start OVUV with invalid UV thresh: 0x%02x", UV_thresh);
         return;
     }
     if (cell_count > 16) {
-        log_err("tried to start OVUV with invalid number of cells: %d", cell_count);
+        bq_log_err("tried to start OVUV with invalid number of cells: %d", cell_count);
         return;
     }
     
@@ -1339,7 +1339,7 @@ void OVUV_config(uint8_t bID, OV_THRESH_t OV_thresh, UV_THRESH_t UV_thresh, uint
     set_reg_value(bID, UV_DISABLE1, (uint8_t)(UV_disable_mask >> 8));
     set_reg_value(bID, UV_DISABLE2, (uint8_t)(UV_disable_mask & 0xff));
     
-    log_info("config'd OVUV: UV_THRESH:0x%02x, UV_THRESH:0x%02x, cell count:%d", OV_thresh, UV_thresh, cell_count);
+    bq_log_info("config'd OVUV: UV_THRESH:0x%02x, UV_THRESH:0x%02x, cell count:%d", OV_thresh, UV_thresh, cell_count);
 }
 
 void OVUV_start(uint8_t bID) {
@@ -1347,7 +1347,7 @@ void OVUV_start(uint8_t bID) {
     reg &= ~(BIT(0) | BIT(1));
     reg |= BIT(2) | BIT(0);
     set_reg_value(bID, OVUV_CTRL, reg);
-    log_info("started OVUV");
+    bq_log_info("started OVUV");
 }
 
 void OVUV_stop(uint8_t bID) {
@@ -1355,12 +1355,12 @@ void OVUV_stop(uint8_t bID) {
     reg &= ~(BIT(0) | BIT(1));
     reg |= BIT(2);
     set_reg_value(bID, OVUV_CTRL, reg);
-    log_info("stopped OVUV");
+    bq_log_info("stopped OVUV");
 }
 
 bool get_OVUV_running(uint8_t bID) {
     bool running = get_reg_value(bID, DEV_STAT) & BIT(3);
-    log_info("OVUV running:%d", running);
+    bq_log_info("OVUV running:%d", running);
     return running;
 }
 
@@ -1370,11 +1370,11 @@ bool get_OVUV_running(uint8_t bID) {
 // *****************************************************************************
 void OTUT_config(uint8_t bID, uint8_t OT_thr_percent, uint8_t UT_thr_percent) {
     if (OT_thr_percent < 10  || OT_thr_percent > 39 ) {
-        log_err("tried setting OTUT with invalid OT_thr_percent:%d%%", OT_thr_percent);
+        bq_log_err("tried setting OTUT with invalid OT_thr_percent:%d%%", OT_thr_percent);
         return;
     }
     if (UT_thr_percent < 66 || UT_thr_percent > 80) {
-        log_err("tried setting OTUT with invalid UT_thr_percent:%d%%", UT_thr_percent);
+        bq_log_err("tried setting OTUT with invalid UT_thr_percent:%d%%", UT_thr_percent);
         return;
     }
     // workout what to set the OTUT_THRESH reg to
@@ -1383,7 +1383,7 @@ void OTUT_config(uint8_t bID, uint8_t OT_thr_percent, uint8_t UT_thr_percent) {
     uint8_t reg = (uint8_t)(UT_THR << 5) | OT_THR;
     
     set_reg_value(bID, OTUT_THRESH, reg);
-    log_info("config'd OTUT to UT:%d%%, OT:%d%%", UT_thr_percent, OT_thr_percent);
+    bq_log_info("config'd OTUT to UT:%d%%, OT:%d%%", UT_thr_percent, OT_thr_percent);
 }
 
 void OTUT_start(uint8_t bID) {
@@ -1391,7 +1391,7 @@ void OTUT_start(uint8_t bID) {
     reg &= ~(BIT(0) | BIT(1));
     reg |= BIT(2) | BIT(0);
     set_reg_value(bID, OTUT_CTRL, reg);
-    log_info("started OTUT");
+    bq_log_info("started OTUT");
 }
 
 void OTUT_stop(uint8_t bID) {
@@ -1399,12 +1399,12 @@ void OTUT_stop(uint8_t bID) {
     reg &= ~(BIT(0) | BIT(1));
     reg |= BIT(2);
     set_reg_value(bID, OTUT_CTRL, reg);
-    log_info("stopped OTUT");
+    bq_log_info("stopped OTUT");
 }
 
 bool get_OTUT_running(uint8_t bID) {
     bool running = get_reg_value(bID, DEV_STAT) & BIT(4);
-    log_info("OTUT running:%d", running);
+    bq_log_info("OTUT running:%d", running);
     return running;
 }
 
@@ -1416,12 +1416,12 @@ bool balancing_start(uint8_t bID) {
     uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
     ctrl2 |= BIT(1);
     set_reg_value(bID, BAL_CTRL2, ctrl2);
-    log_info("started balancing");
+    bq_log_info("started balancing");
     
     // check there is no config error
     bool cfg_err = get_reg_value(bID, BAL_STAT) & BIT(7);
     if(cfg_err) {
-        log_err("failed to start balancing - invalid balancing config detected");
+        bq_log_err("failed to start balancing - invalid balancing config detected");
     }
     return cfg_err;
 }
@@ -1444,36 +1444,36 @@ void balancing_pause(uint8_t bID, bool paused) {
         reg |= BIT(6);
     }
     set_reg_value(bID, BAL_CTRL2, reg);
-    log_info("balancing pause:%d", paused);
+    bq_log_info("balancing pause:%d", paused);
 }
 
 bool get_balancing_running(uint8_t bID) {
     bool running = get_reg_value(bID, BAL_STAT) & BIT(3);
-    log_info("cell balancing running:%d", running);
+    bq_log_info("cell balancing running:%d", running);
     return running;
 }
 
 bool get_balancing_done(uint8_t bID) {
     bool done = get_reg_value(bID, BAL_STAT) & BIT(0);
-    log_info("balancing done:%d", done);
+    bq_log_info("balancing done:%d", done);
     return done;
 }
 
 bool get_bal_OT(uint8_t bID) {
     bool paused = get_reg_value(bID, BAL_STAT) & BIT(6);
-    log_info("balancing over temp:%d", paused);
+    bq_log_info("balancing over temp:%d", paused);
     return paused;
 }
 
 bool get_bal_paused(uint8_t bID) {
     bool paused = get_reg_value(bID, BAL_STAT) & BIT(5);
-    log_info("balancing pause state:%d", paused);
+    bq_log_info("balancing pause state:%d", paused);
     return paused;
 }
 
 void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle) {
     if (duty_cycle > BAL_DUTY_30MIN) {
-        log_err("tried setting autobalancing with invalid duty cycle: 0x%02x", duty_cycle);
+        bq_log_err("tried setting autobalancing with invalid duty cycle: 0x%02x", duty_cycle);
         return;
     }
     
@@ -1485,7 +1485,7 @@ void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle) {
     ctrl2 |= BIT(0);
     set_reg_value(bID, BAL_CTRL2, ctrl2);
     
-    log_info("enabled auto cell balancing with duty cycle: 0x%02x", duty_cycle);
+    bq_log_info("enabled auto cell balancing with duty cycle: 0x%02x", duty_cycle);
 }
 
 void disable_auto_balancing(uint8_t bID) {
@@ -1493,26 +1493,26 @@ void disable_auto_balancing(uint8_t bID) {
     ctrl2 &= ~BIT(0);
     set_reg_value(bID, BAL_CTRL2, ctrl2);
     
-    log_info("disabled auto cell balancing");
+    bq_log_info("disabled auto cell balancing");
 }
 
 void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time) {
     if (cell_number == 0 || cell_number > 16) {
-        log_err("tried to set balancing timer of invalid cell:%d", cell_number);
+        bq_log_err("tried to set balancing timer of invalid cell:%d", cell_number);
         return;
     }
     if (time > BAL_TIME_600MIN) {
-        log_err("tried to set balancing time of cell %d with invalid time: 0x%02x", cell_number, time);
+        bq_log_err("tried to set balancing time of cell %d with invalid time: 0x%02x", cell_number, time);
         return;
     }
     
     set_reg_value(bID, CB_CELL1_CTRL - (cell_number - 1), (uint8_t)time);
-    log_info("set cell %d balance timer to 0x%02x", cell_number, time);
+    bq_log_info("set cell %d balance timer to 0x%02x", cell_number, time);
 }
 
 uint16_t get_balancing_timer(uint8_t bID, uint8_t cell_number) {
     if (cell_number == 0 || cell_number > 16) {
-        log_err("tried to get balancing timer of invalid cell:%d", cell_number);
+        bq_log_err("tried to get balancing timer of invalid cell:%d", cell_number);
         return UINT16_MAX;
     }
     
@@ -1522,7 +1522,7 @@ uint16_t get_balancing_timer(uint8_t bID, uint8_t cell_number) {
 
     // balancing isn't running error - 9.3.3.3.3 p43
     if (bal_time == 0x7f || bal_time == 0xff) {
-        log_err("tried to read cell %d balancing time left when balancing isn't running", cell_number);
+        bq_log_err("tried to read cell %d balancing time left when balancing isn't running", cell_number);
         return UINT16_MAX;
     }
     
@@ -1535,13 +1535,13 @@ uint16_t get_balancing_timer(uint8_t bID, uint8_t cell_number) {
         // result in 5x seconds
         seconds_left = bal_time * 5;
     }
-    log_info("cell %d balance time left: %us", cell_number, seconds_left);
+    bq_log_info("cell %d balance time left: %us", cell_number, seconds_left);
     return seconds_left;
 }
 
 bool get_balancing_cell_done(uint8_t bID, uint8_t cell_number) {
     if (cell_number == 0 || cell_number > 16) {
-        log_err("tried to get balancing done of invalid cell:%d", cell_number);
+        bq_log_err("tried to get balancing done of invalid cell:%d", cell_number);
         return false;
     }
     
@@ -1552,13 +1552,13 @@ bool get_balancing_cell_done(uint8_t bID, uint8_t cell_number) {
         done = get_reg_value(bID, CB_COMPLETE1) & BIT(cell_number - 1);
     }
     
-    log_info("cell %d balancing done:%d", cell_number, done);
+    bq_log_info("cell %d balancing done:%d", cell_number, done);
     return done;
 }
 
 void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr) {
     if (vcb_thr > CB_DONE_4000mV) {
-        log_err("tried to enable VCB stop, but threshold is invalid: 0x%02x", vcb_thr);
+        bq_log_err("tried to enable VCB stop, but threshold is invalid: 0x%02x", vcb_thr);
         return;
     }
     
@@ -1566,10 +1566,10 @@ void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr) {
     set_reg_value(bID, VCB_DONE_THRESH, (uint8_t)vcb_thr);
     
     // start OVUV detector
-    log_dbg("starting OVUV for VCB stop threshold detection");
+    bq_log_dbg("starting OVUV for VCB stop threshold detection");
     OVUV_start(bID);
     
-    log_info("enabled VCB stop detection - threshold: 0x%02x", vcb_thr);
+    bq_log_info("enabled VCB stop detection - threshold: 0x%02x", vcb_thr);
 }
 
 void enable_CB_stop_on_fault(uint8_t bID, bool stop) {
@@ -1580,16 +1580,16 @@ void enable_CB_stop_on_fault(uint8_t bID, bool stop) {
     }
     set_reg_value(bID, BAL_CTRL2, ctrl2);
     
-    log_info("set balancing stop on fault:%d", stop);
+    bq_log_info("set balancing stop on fault:%d", stop);
 }
 
 void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent) {
     if (OT_thr_percent > 24 || OT_thr_percent < 10) {
-        log_err("tried to enable OTCB but OT_thr is invalid:%d%%", OT_thr_percent);
+        bq_log_err("tried to enable OTCB but OT_thr is invalid:%d%%", OT_thr_percent);
         return;
     }
     if (cooloff_thr_percent > 14 || cooloff_thr_percent < 4) {
-        log_err("tried to enable OTCB but cooloff_thr is invalid:%d%%", cooloff_thr_percent);
+        bq_log_err("tried to enable OTCB but cooloff_thr is invalid:%d%%", cooloff_thr_percent);
         return;
     }
     
@@ -1604,15 +1604,15 @@ void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percen
     set_reg_value(bID, BAL_CTRL2, ctrl2);
     
     // enable OTUT
-    log_dbg("enabling OTUT for OTCB");
+    bq_log_dbg("enabling OTUT for OTCB");
     OTUT_start(bID);
     
-    log_info("enabled OTCB with OT threshold:%d%% and cooloff:%d%%", OT_thr_percent, cooloff_thr_percent);
+    bq_log_info("enabled OTCB with OT threshold:%d%% and cooloff:%d%%", OT_thr_percent, cooloff_thr_percent);
 }
 
 bool get_OTCB_enabled(uint8_t bID) {
     bool enabled = get_reg_value(bID, BAL_CTRL2) & BIT(4);
-    log_info("OTCB pause enabled:%d", enabled);
+    bq_log_info("OTCB pause enabled:%d", enabled);
     return enabled;
 }
 
@@ -1622,11 +1622,11 @@ bool get_OTCB_enabled(uint8_t bID) {
 // *****************************************************************************
 int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number) {
     if(cell_number == 0 || cell_number > 16) {
-        log_err("tried to read aux voltage from non existent cell : %d", cell_number);
+        bq_log_err("tried to read aux voltage from non existent cell : %d", cell_number);
         return INT16_MIN;
     }
     
-    log_dbg("reading cell voltage: %d", cell_number);
+    bq_log_dbg("reading cell voltage: %d", cell_number);
     
     int16_t hi = get_reg_value(bID, VCELL1_HI - 2 * (cell_number - 1));
     int16_t lo = get_reg_value(bID, VCELL1_LO - 2 * (cell_number - 1));
@@ -1635,11 +1635,11 @@ int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number) {
     // 0x8000 is the default value, so the ADC may not have run yet - log that if so
     if(v == 0x8000){
         if(!get_main_ADC_RR_complete(bID)){
-            log_err("tried to read voltage %d before main ADC has run - data is invalid", cell_number);   
+            bq_log_err("tried to read voltage %d before main ADC has run - data is invalid", cell_number);   
         }
     }
     
-    log_info("main adc v%d: %d = %fV", cell_number, v, v * V_LSB_ADC);
+    bq_log_info("main adc v%d: %d = %fV", cell_number, v, v * V_LSB_ADC);
     return v;
 }
 
@@ -1647,11 +1647,11 @@ int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number) {
     int16_t ret_val;
     
     if(cell_number == 0 || cell_number > 16) {
-        log_err("tried to read aux voltage from non existent cell : %d", cell_number);
+        bq_log_err("tried to read aux voltage from non existent cell : %d", cell_number);
         return INT16_MIN;
     }
     
-    log_dbg("reading aux cell voltage: %d", cell_number);
+    bq_log_dbg("reading aux cell voltage: %d", cell_number);
     
     // lock CB_MUX to a single cell
     uint8_t ctrl2 = get_reg_value(bID, ADC_CTRL2);
@@ -1659,37 +1659,37 @@ int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number) {
     ctrl2 |= cell_number + 1;
     set_reg_value(bID, ADC_CTRL2, ctrl2);
     set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
-    log_dbg("CB_MUX locked - ctrl2: 0x%02x", ctrl2);
+    bq_log_dbg("CB_MUX locked - ctrl2: 0x%02x", ctrl2);
     
     // wait for value to update
     int retrys = 10;
     while(!get_aux_ADC_RR_complete(bID) && --retrys); // waiting for one rr to complete
-    log_dbg("wait for aux RR to happen once done");
+    bq_log_dbg("wait for aux RR to happen once done");
     
     if(retrys == 0) {
-        log_dbg("wait timed out");
+        bq_log_dbg("wait timed out");
         if(!get_aux_ADC_running(bID)) {
-            log_err("cannot read aux voltage when aux adc is stopped - data is invalid");
+            bq_log_err("cannot read aux voltage when aux adc is stopped - data is invalid");
         }
         ret_val = INT16_MIN;
     } else {
         // read value
         ret_val = ((int16_t)get_reg_value(bID, AUX_CELL_HI) << 8) + (int16_t)get_reg_value(bID, AUX_CELL_LO);
-        log_dbg("aux hi/lo regs read");
+        bq_log_dbg("aux hi/lo regs read");
     }
     
     // unlock CB_MUX
     ctrl2 &= ~(BIT(4) | BIT(3) | BIT(2) | BIT(1) | BIT(0));
     set_reg_value(bID, ADC_CTRL2, ctrl2);
     set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
-    log_dbg("CB_MUX released");
+    bq_log_dbg("CB_MUX released");
     
-    log_info("aux adc v%d : %d = %fV", cell_number, ret_val, ret_val * V_LSB_ADC);
+    bq_log_info("aux adc v%d : %d = %fV", cell_number, ret_val, ret_val * V_LSB_ADC);
     return ret_val;
 }
 
 int16_t get_bat_voltage(uint8_t bID) {
-    log_dbg("reading BAT voltage");
+    bq_log_dbg("reading BAT voltage");
     
     int16_t hi = get_reg_value(bID, AUX_BAT_HI);
     int16_t lo = get_reg_value(bID, AUX_BAT_LO);
@@ -1698,16 +1698,16 @@ int16_t get_bat_voltage(uint8_t bID) {
     // 0x8000 is the default value, so the ADC may not have run yet - log that if so
     if(v == 0x8000){
         if(!get_main_ADC_RR_complete(bID)){
-            log_err("tried to read BAT voltage before main ADC has run - data is invalid");   
+            bq_log_err("tried to read BAT voltage before main ADC has run - data is invalid");   
         }
     }
     
-    log_info("BAT voltage: %d = %fV", v, v * V_LSB_AUX_BAT);
+    bq_log_info("BAT voltage: %d = %fV", v, v * V_LSB_AUX_BAT);
     return v;
 }
 
 int16_t get_BB_voltage(uint8_t bID) {  
-    log_dbg("reading bus bar voltage");
+    bq_log_dbg("reading bus bar voltage");
     
     int16_t hi = get_reg_value(bID, BUSBAR_HI);
     int16_t lo = get_reg_value(bID, BUSBAR_LO);
@@ -1716,18 +1716,18 @@ int16_t get_BB_voltage(uint8_t bID) {
     // 0x8000 is the default value, so the ADC may not have run yet - log that if so
     if(v == 0x8000){
         if(!get_main_ADC_RR_complete(bID)){
-            log_err("tried to read bus bar voltage before main ADC has run - data is invalid");   
+            bq_log_err("tried to read bus bar voltage before main ADC has run - data is invalid");   
         }
     }
     
-    log_info("main adc bus bar: %d = %fV", v, v * V_LSB_BB);
+    bq_log_info("main adc bus bar: %d = %fV", v, v * V_LSB_BB);
     return v;
 }
 
 int16_t get_BB_voltage_aux(uint8_t bID) {
         int16_t ret_val;
     
-    log_dbg("reading aux bus bar voltage");
+    bq_log_dbg("reading aux bus bar voltage");
     
     // lock CB_MUX to a single cell
     uint8_t ctrl2 = get_reg_value(bID, ADC_CTRL2);
@@ -1735,42 +1735,42 @@ int16_t get_BB_voltage_aux(uint8_t bID) {
     ctrl2 |= 1;
     set_reg_value(bID, ADC_CTRL2, ctrl2);
     set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
-    log_dbg("CB_MUX locked to busbar - ctrl2: 0x%02x", ctrl2);
+    bq_log_dbg("CB_MUX locked to busbar - ctrl2: 0x%02x", ctrl2);
     
     // wait for value to update
     int retrys = 10;
     while(!get_aux_ADC_RR_complete(bID) && --retrys); // waiting for one rr to complete
-    log_dbg("wait for aux RR to happen once done");
+    bq_log_dbg("wait for aux RR to happen once done");
     
     if(retrys == 0) {
-        log_dbg("wait timed out");
+        bq_log_dbg("wait timed out");
         if(!get_aux_ADC_running(bID)) {
-            log_err("cannot read aux bus bar voltage when aux adc is stopped - data is invalid");
+            bq_log_err("cannot read aux bus bar voltage when aux adc is stopped - data is invalid");
         }
         ret_val = INT16_MIN;
     } else {
         // read value
         ret_val = ((int16_t)get_reg_value(bID, AUX_CELL_HI) << 8) + (int16_t)get_reg_value(bID, AUX_CELL_LO);
-        log_dbg("aux hi/lo regs read");
+        bq_log_dbg("aux hi/lo regs read");
     }
     
     // unlock CB_MUX
     ctrl2 &= ~(BIT(4) | BIT(3) | BIT(2) | BIT(1) | BIT(0));
     set_reg_value(bID, ADC_CTRL2, ctrl2);
     set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
-    log_dbg("CB_MUX released");
+    bq_log_dbg("CB_MUX released");
     
-    log_info("aux bus bar: %d = %fV", ret_val, ret_val * V_LSB_BB);
+    bq_log_info("aux bus bar: %d = %fV", ret_val, ret_val * V_LSB_BB);
     return ret_val;
 }
 
 int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number) {
     if(gpio_number == 0 || gpio_number > 8) {
-        log_err("tried to read gpio voltage from non existent gpio : %d", gpio_number);
+        bq_log_err("tried to read gpio voltage from non existent gpio : %d", gpio_number);
         return INT16_MIN;
     }
     
-    log_dbg("reading gpio voltage: %d", gpio_number);
+    bq_log_dbg("reading gpio voltage: %d", gpio_number);
     
     int16_t hi = get_reg_value(bID, GPIO1_HI + 2 * (gpio_number - 1));
     int16_t lo = get_reg_value(bID, GPIO1_LO + 2 * (gpio_number - 1));
@@ -1779,18 +1779,18 @@ int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number) {
     // 0x8000 is the default value, so the ADC may not have run yet - log that if so
     if(v == 0x8000){
         if(!get_main_ADC_RR_complete(bID)){
-            log_err("tried to read gpio%d voltage before main ADC has run - data is invalid", gpio_number);   
+            bq_log_err("tried to read gpio%d voltage before main ADC has run - data is invalid", gpio_number);   
         }
         gpio_conf_t conf = get_gpio_conf(bID, gpio_number);
         if( conf == GPIO_CONF_DISABLED | 
             conf == GPIO_CONF_DIGITAL_INPUT |
             conf == GPIO_CONF_OUTPUT_HIGH |
             conf == GPIO_CONF_OUTPUT_LOW) {
-            log_err("tried to read gpio%d voltage when it isn't configured to ADC: conf=0x%02x", gpio_number, conf);
+            bq_log_err("tried to read gpio%d voltage when it isn't configured to ADC: conf=0x%02x", gpio_number, conf);
         }
     }
     
-    log_info("main adc gpio%d: %d = %fV", gpio_number, v, v * V_LSB_GPIO);
+    bq_log_info("main adc gpio%d: %d = %fV", gpio_number, v, v * V_LSB_GPIO);
     return v;
     
 }
@@ -1799,10 +1799,10 @@ int16_t get_tsref_voltage(uint8_t bID) {
     int16_t tsref_v  = ((int16_t)get_reg_value(bID, TSREF_HI) << 8) + (int16_t)get_reg_value(bID, TSREF_LO);
     if (tsref_v == INT16_MIN) {
         if(!get_main_ADC_running(bID)) {
-            log_err("tried to tsref voltage with main ADC not running - data invalid");
+            bq_log_err("tried to tsref voltage with main ADC not running - data invalid");
         }
     }
-    log_info("tsref: %d = %fV", tsref_v, tsref_v * V_LSB_TSREF);
+    bq_log_info("tsref: %d = %fV", tsref_v, tsref_v * V_LSB_TSREF);
     return tsref_v;
 }
 
@@ -1811,10 +1811,10 @@ int16_t get_die_temp_1(uint8_t bID) {
     int16_t temp  = ((int16_t)get_reg_value(bID, DIETEMP1_HI) << 8) + (int16_t)get_reg_value(bID, DIETEMP1_LO);
     if (temp == INT16_MIN) {
         if(!get_main_ADC_running(bID)) {
-            log_err("tried to read die temp 1 with main ADC not running - data invalid");
+            bq_log_err("tried to read die temp 1 with main ADC not running - data invalid");
         }
     }
-    log_info("Die temp 1: %d = %f'C", temp, temp * V_LSB_DIETEMP);
+    bq_log_info("Die temp 1: %d = %f'C", temp, temp * V_LSB_DIETEMP);
     return temp;
 }
 
@@ -1823,10 +1823,10 @@ int16_t get_die_temp_2(uint8_t bID) {
     int16_t temp  = ((int16_t)get_reg_value(bID, DIETEMP2_HI) << 8) + (int16_t)get_reg_value(bID, DIETEMP2_LO);
     if (temp == INT16_MIN) {
         if(!get_aux_ADC_running(bID)) {
-            log_err("tried to read die temp 2 with aux ADC not running - data invalid");
+            bq_log_err("tried to read die temp 2 with aux ADC not running - data invalid");
         }
     }
-    log_info("Die temp 2: %d = %f'C", temp, temp * V_LSB_DIETEMP);
+    bq_log_info("Die temp 2: %d = %f'C", temp, temp * V_LSB_DIETEMP);
     return temp;
 }
 

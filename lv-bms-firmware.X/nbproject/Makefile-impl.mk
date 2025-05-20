@@ -27,7 +27,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=lv-bms-firmware.X
 
 # Active Configuration
-DEFAULTCONF=BQ79600_test
+DEFAULTCONF=Full_firmware
 CONF=${DEFAULTCONF}
 
 # All Configurations

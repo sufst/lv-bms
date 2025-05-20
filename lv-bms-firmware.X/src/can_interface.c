@@ -117,8 +117,10 @@ void send_lockout_message() {
     tx_message(CAN_LOCKOUT_OFFSET, lockout_message, 4);
 }
 
-void can_init() {
-    // assumes CAN1_Initialize() has already been called
+void can_init() {   
+    CAN1_Initialize();
+    CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
+    
     while (CAN1_OperationModeGet() != CAN_NORMAL_2_0_MODE) {
         CAN_OP_MODE_STATUS status = CAN1_OperationModeSet(CAN_NORMAL_2_0_MODE);
         if (CAN_OP_MODE_REQUEST_SUCCESS != status) {
