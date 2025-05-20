@@ -55,7 +55,7 @@
 #define FALSE 0
 #define delayms(x) delay(x)
 #define delayus(x) delay(x/1000)
-#define BIT(x) (1 << x)
+#define BIT(x) (1 << (x))
 #define RESPONSE_DATA_START_INDEX    4U
 #define ACCUMULATION_DATA_SIZE       4U
 #define SW_OUTPUT_OFF                0U
@@ -556,35 +556,47 @@ int ReadReg(uint8_t bID,                   // device id
     bRes = 0;
     count = dwTimeOut; //timeout after this many attempts
     
-    switch (bWriteType){
-        case FRMWRT_SGL_R:
-//            memset(pData, 0, sizeof(pData)); // unsure what this does - it seems to just zero the first entry of the rx data buffer
-            ReadFrameReq(bID, wAddr, bLen, bWriteType);
-            bRes = (int)dma1_read_from_uart(pData, bLen + 6, dwTimeOut);
-            break;
-            
-        case FRMWRT_STK_R:
-            bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
-//            memset(pData, 0, sizeof(pData)); // unsure what this does - it seems to just zero the first entry of the rx data buffer
-            for(bRes = 0; bRes < (bLen + 6) * (TOTALBOARDS - 1); bRes++) {
-                while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
-                if(count == 0) return bRes;
-                pData[bRes] = UART4_Read();
-            }
-            break;
-            
-        default:
-            bRes = 0;
-            break;
-    }
+    bool correctly_rxed = false;
+    
+    for(int tries = 0; tries < 5; tries++) {
+        switch (bWriteType){
+            case FRMWRT_SGL_R:
+    //            memset(pData, 0, sizeof(pData)); // unsure what this does - it seems to just zero the first entry of the rx data buffer
+                ReadFrameReq(bID, wAddr, bLen, bWriteType);
+                bRes = (int)dma1_read_from_uart(pData, bLen + 6, dwTimeOut);
+                break;
 
-    //CHECK IF CRC IS CORRECT
-    for(crc_i=0; crc_i<bRes; crc_i+=(bLen+6))
-    {
-        if(CRC16(&pData[crc_i], bLen+6)!=0)
-        {
-            log_warn("BAD CRC reading reg: 0x%02x", wAddr);
+            case FRMWRT_STK_R:
+                bRes = ReadFrameReq(bID, wAddr, bLen, bWriteType);
+    //            memset(pData, 0, sizeof(pData)); // unsure what this does - it seems to just zero the first entry of the rx data buffer
+                for(bRes = 0; bRes < (bLen + 6) * (TOTALBOARDS - 1); bRes++) {
+                    while(!UART4_is_rx_ready() && count>0) count--; /* Wait for data*/
+                    if(count == 0) return bRes;
+                    pData[bRes] = UART4_Read();
+                }
+                break;
+
+            default:
+                bRes = 0;
+                break;
         }
+
+        //CHECK IF CRC IS CORRECT
+        for(crc_i=0; crc_i<bRes; crc_i+=(bLen+6)) {
+            if(CRC16(&pData[crc_i], bLen+6)!=0) {
+                log_warn("BAD CRC reading reg: 0x%02x, retrying (%d/5)", wAddr, tries);
+                break;
+            }
+        }
+        if(crc_i == bRes){
+            correctly_rxed = true;
+            break;
+        }
+    }
+    
+    if (!correctly_rxed) {
+        log_err("failed after 5 tries to rx, reset needed");
+        while(1);
     }
     
     return bRes;
@@ -1400,28 +1412,209 @@ bool get_OTUT_running(uint8_t bID) {
 // *****************************************************************************
 //  balancing
 // *****************************************************************************
-void balancing_start(uint8_t bID); // configure before starting!!
-void balancing_stop(uint8_t bID);
-void balancing_pause(uint8_t bID, bool paused);
-bool get_bal_paused(uint8_t bID);
+bool balancing_start(uint8_t bID) {
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 |= BIT(1);
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+    log_info("started balancing");
+    
+    // check there is no config error
+    bool cfg_err = get_reg_value(bID, BAL_STAT) & BIT(7);
+    if(cfg_err) {
+        log_err("failed to start balancing - invalid balancing config detected");
+    }
+    return cfg_err;
+}
 
-void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle); 
-void disable_auto_balancing(uint8_t bID);
-bool get_balancing_running(uint8_t bID);
+void balancing_stop(uint8_t bID) {
+    // set all the timers to 0, then send another go
+    for(uint8_t i=0; i<16; i++){
+        set_reg_value(bID, CB_CELL16_CTRL + i, 0);
+    }
+    
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 |= BIT(1);
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+}
 
-void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time); 
-BAL_TIME_t get_balancing_timer(uint8_t bID, uint8_t cell_number); 
-bool get_balancing_done(uint8_t bID, uint8_t cell_number);
+void balancing_pause(uint8_t bID, bool paused) {
+    uint8_t reg = get_reg_value(bID, BAL_CTRL2);
+    reg &= ~BIT(6);
+    if(paused) {
+        reg |= BIT(6);
+    }
+    set_reg_value(bID, BAL_CTRL2, reg);
+    log_info("balancing pause:%d", paused);
+}
 
-void set_module_balancing_timer(uint8_t bID, BAL_TIME_t time);
-BAL_TIME_t get_module_balancing_timer(uint8_t bID);
-bool get_module_balancing_done(uint8_t bID);
+bool get_balancing_running(uint8_t bID) {
+    bool running = get_reg_value(bID, BAL_STAT) & BIT(3);
+    log_info("cell balancing running:%d", running);
+    return running;
+}
 
-void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr);
-void enable_VMB_stop_thres(uint8_t bID, uint8_t vmb_thr);
+bool get_balancing_done(uint8_t bID) {
+    bool done = get_reg_value(bID, BAL_STAT) & BIT(0);
+    log_info("balancing done:%d", done);
+    return done;
+}
 
-void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent);
-bool get_OTCB_running(uint8_t bID);
+bool get_bal_OT(uint8_t bID) {
+    bool paused = get_reg_value(bID, BAL_STAT) & BIT(6);
+    log_info("balancing over temp:%d", paused);
+    return paused;
+}
+
+bool get_bal_paused(uint8_t bID) {
+    bool paused = get_reg_value(bID, BAL_STAT) & BIT(5);
+    log_info("balancing pause state:%d", paused);
+    return paused;
+}
+
+void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle) {
+    if (duty_cycle > BAL_DUTY_30MIN) {
+        log_err("tried setting autobalancing with invalid duty cycle: 0x%02x", duty_cycle);
+        return;
+    }
+    
+    // set duty cycle
+    set_reg_value(bID, BAL_CTRL1, (uint8_t)duty_cycle);
+    
+    // enable
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 |= BIT(0);
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+    
+    log_info("enabled auto cell balancing with duty cycle: 0x%02x", duty_cycle);
+}
+
+void disable_auto_balancing(uint8_t bID) {
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 &= ~BIT(0);
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+    
+    log_info("disabled auto cell balancing");
+}
+
+void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time) {
+    if (cell_number == 0 || cell_number > 16) {
+        log_err("tried to set balancing timer of invalid cell:%d", cell_number);
+        return;
+    }
+    if (time > BAL_TIME_600MIN) {
+        log_err("tried to set balancing time of cell %d with invalid time: 0x%02x", cell_number, time);
+        return;
+    }
+    
+    set_reg_value(bID, CB_CELL1_CTRL - (cell_number - 1), (uint8_t)time);
+    log_info("set cell %d balance timer to 0x%02x", cell_number, time);
+}
+
+uint16_t get_balancing_timer(uint8_t bID, uint8_t cell_number) {
+    if (cell_number == 0 || cell_number > 16) {
+        log_err("tried to get balancing timer of invalid cell:%d", cell_number);
+        return UINT16_MAX;
+    }
+    
+    // load the cell timer we want into the cell time register
+    set_reg_value(bID, BAL_CTRL3, (uint8_t)((cell_number - 1) << 1) | BIT(0));
+    uint8_t bal_time = get_reg_value(bID, BAL_TIME);
+
+    // balancing isn't running error - 9.3.3.3.3 p43
+    if (bal_time == 0x7f || bal_time == 0xff) {
+        log_err("tried to read cell %d balancing time left when balancing isn't running", cell_number);
+        return UINT16_MAX;
+    }
+    
+    // decoding its answer - see datasheet 9.5.4.7.11 p159 
+    uint16_t seconds_left;
+    if (bal_time & BIT(7)) {
+        // result in 5x minutes
+        seconds_left = (bal_time & ~BIT(7)) * 300;
+    } else {
+        // result in 5x seconds
+        seconds_left = bal_time * 5;
+    }
+    log_info("cell %d balance time left: %us", cell_number, seconds_left);
+    return seconds_left;
+}
+
+bool get_balancing_cell_done(uint8_t bID, uint8_t cell_number) {
+    if (cell_number == 0 || cell_number > 16) {
+        log_err("tried to get balancing done of invalid cell:%d", cell_number);
+        return false;
+    }
+    
+    bool done;
+    if (cell_number > 8) {
+        done = get_reg_value(bID, CB_COMPLETE2) & BIT(cell_number - 9);
+    } else {
+        done = get_reg_value(bID, CB_COMPLETE1) & BIT(cell_number - 1);
+    }
+    
+    log_info("cell %d balancing done:%d", cell_number, done);
+    return done;
+}
+
+void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr) {
+    if (vcb_thr > CB_DONE_4000mV) {
+        log_err("tried to enable VCB stop, but threshold is invalid: 0x%02x", vcb_thr);
+        return;
+    }
+    
+    // set the threshold
+    set_reg_value(bID, VCB_DONE_THRESH, (uint8_t)vcb_thr);
+    
+    // start OVUV detector
+    log_dbg("starting OVUV for VCB stop threshold detection");
+    OVUV_start(bID);
+    
+    log_info("enabled VCB stop detection - threshold: 0x%02x", vcb_thr);
+}
+
+void enable_CB_stop_on_fault(uint8_t bID, bool stop) {
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 &= ~BIT(5);
+    if(stop) {
+        ctrl2 |= BIT(5);
+    }
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+    
+    log_info("set balancing stop on fault:%d", stop);
+}
+
+void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent) {
+    if (OT_thr_percent > 24 || OT_thr_percent < 10) {
+        log_err("tried to enable OTCB but OT_thr is invalid:%d%%", OT_thr_percent);
+        return;
+    }
+    if (cooloff_thr_percent > 14 || cooloff_thr_percent < 4) {
+        log_err("tried to enable OTCB but cooloff_thr is invalid:%d%%", cooloff_thr_percent);
+        return;
+    }
+    
+    // set threshold
+    uint8_t cooloff = (cooloff_thr_percent - 4) / 2;
+    uint8_t otcb_thr = (OT_thr_percent - 10) / 2;
+    set_reg_value(bID, OTCB_THRESH, (uint8_t)(cooloff << 4) | otcb_thr);
+    
+    // enable OTCB in ctrl2
+    uint8_t ctrl2 = get_reg_value(bID, BAL_CTRL2);
+    ctrl2 |= BIT(4);
+    set_reg_value(bID, BAL_CTRL2, ctrl2);
+    
+    // enable OTUT
+    log_dbg("enabling OTUT for OTCB");
+    OTUT_start(bID);
+    
+    log_info("enabled OTCB with OT threshold:%d%% and cooloff:%d%%", OT_thr_percent, cooloff_thr_percent);
+}
+
+bool get_OTCB_enabled(uint8_t bID) {
+    bool enabled = get_reg_value(bID, BAL_CTRL2) & BIT(4);
+    log_info("OTCB pause enabled:%d", enabled);
+    return enabled;
+}
 
 
 // *****************************************************************************
@@ -1495,8 +1688,81 @@ int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number) {
     return ret_val;
 }
 
-int16_t get_BB_voltage(uint8_t bID); 
-int16_t get_BB_voltage_aux(uint8_t bID); 
+int16_t get_bat_voltage(uint8_t bID) {
+    log_dbg("reading BAT voltage");
+    
+    int16_t hi = get_reg_value(bID, AUX_BAT_HI);
+    int16_t lo = get_reg_value(bID, AUX_BAT_LO);
+    int16_t v = lo + (hi << 8);
+    
+    // 0x8000 is the default value, so the ADC may not have run yet - log that if so
+    if(v == 0x8000){
+        if(!get_main_ADC_RR_complete(bID)){
+            log_err("tried to read BAT voltage before main ADC has run - data is invalid");   
+        }
+    }
+    
+    log_info("BAT voltage: %d = %fV", v, v * V_LSB_AUX_BAT);
+    return v;
+}
+
+int16_t get_BB_voltage(uint8_t bID) {  
+    log_dbg("reading bus bar voltage");
+    
+    int16_t hi = get_reg_value(bID, BUSBAR_HI);
+    int16_t lo = get_reg_value(bID, BUSBAR_LO);
+    int16_t v = lo + (hi << 8);
+    
+    // 0x8000 is the default value, so the ADC may not have run yet - log that if so
+    if(v == 0x8000){
+        if(!get_main_ADC_RR_complete(bID)){
+            log_err("tried to read bus bar voltage before main ADC has run - data is invalid");   
+        }
+    }
+    
+    log_info("main adc bus bar: %d = %fV", v, v * V_LSB_BB);
+    return v;
+}
+
+int16_t get_BB_voltage_aux(uint8_t bID) {
+        int16_t ret_val;
+    
+    log_dbg("reading aux bus bar voltage");
+    
+    // lock CB_MUX to a single cell
+    uint8_t ctrl2 = get_reg_value(bID, ADC_CTRL2);
+    ctrl2 &= ~(BIT(4) | BIT(3) | BIT(2) | BIT(1) | BIT(0));
+    ctrl2 |= 1;
+    set_reg_value(bID, ADC_CTRL2, ctrl2);
+    set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
+    log_dbg("CB_MUX locked to busbar - ctrl2: 0x%02x", ctrl2);
+    
+    // wait for value to update
+    int retrys = 10;
+    while(!get_aux_ADC_RR_complete(bID) && --retrys); // waiting for one rr to complete
+    log_dbg("wait for aux RR to happen once done");
+    
+    if(retrys == 0) {
+        log_dbg("wait timed out");
+        if(!get_aux_ADC_running(bID)) {
+            log_err("cannot read aux bus bar voltage when aux adc is stopped - data is invalid");
+        }
+        ret_val = INT16_MIN;
+    } else {
+        // read value
+        ret_val = ((int16_t)get_reg_value(bID, AUX_CELL_HI) << 8) + (int16_t)get_reg_value(bID, AUX_CELL_LO);
+        log_dbg("aux hi/lo regs read");
+    }
+    
+    // unlock CB_MUX
+    ctrl2 &= ~(BIT(4) | BIT(3) | BIT(2) | BIT(1) | BIT(0));
+    set_reg_value(bID, ADC_CTRL2, ctrl2);
+    set_reg_value(bID, ADC_CTRL3, get_reg_value(bID, ADC_CTRL3) | BIT(2)); // aux ADC GO
+    log_dbg("CB_MUX released");
+    
+    log_info("aux bus bar: %d = %fV", ret_val, ret_val * V_LSB_BB);
+    return ret_val;
+}
 
 int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number) {
     if(gpio_number == 0 || gpio_number > 8) {
@@ -1524,7 +1790,7 @@ int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number) {
         }
     }
     
-    log_info("main adc gpio%d: %d = %fV", gpio_number, v, v * V_LSB_ADC);
+    log_info("main adc gpio%d: %d = %fV", gpio_number, v, v * V_LSB_GPIO);
     return v;
     
 }
@@ -1536,7 +1802,7 @@ int16_t get_tsref_voltage(uint8_t bID) {
             log_err("tried to tsref voltage with main ADC not running - data invalid");
         }
     }
-    log_info("tsref: %d = %fV", tsref_v, tsref_v * V_LSB_ADC);
+    log_info("tsref: %d = %fV", tsref_v, tsref_v * V_LSB_TSREF);
     return tsref_v;
 }
 
@@ -1563,448 +1829,6 @@ int16_t get_die_temp_2(uint8_t bID) {
     log_info("Die temp 2: %d = %f'C", temp, temp * V_LSB_DIETEMP);
     return temp;
 }
-
-
-
-//RUN BASIC CELL BALANCING FOR ALL DEVICES
-/*
-void RunCB()
-{
-    //SET BALANCING TIMERS TO 30 s
-    WriteReg(0, CB_CELL16_CTRL, 0x0202020202020202, 8, WriteType);   //cell 16-9 (8 byte max write)
-    WriteReg(0, CB_CELL8_CTRL, 0x0202020202020202, 8, WriteType);    //cell 8-1
-
-    //SET DUTY CYCLE TO 10 s (default)
-    WriteReg(0, BAL_CTRL1, 0x01, 1, WriteType);   //10s duty cycle
-
-    //OPTIONAL: SET VCBDONE THRESH TO 3V, AND OVUV_GO
-    WriteReg(0, VCB_DONE_THRESH, 0x08, 1, WriteType);    //3V threshold (8*25mV + 2.8V)
-    WriteReg(0, OVUV_CTRL, 0x05, 1, WriteType);          //round-robin and OVUV_GO
-
-    //START BALANCING
-    WriteReg(0, BAL_CTRL2, 0x03, 1, WriteType); //auto balance and BAL_GO
-}
-*/
-
-#if 0
-/** @fn int ReadDeviceStat2(uint8_t *)
-*   @brief Read the device stat register 
-*   @note This function is empty by default.
-*
-*   This function is called after startup.
-*   The function reads the Dev_stat2 register and returns if the Coulomb count
-*   feature is enabled.
-*/
-#if UART_COMM == TRUE
-int ReadDeviceStat2(uint8_t *response_frame)
-#else
-int ReadDeviceStat2(uint8_t *response_frame)
-#endif
-{
-   int retval = 0U;
-
-   ReadReg(0, DEV_STAT2, response_frame, 1, 0, ReadType);
-   for(currentBoard=0; currentBoard<TOTALBOARDS; currentBoard++)
-   {
-      printf("Dev_Stat2 val for stack dev id %d is 0x%x\n", currentBoard, response_frame[RESPONSE_DATA_START_INDEX + currentBoard]);
-      /* Check if the Coulomb count function is running */
-      if ( 0x1U != ((response_frame[RESPONSE_DATA_START_INDEX + currentBoard] >> 0x5U) &  0x1U ))
-      {
-         retval = -1;
-         break; 
-      }
-   }
-
-   return retval;
-}
-
-/** @fn void ReadCoulumbCount(uint8_t *)
-*   @brief Read the coulomb count accumulation data value 
-*   @note This function is empty by default.
-*
-*   This function is called periodically.
-*   The function reads the accumulation data register and prints its value 
-*/
-
-#if UART_COMM == TRUE
-void ReadCoulumbCount(uint8_t *response_frame, uint8_t rshunt_u8)
-#else
-void ReadCoulumbCount(uint8_t *response_frame, uint8_t rshunt_u8)
-#endif
-{
-    int i = 0U;
-    uint32 cc_acc_val_u32;
-    uint8_t cc_cnt_u8;
-
-    /* Do CC_CLR */
-    WriteReg(0, CC_CTRL, 0x07, 1, WriteType);
-
-    
-    /* Read the CC Accumulation data ( 4 bytes for each stack device ) */
-    ReadReg(0U, CC_ACC_HI, response_frame, ACCUMULATION_DATA_SIZE, 0U, ReadType);
-
-    for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + (TOTALBOARDS * ACCUMULATION_DATA_SIZE)); 
-		    i += ACCUMULATION_DATA_SIZE )
-    {
-       cc_acc_val_u32 = response_frame[i] << 24;
-       cc_acc_val_u32 = response_frame[i + 1] << 16;
-       cc_acc_val_u32 = response_frame[i + 2] << 8;
-       cc_acc_val_u32 = response_frame[i + 3];
-    }
-
-    ReadReg(0U, CC_CNT, response_frame, 1U, 0U, ReadType);
-    cc_cnt_u8 = response_frame[RESPONSE_DATA_START_INDEX];
-
-    if ( cc_cnt_u8 < 0xFFU )
-    {
-       printf("value of Iaverage %f\n", (cc_acc_val_u32 * VLSB_CS ) / ( rshunt_u8 * cc_cnt_u8));
-       printf("value of coulomb count %f\n", (cc_acc_val_u32 * VLSB_CS * TCS_REFRESH * cc_cnt_u8) 
-		                                 / (rshunt_u8) );
-    }
-}
-
-/** @fn void ConfigureOverCurrent(void)
-*   @brief configures over current register on BQ79631 stack device 
-*   @note This function is empty by default.
-*
-*   This function is called at startup.
-*   The function write 'DIAG_OC_CTRL1' and 'DIAG_OC_CTRL2' registers 
-*/
-void ConfigureOverCurrent()
-{
-    /* Set the over current diagnostic injection level */
-    WriteReg(0, DIAG_OC_CTRL1, 0xFF, 1, WriteType);
-    delayms(10);
-    /* Enable Over current diagnostics by setting 'DIAG_OC_MODE' and 'DIAG_OC_GO' */
-    WriteReg(0, DIAG_OC_CTRL2, 0x03, 1, WriteType);
-}
-
-/** @fn void ReadDebugRegisters(uint8_t *)
-*   @brief Read the debug register values and prints its value
-*   @note This function is empty by default.
-*
-*   This function is called periodically.
-*   The function reads the debug register and prints its value 
-*/
-
-#if UART_COMM == TRUE
-void ReadDebugRegisters(uint8_t *response_frame)
-#elif SPI_COMM == TRUE
-void ReadDebugRegisters(uint8_t *response_frame)
-#endif
-{
-   fault_summary_t flt_summary;
-   fault_adc_misc_t flt_adc_misc;
-   fault_pwr1_t fault_pwr1;
-   fault_pwr2_t fault_pwr2;
-   fault_comm1_t flt_comm1;
-   fault_comm2_t flt_comm2;
-   fault_otp_t flt_otp;
-   fault_sys1_t flt_sys1;
-   fault_sys2_t flt_sys2;
-   fault_adc_gpio1_t flt_adc_gpio1;
-   fault_adc_gpio2_t flt_adc_gpio2;
-   fault_adc_vf_t flt_adc_vf;
-   fault_adc_dig1_t flt_adc_dig1;
-   fault_adc_dig2_t flt_adc_dig2;
-   fault_oc_t flt_oc;
-   uint8_t i = 0;
-
-
-   ReadReg(0, FAULT_SUMMARY, response_frame, 1, 0, ReadType);
-
-   for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-   {
-      flt_summary.fault_summary = response_frame[i];
-   
-      printf("Fault summary val is 0x%x and 0x%x\n", flt_summary.fault_summary, response_frame[i]);
-   
-      printf(" FAULT SUMMARY: Over current fault: %d   ADC / CC fault : %d system fault   : %d \n", 
-                   flt_summary.fs.fault_oc_b1, flt_summary.fs.fault_adc_cc_b1, flt_summary.fs.fault_sys_b1);
-      printf(" FAULT SUMMARY: otp fault         : %d   Comm fault     : %d power  fault   : %d \n", 
-                   flt_summary.fs.fault_otp_b1, flt_summary.fs.fault_comm_b1, flt_summary.fs.fault_pwr_b1);
-   }
-
-   if ( TRUE == flt_summary.fs.fault_pwr_b1 )
-   {
-      ReadReg(0, FAULT_PWR1, response_frame, 1, 0, ReadType);
-
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         fault_pwr1.fault_pwr1 = response_frame[i];
-         printf("Fault power1 val is 0x%x\n", fault_pwr1.fault_pwr1);
-      
-         printf(" FAULT POWER1 : PWRBIST FAIL  : %d   VSS_OPEN       : %d TSREF_OSC      : %d \n", 
-                   fault_pwr1.fs.pwrbist_fail_b1, fault_pwr1.fs.vss_open_b1, fault_pwr1.fs.tsref_osc_b1);
-         printf(" FAULT POWER1 : TSREF_UV      : %d   TSREF_OV       : %d DVDD_OV        : %d \n", 
-                   fault_pwr1.fs.tsref_uv_b1, fault_pwr1.fs.tsref_ov_b1, fault_pwr1.fs.dvdd_ov_b1);
-         printf(" FAULT POWER1 : AVDD_OSC      : %d   AVDD_OV        : %d \n", 
-                   fault_pwr1.fs.avdd_osc_b1, fault_pwr1.fs.avdd_ov_b1);
-      }
-      
-      ReadReg(0, FAULT_PWR2, response_frame, 1, 0, ReadType);
-
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         fault_pwr2.fault_pwr2 = response_frame[i];
-         printf("Fault power1 val is 0x%x\n", fault_pwr2.fault_pwr2);
-      
-         printf(" FAULT POWER2 : CP OV         : %d   CP UV          : %d \n", 
-                   fault_pwr2.fs.cp_ov_b1, fault_pwr2.fs.cp_uv_b1);
-      }
-   }
-   else
-   {
-      /* Do nothing */
-   }
-
-   if ( TRUE == flt_summary.fs.fault_comm_b1 )
-   {
-      ReadReg(0, FAULT_COMM1, response_frame, 1, 0, ReadType);
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_comm1.fault_comm1 = response_frame[i];
-         printf("Fault comm1 val is 0x%x\n", flt_comm1.fault_comm1);
-      
-         printf(" FAULT COMM1 : FCOMM_DET     : %d   FTONE_DET       : %d HB_FAIL        : %d \n", 
-                   flt_comm1.fs.fcomm_det_b1, flt_comm1.fs.ftone_det_b1, flt_comm1.fs.hb_fail_b1);
-         printf(" FAULT COMM1 : COML          : %d   COMH            : %d uart_frame     : %d \n", 
-                   flt_comm1.fs.coml_b1, flt_comm1.fs.comh_b1, flt_comm1.fs.uart_frame_b1);
-         printf(" FAULT COMM1 : COMM_CLR_DET  : %d   STOP_DET        : %d \n", 
-                   flt_comm1.fs.comm_clr_det_b1, flt_comm1.fs.stop_det_b1);
-      }
-   
-      ReadReg(0, FAULT_COMM2, response_frame, 1, 0, ReadType);
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_comm2.fault_comm2 = response_frame[i];
-         printf("Fault comm2 val is 0x%x\n", flt_comm2.fault_comm2);
-      
-         printf(" FAULT COMM2 :  VIF_DIS      : %d   SPI             : %d \n", 
-                   flt_comm2.fs.vif_dis_b1, flt_comm2.fs.spi_b1);
-      }
-   }
-   else
-   {
-      /* Do nothing */
-   }
-  
-   if ( TRUE == flt_summary.fs.fault_otp_b1 )
-   {
-      ReadReg(0, FAULT_OTP, response_frame, 1, 0, ReadType);
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_otp.fault_otp = response_frame[i];
-         printf("Fault otp val is 0x%x\n", flt_otp.fault_otp);
-      
-         printf(" FAULT OTP : DED_DET         : %d   SEC_DET         : %d CUST_CRC       : %d \n", 
-                   flt_otp.fs.ded_det_b1, flt_otp.fs.sec_det_b1, flt_otp.fs.cust_crc_b1);
-         printf(" FAULT OTP : FACT CRC        : %d   LOAD ERR        : %d GBLOV ERR      : %d \n", 
-                   flt_otp.fs.fact_crc_b1, flt_otp.fs.load_err_b1, flt_otp.fs.gblov_err_b1);
-      }
-   }
-   else
-   {
-      /* Do nothing */
-   }
-
-   if ( TRUE == flt_summary.fs.fault_sys_b1 )
-   {
-      ReadReg(0, FAULT_SYS1, response_frame, 1, 0, ReadType);
-
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_sys1.fault_sys1 = response_frame[i];
-         printf("Fault sys1 val is 0x%x\n", flt_sys1.fault_sys1);
-      
-         printf(" FAULT SYS1 : GPIO           : %d   I2C low         : %d I2C NACK       : %d \n", 
-                   flt_sys1.fs.gpio_b1, flt_sys1.fs.i2c_low_b1, flt_sys1.fs.i2c_nack_b1);
-         printf(" FAULT SYS1 : LFO            : %d   DRST            : %d TSHUT          : %d \n", 
-                   flt_sys1.fs.lfo_b1, flt_sys1.fs.drst_b1, flt_sys1.fs.tshut_b1);
-      }
-
-      ReadReg(0, FAULT_SYS2, response_frame, 1, 0, ReadType);
-
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_sys2.fault_sys2 = response_frame[i];
-         printf("Fault sys2 val is 0x%x\n", flt_sys2.fault_sys2);
-      
-         printf(" FAULT SYS2 :  I2C BUSY      : %d   MSPI_BUSY       : %d MSPI_SS        : %d\n", 
-                   flt_sys2.fs.i2c_busy_b1, flt_sys2.fs.mspi_busy_b1, flt_sys2.fs.mspi_ss_b1);
-      }
-   }
-   else
-   {
-      /* Do nothing */
-   }
-   
-   if ( TRUE == flt_summary.fs.fault_adc_cc_b1 )
-   {
-      ReadReg(0, FAULT_ADC_GPIO1, response_frame, 1, 0, ReadType);
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_adc_gpio1.fault_adc_gpio1 = response_frame[i];
-      
-         printf(" FAULT GPIO1 : GPIO15 AFAIL  : %d   GPIO14 AFAIL    : %d GPIO13 AFAIL   : %d \n", 
-                      flt_adc_gpio1.fs.gpio15_afail_b1, flt_adc_gpio1.fs.gpio14_afail_b1, flt_adc_gpio1.fs.gpio13_afail_b1);
-         printf(" FAULT GPIO1 : GPIO12 AFAIL  : %d   GPIO11 AFAIL    : %d GPIO10 AFAIL   : %d \n", 
-                      flt_adc_gpio1.fs.gpio12_afail_b1, flt_adc_gpio1.fs.gpio11_afail_b1, flt_adc_gpio1.fs.gpio10_afail_b1);
-         printf(" FAULT GPIO1 : GPIO9_AFAIL   : %d \n", 
-                      flt_adc_gpio1.fs.gpio9_afail_b1);
-      }
-   
-      ReadReg(0, FAULT_ADC_GPIO2, response_frame, 1, 0, ReadType);
-      
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_adc_gpio2.fault_adc_gpio2 = response_frame[i];
-      
-         printf(" FAULT GPIO2 : GPIO8 AFAIL   : %d   GPIO7 AFAIL    : %d GPIO6 AFAIL   : %d \n", 
-                      flt_adc_gpio2.fs.gpio8_afail_b1, flt_adc_gpio2.fs.gpio7_afail_b1, flt_adc_gpio2.fs.gpio6_afail_b1);
-         printf(" FAULT GPIO2 : GPIO5 AFAIL   : %d   GPIO4 AFAIL    : %d GPIO3 AFAIL   : %d \n", 
-                      flt_adc_gpio2.fs.gpio5_afail_b1, flt_adc_gpio2.fs.gpio4_afail_b1, flt_adc_gpio2.fs.gpio3_afail_b1);
-         printf(" FAULT GPIO2 : GPIO2_AFAIL   : %d  GPIO1_AFAIL     : %d \n", 
-                      flt_adc_gpio2.fs.gpio2_afail_b1, flt_adc_gpio2.fs.gpio1_afail_b1);
-      }
-   
-      ReadReg(0, FAULT_ADC_VF, response_frame, 1, 0, ReadType);
-      
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_adc_vf.fault_adc_vf = response_frame[i];
-      
-         printf(" FAULT ADC VF : VF2_AFAIL    : %d  VF1_AFAIL       : %d \n", 
-                      flt_adc_vf.fs.vf2_afail_b1, flt_adc_vf.fs.vf1_afail_b1);
-      }
-   
-      ReadReg(0, FAULT_ADC_DIG1, response_frame, 1, 0, ReadType);
-      
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_adc_dig1.fault_adc_dig1 = response_frame[i];
-        
-         printf(" FAULT ADC DIG1 : GP3_DFAIL  : %d  GP1_DFAIL       : %d \n", 
-                      flt_adc_dig1.fs.gp3_dfail_b1, flt_adc_dig1.fs.gp1_dfail_b1);
-      }
-   
-      ReadReg(0, FAULT_ADC_DIG2, response_frame, 1, 0, ReadType);
-   
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         flt_adc_dig2.fault_adc_dig2 = response_frame[i];
-      
-         printf(" FAULT ADC VF : VF1_DFAIL    : %d  VF2_DFAIL       : %d \n", 
-                      flt_adc_dig2.fs.vf1_dfail_b1, flt_adc_dig2.fs.vf2_dfail_b1);
-      }
-   
-      ReadReg(0, FAULT_ADC_MISC, response_frame, 1, 0, ReadType);
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         printf("Fault ADC MISC val is 0x%x\n", response_frame[i]);
-         flt_adc_misc.fault_adc_misc = response_frame[4];
-      
-         printf(" FAULT ADC MISC: CC overflow : %d   adc pfail      : %d diag meas pfail: %d \n", 
-                     flt_adc_misc.fs.cc_ovf_b1, flt_adc_misc.fs.adc_pfail_b1, flt_adc_misc.fs.diag_meas_pfail_b1);
-         printf(" FAULT ADC MISC: diag ana pfail: %d   diag ana abort : %d \n", 
-                     flt_adc_misc.fs.diag_ana_pfail_b1, flt_adc_misc.fs.diag_ana_abort_b1);
-      }
-   
-      ReadReg(0, FAULT_OC, response_frame, 1, 0, ReadType);
-   
-      for ( i = RESPONSE_DATA_START_INDEX; i < (RESPONSE_DATA_START_INDEX + TOTALBOARDS); i++ )
-      {
-         printf("Fault over current val is 0x%x\n", response_frame[4]);
-      
-         flt_oc.fault_oc = response_frame[i];
-      
-         printf(" FAULT OC: DIAG_OC_ABORT     : %d   OCC2           : %d OCD2           : %d \n", 
-                     flt_oc.fs.diag_oc_abort_b1, flt_oc.fs.occ2_b1, flt_oc.fs.ocd2_b1);
-      
-         printf(" FAULT OC: OC PFAIL          : %d   OCC1           : %d OCD1           : %d \n", 
-                     flt_oc.fs.oc_pfail_b1, flt_oc.fs.occ1_b1, flt_oc.fs.ocd1_b1);
-      }
-   }
-   else
-   {
-      /* Do nothing */
-   }
-}
-
-/** @fn void set_SW_CTRL(uint8_t pinNum, uint8_t value)
-*   @brief set the value of SW_CTRL register 
-*   takes the SW pin number and the value to set the pin high / low
-*/
-
-void set_SW_CTRL(uint8_t pinNum, uint8_t value )
-{
-    printf("Writing SW_CTRL with value %x\n", (value << ((pinNum - 1U) * 2)));
-
-    if ((value <= SW_OUTPUT_HIGH) || 
-	    (pinNum <= 4))
-    { 
-       WriteReg(0, SW_CTRL, (value << ((pinNum - 1U) * 2)), 1U, WriteType);
-    }
-    else
-    {
-       /* Do nothing */
-       printf("SW_CTRL arguments out of range\n");
-    }
-}
-
-/** @fn void set_GPIO_Out_Val(uint8_t pinNum, boolean value)
-*   @brief set the value of GPIO[1 - 15] output High / Low 
-*   takes the gpio number and the value its output to high / low
-*/
-
-void set_GPIO_Out_Val(uint8_t gpioNum, uint8_t val )
-{
-   uint8_t value = 0;
-   if ( gpioNum > 8U )
-   {
-       /*  decrement gpioNum with 9 to index bit 0 to bit 6 to represent 
-	*  gpio num 9 to 15 */
-       value |= (val << (gpioNum - 9U));
-       WriteReg(0, GPIO_CTRL1, value, 1U, WriteType);
-       printf("Set GPIO_CTRL1 val %x\n", value);
-   }
-   else
-   {
-       /* bit index starts from 0 so decrement gpioNum by 1 */
-       value |= (val << (gpioNum - 1U));
-       WriteReg(0, GPIO_CTRL2, value, 1U, WriteType);
-       printf("Set GPIO_CTRL2 val %x\n", value);
-   }
-
-}
-
-/** @fn void set_GPIO_As_PWM(uint8_t gpioNum, boolean val)
-*   @brief set GPIO[12 - 15] as PWM or GPIO 
-*   takes the gpio number and the value representing PWM / GPIO 
-*/
-
-void set_GPIO_As_PWM(uint8_t gpioNum, uint8_t val )
-{
-   uint8_t value = 0;
-   if ( (gpioNum >= 12U) && (gpioNum < 16U)  )
-   {
-       /*  decrement gpioNum with 9 to index bit 0 to bit 6 to represent 
-	*  gpio num 9 to 15 */
-       value |= (val << (gpioNum - 9U));
-       WriteReg(0, GPIO_PWM_CTRL, value, 1U, WriteType);
-       printf("Set GPIO_PWM_CTRL val %x\n", value);
-   }
-   else
-   {
-       /* Do nothing */       
-       printf("GPIO number argument is incorrect\n");
-   }
-
-}
-#endif
-//***************************
-//END MISCELLANEOUS FUNCTIONS
-//***************************
 
 //EOF
 

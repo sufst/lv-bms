@@ -49,7 +49,12 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #define UART_COMM     TRUE
 #define BQ796XX_FAULT_PRINTS // enables the debug prints for the faults 
 #define TOTALBOARDS 1       //boards in stack
-#define V_LSB_ADC 190.73f*0.000001 // mV/LSB
+#define V_LSB_ADC       190.73f*0.000001 // V/LSB
+#define V_LSB_BB         30.52f*0.000001 // V/LSB
+#define V_LSB_GPIO      152.59f*0.000001 // V/LSB
+#define V_LSB_TSREF     169.54f*0.000001 // V/LSB
+#define V_LSB_DIAG      152.59f*0.000001 // V/LSB
+#define V_LSB_AUX_BAT     3.05f*0.001    // V/LSB
 #define V_LSB_DIETEMP 0.025 // *C/LSB
 
 #define MAXBYTES (16*2)     //maximum number of bytes to be read from the devices (for array creation)
@@ -157,47 +162,41 @@ void OTUT_stop(uint8_t bID);
 bool get_OTUT_running(uint8_t bID);
 
 // balancing
-void balancing_start(uint8_t bID); // configure before starting!!
+bool balancing_start(uint8_t bID); // configure before starting!!
 void balancing_stop(uint8_t bID);
 void balancing_pause(uint8_t bID, bool paused);
-bool get_bal_paused(uint8_t bID);
+bool get_balancing_running(uint8_t bID);
+bool get_balancing_done(uint8_t bID);
+bool get_bal_OT(uint8_t bID);
+bool get_bal_paused(uint8_t bID); // can be paused either by choice or by OT
+
 
 void enable_auto_balancing(uint8_t bID, BAL_DUTY_t duty_cycle); // automatically cycle between odd and even cells so they can all be set to balance at once
 void disable_auto_balancing(uint8_t bID);
-bool get_balancing_running(uint8_t bID);
 
 void set_balancing_timer(uint8_t bID, uint8_t cell_number, BAL_TIME_t time); 
-BAL_TIME_t get_balancing_timer(uint8_t bID, uint8_t cell_number); 
-bool get_balancing_done(uint8_t bID, uint8_t cell_number);
-
-// uses GPIO3 for balancing the whole module
-void set_module_balancing_timer(uint8_t bID, BAL_TIME_t time);
-BAL_TIME_t get_module_balancing_timer(uint8_t bID);
-bool get_module_balancing_done(uint8_t bID);
+uint16_t get_balancing_timer(uint8_t bID, uint8_t cell_number); // in seconds left
+bool get_balancing_cell_done(uint8_t bID, uint8_t cell_number);
 
 // stop balancing based on cell voltage
-void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr); // must restart OVUV detector after changing these
-void enable_VMB_stop_thres(uint8_t bID, uint8_t vmb_thr); // thr in volts (18V to 65V)
+void enable_VCB_stop_thresh(uint8_t bID, CB_DONE_THRESH_t vcb_thr); // (also starts OVUV - see 9.3.3.1.4 p42)
+void enable_CB_stop_on_fault(uint8_t bID, bool stop);
 
 // balancing can be paused if the chip or external thermistors get too hot
 //  requires OTUT detector is running
-void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent); // must restart OTUT after changing these
-bool get_OTCB_running(uint8_t bID);
+void enable_OTCB(uint8_t bID, uint8_t OT_thr_percent, uint8_t cooloff_thr_percent); // restarts OTUT 
+bool get_OTCB_enabled(uint8_t bID);
 
 // reading voltages and temperatures
 int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number);
 int16_t get_cell_voltage_aux(uint8_t bID, uint8_t cell_number);
+int16_t get_bat_voltage(uint8_t bID); // whole stack voltage
 int16_t get_BB_voltage(uint8_t bID); // bus bar (current measurement)
 int16_t get_BB_voltage_aux(uint8_t bID); // bus bar (current measurement)
 int16_t get_gpio_voltage(uint8_t bID, uint8_t gpio_number);
 int16_t get_tsref_voltage(uint8_t bID);
 int16_t get_die_temp_1(uint8_t bID);
 int16_t get_die_temp_2(uint8_t bID);
-
-void RunCB();
-
-int ReadDeviceStat2(uint8_t *response_frame);
-void ReadCoulumbCount(uint8_t *response_frame, uint8_t rshunt_u8);
 
 #endif /* BQ796xx_H_ */
 //EOF

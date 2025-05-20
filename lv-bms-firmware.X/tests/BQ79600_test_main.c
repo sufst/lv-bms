@@ -86,7 +86,7 @@ void bms_main(void) {
     get_OVUV_running(1);
     get_ovuv_faults(1);
     
-    OTUT_config(1, 39, 80);
+    OTUT_config(1, 10, 80);
     OTUT_start(1);
     get_otut_faults(1);
     get_OTUT_running(1);
@@ -102,13 +102,24 @@ void bms_main(void) {
 //        delay(500);
 //        CLRWDT();
 //    }
-
-    while(1){
-        reset_faults(1, MSK_ALL);
+//    while(1){
+//        reset_faults(1, MSK_ALL);
+        
 //        printf("V1: %fV, V2: %fV, V3: %fV\n", get_cell_voltage(1,1) * V_LSB_ADC, get_cell_voltage(1,2) * V_LSB_ADC, get_cell_voltage(1,3) * V_LSB_ADC );
-        get_gpio_voltage(1, 1);
-        get_otut_faults(1);
-    }
+//        get_gpio_voltage(1, 1);
+//        get_otut_faults(1);
+//    }
+    
+//    set_balancing_timer(1, 1, BAL_TIME_600MIN);
+//    enable_OTCB(1, 10, 4);
+//    balancing_start(1);
+//
+//    while(!get_balancing_done(1)) {
+//        get_balancing_timer(1, 1);
+//        get_gpio_voltage(1, 1);
+//        get_bal_OT(1);
+//    }
+
 
     delay(5000);
     SD796XX();
