@@ -20,3 +20,7 @@ CND_ARTIFACT_PATH_CAN_test=dist/CAN_test/production/lv-bms-firmware.X.production
 CND_ARTIFACT_DIR_BQ79600_test=dist/BQ79600_test/production
 CND_ARTIFACT_NAME_BQ79600_test=lv-bms-firmware.X.production.hex
 CND_ARTIFACT_PATH_BQ79600_test=dist/BQ79600_test/production/lv-bms-firmware.X.production.hex
+# error_load_store_test configuration
+CND_ARTIFACT_DIR_error_load_store_test=dist/error_load_store_test/production
+CND_ARTIFACT_NAME_error_load_store_test=lv-bms-firmware.X.production.hex
+CND_ARTIFACT_PATH_error_load_store_test=dist/error_load_store_test/production/lv-bms-firmware.X.production.hex

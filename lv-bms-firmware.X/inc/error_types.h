@@ -1,0 +1,34 @@
+/* 
+ * File:   error_types.h
+ * Author: alexl
+ *
+ * Created on 23 May 2025, 15:07
+ */
+
+#ifndef ERROR_TYPES_H
+#define	ERROR_TYPES_H
+
+typedef enum {
+    LOCKOUT_NONE = 0xff,
+    LOCKOUT_OVERVOLT = 0x01,
+    LOCKOUT_UNDERVOLT = 0x02,
+    LOCKOUT_OVERTEMP = 0x03,
+    LOCKOUT_UNDERTEMP = 0x04,
+    LOCKOUT_OVERCURRENT = 0x05,
+    LOCKOUT_COMM_FAULT = 0x06,
+} lockout_reason_t;
+
+typedef enum { 
+    SHUTDOWN_REASON_NONE, 
+    SHUTDOWN_REASON_TIMER,
+    SHUTDOWN_REASON_CHARGE_DONE,
+    SHUTDOWN_REASON_UNDER_V,
+    SHUTDOWN_REASON_OVER_V,
+    SHUTDOWN_REASON_UNDER_TEMP,
+    SHUTDOWN_REASON_OVER_TEMP,
+    SHUTDOWN_REASON_OVER_CURR,
+    SHUTDOWN_REASON_WDT,
+} shutdown_reason_t;
+
+#endif	/* ERROR_TYPES_H */
+

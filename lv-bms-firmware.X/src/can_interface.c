@@ -39,6 +39,10 @@ void CAN_RX_ISR() {
 }
 
 void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) {
+    if (!sending_en){
+        return;
+    }
+    
     CAN_MSG_OBJ tx_msg;
     tx_msg.msgId = CAN_NODE_BASE_ID + offset;
     tx_msg.field.formatType = CAN_2_0_FORMAT;

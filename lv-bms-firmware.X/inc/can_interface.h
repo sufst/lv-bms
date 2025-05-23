@@ -34,6 +34,7 @@
 #include <xc.h> // include processor files - each processor file is guarded.  
 #include <stdbool.h>
 #include "units.h"
+#include "error_types.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -70,14 +71,6 @@ typedef enum {
     CAN_CRITICAL_TEMP = 0x02,
     CAN_CRITICAL_CURRENT = 0x03,
 } can_critical_byte_t;
-
-typedef enum {
-    LOCKOUT_OVERVOLT = 0x01,
-    LOCKOUT_UNDERVOLT = 0x02,
-    LOCKOUT_OVERTEMP = 0x03,
-    LOCKOUT_UNDERTEMP = 0x04,
-    LOCKOUT_OVERCURRENT = 0x05,
-} lockout_reason_t;
 
 // initialise the can interface
 void can_init();

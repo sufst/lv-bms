@@ -50,6 +50,8 @@
 #include "error_load_store.h"
 #include "indicator_lights.h"
 #include "logging.h"
+#include "bq796xx.h"
+#include "can_interface.h"
 
 #define CELL_COUNT 3
 
@@ -113,9 +115,23 @@ uint64_t power_button_press_duration(uint64_t max_duration){
     return press_len;
 }
 
+bool bq_connection_good() {
+    int tries_left = 5;
+    while (tries_left) {
+        if(get_reg_value(1, PARTID) == 0x21) {
+            break;
+        }
+        tries_left--;
+    }
+    
+    return tries_left > 0;
+}
+
 
 void locked_out_main() {
     log_info("locked out main");
+    disp_set_critical(true);
+    
     while(1){
         // send locked out message
     
@@ -129,10 +145,12 @@ void locked_out_main() {
 void sleep_main() {
     log_info("sleep main");
     disp_set_number(0);
+    can_sending_enable(false);
     
     uint64_t loop_count = 0;
     while(1){
         
+        // exiting sleep
         uint64_t press = power_button_press_duration(1000);
         if (press == 0) {
             // nothing
@@ -189,16 +207,67 @@ void discharging_main() {
     // check pack is happy
     // close relay
     
+    set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
+    set_active_cells(1, 3);
+    enable_LPF_cells(1, LPF_6_5Hz);
+    set_gpio_conf(1, 1, GPIO_CONF_ADC_OTUT_INPUT);
+    delay(1);
+    main_ADC_start(1);
+    aux_ADC_start(1);
+    
+    int16_t voltages[3];
+    can_register_voltages(voltages);
+    can_sending_enable(true);
+    
+    uint32_t loop_counter = 0;
     while(1) {
+        // check connection
+        if(loop_counter % 100 == 0) {
+            
+        }
+        
         // monitor discharging
+        for(int cell = 1; cell <= 3; cell++) {
+            voltages[cell-1] = get_cell_voltage(1, cell) * V_LSB_ADC * 1024;
+        }
+        send_sensor_message();
+        
         
         if (power_button_press_duration(2000) >= 2000) {
             break;
         }
         
+        loop_counter++;
     }
     
     log_info("exiting discharging");
+}
+
+void powered_on_main() {
+    // power on setup
+    log_info("powering on");
+    
+    // power up and check connection to BQ79616
+    Wake796XX();
+    if (bq_connection_good() == false) {
+        log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
+        hard_fault_handler(LOCKOUT_COMM_FAULT);
+    }
+    
+    switch (wakeup_mode) {
+        case WAKEUP_DISCHARGE:
+            discharging_main();
+            break;
+        case WAKEUP_CHARGE:
+            charging_main();
+            break;
+    }
+    
+    // power off shutdown
+    log_info("powering off");
+    
+    SD796XX();
+    
 }
 
 /*
@@ -214,24 +283,18 @@ void bms_main(void) {
     disp_init();
     can_init();
     
+    // set default lockout value
+    
     wakeup_mode = WAKEUP_DISCHARGE;
     log_info("bms powered up");
     
     // lockout takes precedence
-    bool locked_out = false; // todo from nvm
-    if(locked_out) {
+    if(load_lockout_reason() != LOCKOUT_NONE) {
         locked_out_main();
     }
     
     while(1) {
-        switch (wakeup_mode) {
-            case WAKEUP_DISCHARGE:
-                discharging_main();
-                break;
-            case WAKEUP_CHARGE:
-                charging_main();
-                break;
-        }
+        powered_on_main();
         sleep_main();
     }
     

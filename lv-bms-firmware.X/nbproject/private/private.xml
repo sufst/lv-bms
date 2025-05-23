@@ -4,13 +4,13 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/inc/bq796xx.h</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/inc/indicator_lights.h</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/mcc_generated_files/pin_manager.h</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/src/can_interface.c</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/src/millis.c</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/inc/error_load_store.h</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/tests/error_load_store_test.c</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/inc/can_interface.h</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/tests/BQ79600_test_main.c</file>
             <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/src/bms_main.c</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/src/indicator_lights.c</file>
-            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/mcc_generated_files/mcc.c</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/tests/indicator_test_main.c</file>
+            <file>file:/C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/src/error_load_store.c</file>
         </group>
     </open-files>
 </project-private>

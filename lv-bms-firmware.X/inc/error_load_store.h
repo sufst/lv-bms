@@ -10,17 +10,7 @@
 
 #define SHUTDOWN_REASON_ADDR TODO
 
-#include "can_interface.h"
-
-typedef enum { 
-    SHUTDOWN_REASON_NONE, 
-    SHUTDOWN_REASON_UNDER_V,
-    SHUTDOWN_REASON_OVER_V,
-    SHUTDOWN_REASON_UNDER_TEMP,
-    SHUTDOWN_REASON_OVER_TEMP,
-    SHUTDOWN_REASON_OVER_CURR,
-    SHUTDOWN_REASON_WDT,
-} shutdown_reason_t;
+#include "error_types.h"
              
 /**
  * save_shutdown_reason
@@ -41,13 +31,22 @@ shutdown_reason_t load_shutdown_reason(void);
  * save_lockout_reason
  * @param lo_reason
  */
-void save_lockout_reason(lockout_reason_t lo_reason);
+void save_lockout_reason(lockout_reason_t lo_reason, uint8_t cell, int16_t fault_value);
 
 /**
  * load_lockout_reason
  * @returns last saved lockout reason
  */
 lockout_reason_t load_lockout_reason(void);
+
+int16_t load_lockout_value(void);
+uint8_t load_lockout_cell(void);
+
+
+// deals with if there is an unrecoverable error
+// saves the error cause then puts the system into lockout
+void hard_fault_handler(lockout_reason_t lo_reason);
+void hard_fault_handler_2(lockout_reason_t lo_reason, uint8_t cell, int16_t value);
 
 #endif	/* ERROR_LOAD_STORE_H */
 

@@ -47,7 +47,6 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #define TRUE 1
 #define FALSE 0
 #define UART_COMM     TRUE
-#define BQ796XX_FAULT_PRINTS // enables the debug prints for the faults 
 #define TOTALBOARDS 1       //boards in stack
 #define V_LSB_ADC       190.73f*0.000001 // V/LSB
 #define V_LSB_BB         30.52f*0.000001 // V/LSB
