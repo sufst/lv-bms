@@ -1290,10 +1290,10 @@ void CAN1_SetRxBufferOverFlowInterruptHandler(void (*handler)(void));
 
 /**
   @Summary
-    Sets the RX FIFO Full interrupt handler.
+    Sets the RX FIFO Not Empty interrupt handler.
 
   @Description
-    This routine sets the RX FIFO Full interrupt handler for FIFO1.
+    This routine sets the RX FIFO Not Empty interrupt handler for FIFO1.
 
   @Param
     Address of the callback routine.
@@ -1313,7 +1313,7 @@ void CAN1_SetRxBufferOverFlowInterruptHandler(void (*handler)(void));
     void main(void)
     {
         SYSTEM_Initialize();
-        CAN1_SetFIFO1FullHandler(&CustomFIFO1Handler);
+        CAN1_SetFIFO1NotEmptyHandler(&CustomFIFO1Handler);
         
         INTERRUPT_GlobalInterruptEnable();
 
@@ -1321,7 +1321,7 @@ void CAN1_SetRxBufferOverFlowInterruptHandler(void (*handler)(void));
     }
     </code>
 */
-void CAN1_SetFIFO1FullHandler(void (*handler)(void));
+void CAN1_SetFIFO1NotEmptyHandler(void (*handler)(void));
 
 /**
   @Summary

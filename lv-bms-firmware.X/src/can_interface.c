@@ -11,6 +11,7 @@
 #include "mcc.h"
 #include "millis.h"
 #include "stdio.h"
+#include "logging.h"
 
 // timers
 uint64_t sending_timer, critical_warning_timer, lockout_message_timer;
@@ -22,7 +23,7 @@ current_t* curr_p;
 uint8_t* SOC_p;
 
 can_status_byte_t status_byte;
-bool sending_en;
+bool sensor_sending_en;
 
 lockout_reason_t lockout_reason;
 bool lockout_set;
@@ -31,18 +32,15 @@ uint16_t lockout_cell_value;
 
 uint16_t charge_cycles, shutdown_count, lockout_count;
 
-void CAN_RX_ISR() {
+void can_recieve_handler() {
     CAN_MSG_OBJ rx_msg;
     CAN1_ReceiveFrom(FIFO1, &rx_msg);
     
+    log_info("can message recieved");
     // TODO some kind of command interface - emulate the ORION BMS for the LV battery
 }
 
-void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) {
-    if (!sending_en){
-        return;
-    }
-    
+void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) { 
     CAN_MSG_OBJ tx_msg;
     tx_msg.msgId = CAN_NODE_BASE_ID + offset;
     tx_msg.field.formatType = CAN_2_0_FORMAT;
@@ -52,11 +50,18 @@ void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) {
     tx_msg.field.idType = CAN_FRAME_EXT;
     tx_msg.data = message_body;
     
-    for(int trys = 0; trys < 10; trys++){
+    int trys;
+    for(trys = 10; trys != 0; trys--){
         if(CAN_TX_FIFO_AVAILABLE == (CAN1_TransmitFIFOStatusGet(CAN1_TX_TXQ) & CAN_TX_FIFO_AVAILABLE)) {
             CAN1_Transmit(CAN1_TX_TXQ, &tx_msg);
+            break;
         }
     }
+    
+    if(trys == 0) {
+        log_warn("ran out of tries to send a CAN message");
+    }
+    
 }
 
 void send_sensor_message() {
@@ -85,9 +90,9 @@ void send_sensor_message() {
     current_message[0] = (uint8_t)(c & 0xff);
     current_message[1] = (uint8_t)(c >> 8);
     tx_message(CAN_CURR_MESSAGE_OFFSET, current_message, 2);
-    
-    delay(1);
-    // status
+}
+
+void send_status_message() {
     uint8_t status_message[8];
     status_message[0] = (uint8_t)status_byte;
     status_message[1] = *SOC_p;
@@ -125,7 +130,7 @@ void send_lockout_message() {
 
 void can_init() {   
     CAN1_Initialize();
-    CAN1_SetFIFO1FullHandler(&CAN_RX_ISR);
+    CAN1_SetFIFO1NotEmptyHandler(can_recieve_handler);
     
     while (CAN1_OperationModeGet() != CAN_NORMAL_2_0_MODE) {
         CAN_OP_MODE_STATUS status = CAN1_OperationModeSet(CAN_NORMAL_2_0_MODE);
@@ -141,10 +146,12 @@ void can_update() {
     uint64_t now = millis();
     
     // sensor message sending
-    if((now - sending_timer) > CAN_SENSOR_SENDING_INTERVAL) {
+    if((now - sending_timer) > CAN_SENSOR_SENDING_INTERVAL && sensor_sending_en) {
         sending_timer = now;
         send_sensor_message();
-        
+        delay(1);
+        send_status_message();
+
         // empty warning sending
         if(*SOC_p < CAN_EMPTY_WARNING_THRESHOLD) {
             send_empty_warning();
@@ -152,10 +159,11 @@ void can_update() {
     }
     
     // lockout
-    
     if((now - lockout_message_timer) > CAN_LOCKOUT_SENDING_INTERVAL && lockout_set) {
         lockout_message_timer = now;
         send_lockout_message();
+        delay(1);
+        send_status_message();
     }
 }
 
@@ -195,16 +203,18 @@ void can_set_lockout_count(uint16_t new_lockout_count) {
 }
 
 // turns on and off the data sending
-void can_sending_enable(bool enabled) {
-    sending_en = enabled;
+void can_sensor_sending_enable(bool enabled) {
+    sensor_sending_en = enabled;
 }
+
 // enabled the lockout message
-void set_lockdout(lockout_reason_t new_lockout_reason, uint8_t new_cell_index, uint16_t new_dire_value) {
+void can_set_lockdout(lockout_reason_t new_lockout_reason, uint8_t new_cell_index, uint16_t new_dire_value) {
     lockout_reason = new_lockout_reason;
     lockout_cell_index = new_cell_index;
     lockout_cell_value = new_dire_value;
     lockout_set = true;
 }
-void clear_lockout() {
+
+void can_clear_lockout() {
     lockout_set = false;
 }

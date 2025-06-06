@@ -61,11 +61,14 @@
 typedef enum {WAKEUP_DISCHARGE, WAKEUP_CHARGE} wakeup_mode_t;
 wakeup_mode_t wakeup_mode;
 
-// milli second timer hook  - runs the display
+voltage_t voltages[3];
+temp_t temps[3];
+current_t current;
+int8_t SOC = 50;
+
+// milli second timer hook
 void millis_hook (uint64_t uptime) {
-    if ((uptime % 64) == 0) {
-        disp_update();
-    }
+
 }
 
 // how long has the power button been pressed (capped at a maximum duration)
@@ -117,9 +120,14 @@ uint64_t power_button_press_duration(uint64_t max_duration){
 void locked_out_main() {
     log_info("locked out main");
     disp_set_critical(true);
+    disp_set_soc(0); // enables animations
+    can_set_status(CAN_LOCKED_OUT);
+    can_set_lockdout(load_lockout_reason(), load_lockout_cell(), load_lockout_value());
     
     while(1){
         // send locked out message
+        can_update();
+        disp_update();
     
 //        if (unlock command sent) {
 //            // clear lock
@@ -131,17 +139,15 @@ void locked_out_main() {
 void sleep_main() {
     log_info("sleep main");
     disp_set_number(0);
-    can_sending_enable(false);
+    can_sensor_sending_enable(false);
     
     uint64_t loop_count = 0;
     while(1){
-        
         // exiting sleep
         uint64_t press = power_button_press_duration(1000);
         if (press == 0) {
             // nothing
-        }
-        else if(press < 1000) {
+        } else if(press < 1000) {
             wakeup_mode = WAKEUP_DISCHARGE;
             break;
         } else {
@@ -163,11 +169,41 @@ void charging_main() {
     log_info("charging main");
     disp_set_charging(true);
     disp_set_soc(70);
+    can_set_status(CAN_CHARGING);
+    can_sensor_sending_enable(true);
     // check pack is happy
     // close relay
     
+    uint32_t loop_counter = 0;
     while(1) {
-        // monitor charging
+        //-------------------------- MEASURE --------------------------
+        // check connection
+        if(loop_counter % 100 == 0) {
+            if (bq_check_connection() == false) {
+                log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
+                hard_fault_handler(LOCKOUT_COMM_FAULT);
+            }
+            
+            if(bq_check_measuring() == false) {
+                log_err("a measurement system on the BQ79616 has failed, locking out and going to sleep");
+                hard_fault_handler(LOCKOUT_MEASURE_FAULT);
+            }
+        }
+        
+        bq_get_voltages(voltages);
+        bq_get_temperatures(temps);
+        bq_get_current(&current);
+        
+        // check for going to sleep
+        if (power_button_press_duration(2000) >= 2000) {
+            break;
+        }
+        
+        //-------------------------- ANALYSE --------------------------
+        
+        //-------------------------- ACT --------------------------   
+        can_update();
+        disp_update();
         
         bool charge_done = false;
         if(charge_done) {
@@ -177,6 +213,8 @@ void charging_main() {
         if(power_button_press_duration(2000) >= 2000) {
             break;
         }
+        
+        loop_counter++;
     }
     
     // open relay
@@ -184,43 +222,53 @@ void charging_main() {
     // indicate charging done
     
     log_info("exiting charging");
+    can_set_status(CAN_FULL);
+    disp_set_charging(false);
 }
 
 void discharging_main() {
     log_info("discharging main");
-    disp_set_charging(false);
     disp_set_soc(70);
+    can_set_status(CAN_DISCHARGING);
+    can_sensor_sending_enable(true);
     // check pack is happy
     // close relay
     
-    voltage_t voltages[3];
-    temp_t temps[3];
-    can_register_voltages(voltages);
-    can_register_temps(temps);
-    can_sending_enable(true);
-    
-    bq_setup();
-    
     uint32_t loop_counter = 0;
     while(1) {
+        //-------------------------- MEASURE --------------------------
         // check connection
         if(loop_counter % 100 == 0) {
+            if (bq_check_connection() == false) {
+                log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
+                hard_fault_handler(LOCKOUT_COMM_FAULT);
+            }
             
+            if(bq_check_measuring() == false) {
+                log_err("a measurement system on the BQ79616 has failed, locking out and going to sleep");
+                hard_fault_handler(LOCKOUT_MEASURE_FAULT);
+            }
         }
         
-        // monitor discharging
         bq_get_voltages(voltages);
         bq_get_temperatures(temps);
+        bq_get_current(&current);
         
+        // check for going to sleep
         if (power_button_press_duration(2000) >= 2000) {
             break;
         }
         
+        //-------------------------- ANALYSE --------------------------
+        
+        //-------------------------- ACT --------------------------
         can_update();
+        disp_update();
         loop_counter++;
     }
     
     log_info("exiting discharging");
+    can_set_status(CAN_POWERED_DOWN);
 }
 
 void powered_on_main() {
@@ -228,11 +276,14 @@ void powered_on_main() {
     log_info("powering on");
     
     // power up and check connection to BQ79616
-    Wake796XX();
+    bq_wake();
+    delay(10);
     if (bq_check_connection() == false) {
         log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
         hard_fault_handler(LOCKOUT_COMM_FAULT);
     }
+    
+    bq_setup();
     
     switch (wakeup_mode) {
         case WAKEUP_DISCHARGE:
@@ -246,8 +297,8 @@ void powered_on_main() {
     // power off shutdown
     log_info("powering off");
     
-    SD796XX();
-    
+    can_sensor_sending_enable(false);
+    bq_shutdown();
 }
 
 /*
@@ -262,6 +313,11 @@ void bms_main(void) {
     INTERRUPT_GlobalInterruptEnable();
     disp_init();
     can_init();
+    
+    can_register_voltages(voltages);
+    can_register_temps(temps);
+    can_register_current(&current);
+    can_register_SOC(&SOC);
     
     // set default lockout value
     

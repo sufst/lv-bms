@@ -59,8 +59,8 @@ enum {
     
 typedef enum  {
     CAN_POWERED_DOWN = 0x00,
-    CAN_DISCHARING = 0x01,
-    CAN_CHARING = 0x02,
+    CAN_DISCHARGING = 0x01,
+    CAN_CHARGING = 0x02,
     CAN_EMPTY = 0x03,
     CAN_FULL = 0x04,
     CAN_LOCKED_OUT = 0x05
@@ -94,14 +94,14 @@ void can_set_shutdown_count(uint16_t shutdown_count);
 void can_set_lockout_count(uint16_t lockout_count);
 
 // turns on and off the data sending
-void can_sending_enable(bool enabled);
+void can_sensor_sending_enable(bool enabled);
 
 // sends a critical warning
-void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value);
+void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value);
 
 // enabled the lockout message
-void set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
-void clear_lockout();
+void can_set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
+void can_clear_lockout();
 
 #ifdef	__cplusplus
 }

@@ -106,7 +106,7 @@ static struct CAN1_RX_FIFO rxFifos[] =
 static volatile struct CAN_FIFOREG * const FIFO = (struct CAN_FIFOREG *)&C1TXQCONL;
 static const uint8_t DLC_BYTES[] = {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U};
 
-static void (*CAN1_FIFO1FullHandler)(void);
+static void (*CAN1_FIFO1NotEmptyHandler)(void);
 static void (*CAN1_InvalidMessageHandler)(void);
 static void (*CAN1_BusWakeUpActivityHandler)(void);
 static void (*CAN1_BusErrorHandler)(void);
@@ -115,7 +115,7 @@ static void (*CAN1_SystemErrorHandler)(void);
 static void (*CAN1_TxAttemptHandler)(void);
 static void (*CAN1_RxBufferOverflowHandler)(void);
 
-static void DefaultFIFO1FullHandler(void)
+static void DefaultFIFO1NotEmptyHandler(void)
 {
 }
 
@@ -159,8 +159,8 @@ void CAN1_RX_FIFO_ResetInfo(void)
 
 static void CAN1_RX_FIFO_Configuration(void)
 {
-    // TXEN disabled; RTREN disabled; RXTSEN disabled; TXATIE disabled; RXOVIE enabled; TFERFFIE enabled; TFHRFHIE disabled; TFNRFNIE disabled; 
-    C1FIFOCON1L = 0x0C;
+    // TXEN disabled; RTREN disabled; RXTSEN disabled; TXATIE disabled; RXOVIE enabled; TFERFFIE disabled; TFHRFHIE disabled; TFNRFNIE enabled; 
+    C1FIFOCON1L = 0x09;
     
     // FRESET enabled; TXREQ disabled; UINC disabled; 
     C1FIFOCON1H = 0x04;
@@ -171,7 +171,7 @@ static void CAN1_RX_FIFO_Configuration(void)
     // PLSIZE 8; FSIZE 6; 
     C1FIFOCON1T = 0x05;
     
-    CAN1_SetFIFO1FullHandler(DefaultFIFO1FullHandler);
+    CAN1_SetFIFO1NotEmptyHandler(DefaultFIFO1NotEmptyHandler);
     
     C1INTUbits.RXIE = 1;
     
@@ -703,17 +703,17 @@ void CAN1_ISR(void)
     PIR0bits.CANIF = 0;
 }
 
-void CAN1_SetFIFO1FullHandler(void (*handler)(void))
+void CAN1_SetFIFO1NotEmptyHandler(void (*handler)(void))
 {
-    CAN1_FIFO1FullHandler = handler;
+    CAN1_FIFO1NotEmptyHandler = handler;
 }
 
 
 void CAN1_RXI_ISR(void)
 {
-    if (1 == C1FIFOSTA1Lbits.TFERFFIF)
+    if (1 == C1FIFOSTA1Lbits.TFNRFNIF)
     {
-        CAN1_FIFO1FullHandler();
+        CAN1_FIFO1NotEmptyHandler();
         // flag readonly
     }
     

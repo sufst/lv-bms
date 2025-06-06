@@ -16,6 +16,7 @@ typedef enum {
     LOCKOUT_UNDERTEMP = 0x04,
     LOCKOUT_OVERCURRENT = 0x05,
     LOCKOUT_COMM_FAULT = 0x06,
+    LOCKOUT_MEASURE_FAULT = 0x07,        
 } lockout_reason_t;
 
 typedef enum { 

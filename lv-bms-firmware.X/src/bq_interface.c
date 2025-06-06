@@ -52,6 +52,15 @@ bool bq_check_connection() {
     return tries_left > 0;
 }
 
+bool bq_check_measuring() {
+    bool running = true;
+    running &= get_main_ADC_running(1);
+    running &= get_aux_ADC_running(1);
+//    running &= get_OTUT_running(1);
+//    running &= get_OVUV_running(1);
+    return running;
+}
+
 bool bq_setup() {
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_active_cells(1, 3);
@@ -89,5 +98,5 @@ void bq_get_temperatures(temp_t* temps) {
 
 // gathers the current
 void bq_get_current(current_t* current) {
-    
+     *current = CURRENT_MULTIPLIER * (get_BB_voltage(1) * V_LSB_BB) / BB_CURRENT_SENSE_R;
 }
