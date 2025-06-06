@@ -62,7 +62,7 @@ __        ___    ____  _   _ ___ _   _  ____ _
 // debug logging - split into levels
 typedef enum {BQ_LOG_ERR, BQ_LOG_WARN, BQ_LOG_INFO, BQ_LOG_DBG, BQ_LOG_REG} bq796xx_log_level_t;
 //bq796xx_log_level_t bq796xx_log_level = BQ_LOG_WARN;
-bq796xx_log_level_t bq796xx_log_level = BQ_LOG_INFO; 
+bq796xx_log_level_t bq796xx_log_level = BQ_LOG_WARN; 
 
 // power state control
 void Wake796XX(void);

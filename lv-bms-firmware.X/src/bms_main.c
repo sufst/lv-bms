@@ -45,12 +45,11 @@
 #include "mcc.h"
 #include "units.h"
 #include "batt_properties.h"
-#include "therm_LUT.h"
 #include "millis.h"
 #include "error_load_store.h"
 #include "indicator_lights.h"
 #include "logging.h"
-#include "bq796xx.h"
+#include "bq_interface.h"
 #include "can_interface.h"
 
 #define CELL_COUNT 3
@@ -66,7 +65,6 @@ wakeup_mode_t wakeup_mode;
 void millis_hook (uint64_t uptime) {
     if ((uptime % 64) == 0) {
         disp_update();
-        can_update();
     }
 }
 
@@ -113,18 +111,6 @@ uint64_t power_button_press_duration(uint64_t max_duration){
     }
     
     return press_len;
-}
-
-bool bq_connection_good() {
-    int tries_left = 5;
-    while (tries_left) {
-        if(get_reg_value(1, PARTID) == 0x21) {
-            break;
-        }
-        tries_left--;
-    }
-    
-    return tries_left > 0;
 }
 
 
@@ -207,17 +193,13 @@ void discharging_main() {
     // check pack is happy
     // close relay
     
-    set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
-    set_active_cells(1, 3);
-    enable_LPF_cells(1, LPF_6_5Hz);
-    set_gpio_conf(1, 1, GPIO_CONF_ADC_OTUT_INPUT);
-    delay(1);
-    main_ADC_start(1);
-    aux_ADC_start(1);
-    
-    int16_t voltages[3];
+    voltage_t voltages[3];
+    temp_t temps[3];
     can_register_voltages(voltages);
+    can_register_temps(temps);
     can_sending_enable(true);
+    
+    bq_setup();
     
     uint32_t loop_counter = 0;
     while(1) {
@@ -227,16 +209,14 @@ void discharging_main() {
         }
         
         // monitor discharging
-        for(int cell = 1; cell <= 3; cell++) {
-            voltages[cell-1] = get_cell_voltage(1, cell) * V_LSB_ADC * 1024;
-        }
-        send_sensor_message();
-        
+        bq_get_voltages(voltages);
+        bq_get_temperatures(temps);
         
         if (power_button_press_duration(2000) >= 2000) {
             break;
         }
         
+        can_update();
         loop_counter++;
     }
     
@@ -249,7 +229,7 @@ void powered_on_main() {
     
     // power up and check connection to BQ79616
     Wake796XX();
-    if (bq_connection_good() == false) {
+    if (bq_check_connection() == false) {
         log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
         hard_fault_handler(LOCKOUT_COMM_FAULT);
     }

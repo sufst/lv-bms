@@ -63,21 +63,22 @@ void send_sensor_message() {
     // voltage 
     uint8_t voltage_message[6];
     for (int i = 0; i < 3; i++) {
-        voltage_t v = *(voltages_p + i);
+        voltage_t v = voltages_p[i];
         voltage_message[i * 2] = v & 0xff ;
         voltage_message[i * 2 + 1] = v >> 8;
     }
     tx_message(CAN_VOLTAGE_MESSAGE_OFFSET, voltage_message, 6);
     
+    delay(1);
     // temperatures
-    uint8_t temp_message[6];
+    uint8_t temp_message[3];
     for (int i = 0; i < 3; i++) {
-        temp_t t = *(temps_p + i);
-        temp_message[i * 2] = (uint8_t)(t & 0xff);
-        temp_message[i * 2 + 1] = (uint8_t)(t >> 8);
+        temp_t t = temps_p[i];
+        temp_message[i] = (uint8_t)t;
     }
-    tx_message(CAN_TEMPS_MESSAGE_OFFSET, temp_message, 6);
+    tx_message(CAN_TEMPS_MESSAGE_OFFSET, temp_message, 3);
     
+    delay(1);
     // current
     uint8_t current_message[2]; 
     current_t c = *curr_p;
@@ -85,6 +86,7 @@ void send_sensor_message() {
     current_message[1] = (uint8_t)(c >> 8);
     tx_message(CAN_CURR_MESSAGE_OFFSET, current_message, 2);
     
+    delay(1);
     // status
     uint8_t status_message[8];
     status_message[0] = (uint8_t)status_byte;

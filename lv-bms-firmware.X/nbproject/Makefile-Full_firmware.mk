@@ -51,17 +51,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=mcc_generated_files/mcc.c mcc_generated_files/device_config.c mcc_generated_files/pin_manager.c mcc_generated_files/interrupt_manager.c mcc_generated_files/can1.c mcc_generated_files/adc.c mcc_generated_files/memory.c mcc_generated_files/tmr0.c mcc_generated_files/uart2.c mcc_generated_files/uart4.c mcc_generated_files/dma1.c src/batt_properties.c src/indicator_lights.c src/error_load_store.c src/millis.c src/can_interface.c src/bq796xx.c src/bms_main.c src/logging.c main.c
+SOURCEFILES_QUOTED_IF_SPACED=mcc_generated_files/mcc.c mcc_generated_files/device_config.c mcc_generated_files/pin_manager.c mcc_generated_files/interrupt_manager.c mcc_generated_files/can1.c mcc_generated_files/adc.c mcc_generated_files/memory.c mcc_generated_files/tmr0.c mcc_generated_files/uart2.c mcc_generated_files/uart4.c mcc_generated_files/dma1.c src/batt_properties.c src/indicator_lights.c src/error_load_store.c src/millis.c src/can_interface.c src/bq796xx.c src/bms_main.c src/logging.c src/bq_interface.c main.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/mcc_generated_files/mcc.p1 ${OBJECTDIR}/mcc_generated_files/device_config.p1 ${OBJECTDIR}/mcc_generated_files/pin_manager.p1 ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1 ${OBJECTDIR}/mcc_generated_files/can1.p1 ${OBJECTDIR}/mcc_generated_files/adc.p1 ${OBJECTDIR}/mcc_generated_files/memory.p1 ${OBJECTDIR}/mcc_generated_files/tmr0.p1 ${OBJECTDIR}/mcc_generated_files/uart2.p1 ${OBJECTDIR}/mcc_generated_files/uart4.p1 ${OBJECTDIR}/mcc_generated_files/dma1.p1 ${OBJECTDIR}/src/batt_properties.p1 ${OBJECTDIR}/src/indicator_lights.p1 ${OBJECTDIR}/src/error_load_store.p1 ${OBJECTDIR}/src/millis.p1 ${OBJECTDIR}/src/can_interface.p1 ${OBJECTDIR}/src/bq796xx.p1 ${OBJECTDIR}/src/bms_main.p1 ${OBJECTDIR}/src/logging.p1 ${OBJECTDIR}/main.p1
-POSSIBLE_DEPFILES=${OBJECTDIR}/mcc_generated_files/mcc.p1.d ${OBJECTDIR}/mcc_generated_files/device_config.p1.d ${OBJECTDIR}/mcc_generated_files/pin_manager.p1.d ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1.d ${OBJECTDIR}/mcc_generated_files/can1.p1.d ${OBJECTDIR}/mcc_generated_files/adc.p1.d ${OBJECTDIR}/mcc_generated_files/memory.p1.d ${OBJECTDIR}/mcc_generated_files/tmr0.p1.d ${OBJECTDIR}/mcc_generated_files/uart2.p1.d ${OBJECTDIR}/mcc_generated_files/uart4.p1.d ${OBJECTDIR}/mcc_generated_files/dma1.p1.d ${OBJECTDIR}/src/batt_properties.p1.d ${OBJECTDIR}/src/indicator_lights.p1.d ${OBJECTDIR}/src/error_load_store.p1.d ${OBJECTDIR}/src/millis.p1.d ${OBJECTDIR}/src/can_interface.p1.d ${OBJECTDIR}/src/bq796xx.p1.d ${OBJECTDIR}/src/bms_main.p1.d ${OBJECTDIR}/src/logging.p1.d ${OBJECTDIR}/main.p1.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/mcc_generated_files/mcc.p1 ${OBJECTDIR}/mcc_generated_files/device_config.p1 ${OBJECTDIR}/mcc_generated_files/pin_manager.p1 ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1 ${OBJECTDIR}/mcc_generated_files/can1.p1 ${OBJECTDIR}/mcc_generated_files/adc.p1 ${OBJECTDIR}/mcc_generated_files/memory.p1 ${OBJECTDIR}/mcc_generated_files/tmr0.p1 ${OBJECTDIR}/mcc_generated_files/uart2.p1 ${OBJECTDIR}/mcc_generated_files/uart4.p1 ${OBJECTDIR}/mcc_generated_files/dma1.p1 ${OBJECTDIR}/src/batt_properties.p1 ${OBJECTDIR}/src/indicator_lights.p1 ${OBJECTDIR}/src/error_load_store.p1 ${OBJECTDIR}/src/millis.p1 ${OBJECTDIR}/src/can_interface.p1 ${OBJECTDIR}/src/bq796xx.p1 ${OBJECTDIR}/src/bms_main.p1 ${OBJECTDIR}/src/logging.p1 ${OBJECTDIR}/src/bq_interface.p1 ${OBJECTDIR}/main.p1
+POSSIBLE_DEPFILES=${OBJECTDIR}/mcc_generated_files/mcc.p1.d ${OBJECTDIR}/mcc_generated_files/device_config.p1.d ${OBJECTDIR}/mcc_generated_files/pin_manager.p1.d ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1.d ${OBJECTDIR}/mcc_generated_files/can1.p1.d ${OBJECTDIR}/mcc_generated_files/adc.p1.d ${OBJECTDIR}/mcc_generated_files/memory.p1.d ${OBJECTDIR}/mcc_generated_files/tmr0.p1.d ${OBJECTDIR}/mcc_generated_files/uart2.p1.d ${OBJECTDIR}/mcc_generated_files/uart4.p1.d ${OBJECTDIR}/mcc_generated_files/dma1.p1.d ${OBJECTDIR}/src/batt_properties.p1.d ${OBJECTDIR}/src/indicator_lights.p1.d ${OBJECTDIR}/src/error_load_store.p1.d ${OBJECTDIR}/src/millis.p1.d ${OBJECTDIR}/src/can_interface.p1.d ${OBJECTDIR}/src/bq796xx.p1.d ${OBJECTDIR}/src/bms_main.p1.d ${OBJECTDIR}/src/logging.p1.d ${OBJECTDIR}/src/bq_interface.p1.d ${OBJECTDIR}/main.p1.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/mcc_generated_files/mcc.p1 ${OBJECTDIR}/mcc_generated_files/device_config.p1 ${OBJECTDIR}/mcc_generated_files/pin_manager.p1 ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1 ${OBJECTDIR}/mcc_generated_files/can1.p1 ${OBJECTDIR}/mcc_generated_files/adc.p1 ${OBJECTDIR}/mcc_generated_files/memory.p1 ${OBJECTDIR}/mcc_generated_files/tmr0.p1 ${OBJECTDIR}/mcc_generated_files/uart2.p1 ${OBJECTDIR}/mcc_generated_files/uart4.p1 ${OBJECTDIR}/mcc_generated_files/dma1.p1 ${OBJECTDIR}/src/batt_properties.p1 ${OBJECTDIR}/src/indicator_lights.p1 ${OBJECTDIR}/src/error_load_store.p1 ${OBJECTDIR}/src/millis.p1 ${OBJECTDIR}/src/can_interface.p1 ${OBJECTDIR}/src/bq796xx.p1 ${OBJECTDIR}/src/bms_main.p1 ${OBJECTDIR}/src/logging.p1 ${OBJECTDIR}/main.p1
+OBJECTFILES=${OBJECTDIR}/mcc_generated_files/mcc.p1 ${OBJECTDIR}/mcc_generated_files/device_config.p1 ${OBJECTDIR}/mcc_generated_files/pin_manager.p1 ${OBJECTDIR}/mcc_generated_files/interrupt_manager.p1 ${OBJECTDIR}/mcc_generated_files/can1.p1 ${OBJECTDIR}/mcc_generated_files/adc.p1 ${OBJECTDIR}/mcc_generated_files/memory.p1 ${OBJECTDIR}/mcc_generated_files/tmr0.p1 ${OBJECTDIR}/mcc_generated_files/uart2.p1 ${OBJECTDIR}/mcc_generated_files/uart4.p1 ${OBJECTDIR}/mcc_generated_files/dma1.p1 ${OBJECTDIR}/src/batt_properties.p1 ${OBJECTDIR}/src/indicator_lights.p1 ${OBJECTDIR}/src/error_load_store.p1 ${OBJECTDIR}/src/millis.p1 ${OBJECTDIR}/src/can_interface.p1 ${OBJECTDIR}/src/bq796xx.p1 ${OBJECTDIR}/src/bms_main.p1 ${OBJECTDIR}/src/logging.p1 ${OBJECTDIR}/src/bq_interface.p1 ${OBJECTDIR}/main.p1
 
 # Source Files
-SOURCEFILES=mcc_generated_files/mcc.c mcc_generated_files/device_config.c mcc_generated_files/pin_manager.c mcc_generated_files/interrupt_manager.c mcc_generated_files/can1.c mcc_generated_files/adc.c mcc_generated_files/memory.c mcc_generated_files/tmr0.c mcc_generated_files/uart2.c mcc_generated_files/uart4.c mcc_generated_files/dma1.c src/batt_properties.c src/indicator_lights.c src/error_load_store.c src/millis.c src/can_interface.c src/bq796xx.c src/bms_main.c src/logging.c main.c
+SOURCEFILES=mcc_generated_files/mcc.c mcc_generated_files/device_config.c mcc_generated_files/pin_manager.c mcc_generated_files/interrupt_manager.c mcc_generated_files/can1.c mcc_generated_files/adc.c mcc_generated_files/memory.c mcc_generated_files/tmr0.c mcc_generated_files/uart2.c mcc_generated_files/uart4.c mcc_generated_files/dma1.c src/batt_properties.c src/indicator_lights.c src/error_load_store.c src/millis.c src/can_interface.c src/bq796xx.c src/bms_main.c src/logging.c src/bq_interface.c main.c
 
 
 
@@ -240,6 +240,14 @@ ${OBJECTDIR}/src/logging.p1: src/logging.c  nbproject/Makefile-${CND_CONF}.mk
 	@-${MV} ${OBJECTDIR}/src/logging.d ${OBJECTDIR}/src/logging.p1.d 
 	@${FIXDEPS} ${OBJECTDIR}/src/logging.p1.d $(SILENT) -rsi ${MP_CC_DIR}../  
 	
+${OBJECTDIR}/src/bq_interface.p1: src/bq_interface.c  nbproject/Makefile-${CND_CONF}.mk 
+	@${MKDIR} "${OBJECTDIR}/src" 
+	@${RM} ${OBJECTDIR}/src/bq_interface.p1.d 
+	@${RM} ${OBJECTDIR}/src/bq_interface.p1 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c  -D__DEBUG=1  -mdebugger=pickit4   -mdfp="${DFP_DIR}/xc8"  -fno-short-double -fno-short-float -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -xassembler-with-cpp -I"inc" -I"mcc_generated_files" -mwarn=-3 -Wa,-a -DXPRJ_Full_firmware=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto:auto     -o ${OBJECTDIR}/src/bq_interface.p1 src/bq_interface.c 
+	@-${MV} ${OBJECTDIR}/src/bq_interface.d ${OBJECTDIR}/src/bq_interface.p1.d 
+	@${FIXDEPS} ${OBJECTDIR}/src/bq_interface.p1.d $(SILENT) -rsi ${MP_CC_DIR}../  
+	
 ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk 
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.p1.d 
@@ -400,6 +408,14 @@ ${OBJECTDIR}/src/logging.p1: src/logging.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -fno-short-double -fno-short-float -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -xassembler-with-cpp -I"inc" -I"mcc_generated_files" -mwarn=-3 -Wa,-a -DXPRJ_Full_firmware=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto:auto     -o ${OBJECTDIR}/src/logging.p1 src/logging.c 
 	@-${MV} ${OBJECTDIR}/src/logging.d ${OBJECTDIR}/src/logging.p1.d 
 	@${FIXDEPS} ${OBJECTDIR}/src/logging.p1.d $(SILENT) -rsi ${MP_CC_DIR}../  
+	
+${OBJECTDIR}/src/bq_interface.p1: src/bq_interface.c  nbproject/Makefile-${CND_CONF}.mk 
+	@${MKDIR} "${OBJECTDIR}/src" 
+	@${RM} ${OBJECTDIR}/src/bq_interface.p1.d 
+	@${RM} ${OBJECTDIR}/src/bq_interface.p1 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -mcpu=$(MP_PROCESSOR_OPTION) -c   -mdfp="${DFP_DIR}/xc8"  -fno-short-double -fno-short-float -memi=wordwrite -O0 -fasmfile -maddrqual=ignore -xassembler-with-cpp -I"inc" -I"mcc_generated_files" -mwarn=-3 -Wa,-a -DXPRJ_Full_firmware=$(CND_CONF)  -msummary=-psect,-class,+mem,-hex,-file  -ginhx32 -Wl,--data-init -mno-keep-startup -mno-download -mno-default-config-bits $(COMPARISON_BUILD)  -std=c99 -gdwarf-3 -mstack=compiled:auto:auto:auto     -o ${OBJECTDIR}/src/bq_interface.p1 src/bq_interface.c 
+	@-${MV} ${OBJECTDIR}/src/bq_interface.d ${OBJECTDIR}/src/bq_interface.p1.d 
+	@${FIXDEPS} ${OBJECTDIR}/src/bq_interface.p1.d $(SILENT) -rsi ${MP_CC_DIR}../  
 	
 ${OBJECTDIR}/main.p1: main.c  nbproject/Makefile-${CND_CONF}.mk 
 	@${MKDIR} "${OBJECTDIR}" 

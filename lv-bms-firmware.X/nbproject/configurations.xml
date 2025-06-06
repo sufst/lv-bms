@@ -34,6 +34,7 @@
         <itemPath>inc/bq796xx_fault_types.h</itemPath>
         <itemPath>inc/bq796xx_enums.h</itemPath>
         <itemPath>inc/logging.h</itemPath>
+        <itemPath>inc/bq_interface.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -67,6 +68,8 @@
       <logicalFolder name="Project Source"
                      displayName="Project Source"
                      projectFiles="true">
+        <logicalFolder name="f1" displayName="New Folder 1" projectFiles="true">
+        </logicalFolder>
         <itemPath>src/batt_properties.c</itemPath>
         <itemPath>src/indicator_lights.c</itemPath>
         <itemPath>src/error_load_store.c</itemPath>
@@ -75,6 +78,7 @@
         <itemPath>src/bq796xx.c</itemPath>
         <itemPath>src/bms_main.c</itemPath>
         <itemPath>src/logging.c</itemPath>
+        <itemPath>src/bq_interface.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
@@ -392,6 +396,14 @@
         </XC8-config-global>
       </item>
       <item path="tests/error_load_store_test.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
       <item path="tests/indicator_test_main.c" ex="true" overriding="false">
         <HI-TECH-COMP>
@@ -710,6 +722,14 @@
         </XC8-config-global>
       </item>
       <item path="tests/error_load_store_test.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
     </conf>
     <conf name="CAN_test" type="2">
@@ -1008,6 +1028,14 @@
         </XC8-config-global>
       </item>
       <item path="tests/error_load_store_test.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
       <item path="tests/indicator_test_main.c" ex="true" overriding="false">
         <HI-TECH-COMP>
@@ -1316,6 +1344,14 @@
         </XC8-config-global>
       </item>
       <item path="tests/error_load_store_test.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
       <item path="tests/indicator_test_main.c" ex="true" overriding="false">
         <HI-TECH-COMP>
@@ -1572,7 +1608,7 @@
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
         <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/error_load_store_test/lv-bms-firmware_ptg"/>
+                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -1634,6 +1670,14 @@
         </XC8-config-global>
       </item>
       <item path="tests/indicator_test_main.c" ex="true" overriding="false">
+        <HI-TECH-COMP>
+        </HI-TECH-COMP>
+        <HI-TECH-LINK>
+        </HI-TECH-LINK>
+        <XC8-CO>
+        </XC8-CO>
+        <XC8-config-global>
+        </XC8-config-global>
       </item>
     </conf>
   </confs>

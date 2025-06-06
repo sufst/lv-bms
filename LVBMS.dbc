@@ -43,10 +43,10 @@ BO_ 2217873408 CELL_VOLTAGES: 6 LVBMS
 	SG_ CELL_2_Voltage : 16|16@1+ (0.000977,0) [0|0] "V" LVBMS
 	SG_ CELL_3_Voltage : 32|16@1+ (0.000977,0) [0|0] "V" LVBMS
 
-BO_ 2217873409 CELL_TEMPS: 6 LVBMS
-	SG_ CELL_1_TEMP : 0|16@1+ (1,0) [0|0] "'C" LVBMS
-	SG_ CELL_2_TEMP : 16|16@1+ (1,0) [0|0] "'C" LVBMS
-	SG_ CELL_3_TEMP : 32|16@1+ (1,0) [0|0] "'C" LVBMS
+BO_ 2217873409 CELL_TEMPS: 3 LVBMS
+	SG_ CELL_1_TEMP : 0|8@1- (1,0) [0|0] "'C" LVBMS
+	SG_ CELL_2_TEMP : 8|8@1- (1,0) [0|0] "'C" LVBMS
+	SG_ CELL_3_TEMP : 16|8@1- (1,0) [0|0] "'C" LVBMS
 
 BO_ 2217873410 Current: 2 LVBMS
 	SG_ Current : 0|16@1- (0.000977,0) [0|0] "A" LVBMS
@@ -71,6 +71,12 @@ BO_ 2217873414 Locked_out: 4 LVBMS
 	SG_ sad_cell : 8|8@1+ (1,0) [0|0] "" LVBMS
 	SG_ sad_value : 16|16@1+ (1,0) [0|0] "" LVBMS
 
+BO_ 2147483648 : 0 Vector__XXX
+	SG_  : 0|0@1+ (0,0) [0|0] "" Vector__XXX
+
+BO_ 2147483648 : 0 Vector__XXX
+	SG_  : 0|0@1+ (0,0) [0|0] "" Vector__XXX
+
 
 BA_DEF_ SG_  "SPN" INT 0 524287;
 BA_DEF_ BO_  "VFrameFormat" ENUM  "StandardCAN","ExtendedCAN","reserved","J1939PG";
@@ -91,6 +97,8 @@ BA_ "DatabaseVersion" "1.0.0";
 BA_ "VFrameFormat" BO_ 2364540158 3;
 BA_ "VFrameFormat" BO_ 2566844926 3;
 BA_ "SPN" SG_ 2364540158 EngineSpeed 190;
+BA_ "VFrameFormat" BO_ 2147483648 3;
+BA_ "VFrameFormat" BO_ 2147483648 3;
 BA_ "SPN" SG_ 2566844926 WheelBasedVehicleSpeed 84;
 
 CM_ SG_ 2217873414 sad_value "temp: *1, Current *0.000977-32.768, Voltage: *0.000977";
