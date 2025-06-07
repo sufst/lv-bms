@@ -37,7 +37,5 @@ void bq_get_temperatures(temp_t* temps);
 // gathers the current
 void bq_get_current(current_t* current);
 
-void test();
-
 #endif	/* BQ_INTERFACE_H */
 

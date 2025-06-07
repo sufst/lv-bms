@@ -40,7 +40,9 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define CAN_NODE_BASE_ID 0x4321000
+// sets the tx base address ; for RX, check the filters for MCC
+#define CAN_EID 0x4321000
+    
 #define CAN_EMPTY_WARNING_THRESHOLD 5 //%
     
 #define CAN_SENSOR_SENDING_INTERVAL 128 //ms#define CAN_EMPTY_WARNING_SENDING_INTERVAL 128 //ms
@@ -55,6 +57,8 @@ enum {
     CAN_EMPTY_MESSAGE_OFFSET = 0x04,
     CAN_CRITICAL_WARNING_OFFSET = 0x05,
     CAN_LOCKOUT_OFFSET = 0x06,
+    
+    CAN_LOCKOUT_CLEAR_OFFSET = 0xff,
 } CAN_MESSAGE_ID_OFFSETS;
     
 typedef enum  {

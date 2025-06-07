@@ -48,6 +48,8 @@
 #include <stdint.h>
 #include <string.h>
 #include "can1.h"
+#include "can_interface.h"
+#include "logging.h"
 
 #define RX_FIFO_MSG_DATA                (8U)
 #define NUM_OF_RX_FIFO                  (1U)
@@ -180,7 +182,46 @@ static void CAN1_RX_FIFO_Configuration(void)
 }
 
 static void CAN1_RX_FIFO_FilterMaskConfiguration(void)
-{
+{            
+    uint32_t reg = 0;
+
+    // Ensure only 29 bits are used
+
+    // Set EXIDE (bit 30) to enable extended ID filtering
+    reg |= (1 << 30);
+
+    // Bit 29: SID11 = ID[28]
+    reg |= ((CAN_EID >> 28) & 0x1) << 29;
+
+    // Bits 28-24: EID[17:13] = ID[27:23]
+    reg |= ((CAN_EID >> 23) & 0x1F) << 24;
+
+    // Bits 23-16: EID[12:5] = ID[22:15]
+    reg |= ((CAN_EID >> 15) & 0xFF) << 16;
+
+    // Bits 15-11: EID[4:0] = ID[14:10]
+    reg |= ((CAN_EID >> 10) & 0x1F) << 11;
+
+    // Bits 10-8: SID[10:8] = ID[9:7]
+    reg |= ((CAN_EID >> 7) & 0x7) << 8;
+
+    // Bits 7-0: SID[7:0] = ID[6:0]
+    reg |= (CAN_EID & 0x7F);
+    
+    log_info("REG: 0x%08x", reg);
+    
+    reg = 0x5080010C;
+    
+    C1FLTOBJ0 = reg;
+    
+    // FLTEN0 enabled; F0BP FIFO 1; 
+  
+    C1MASK0L = 0xFF;
+    C1MASK0H = 0xFF;
+    C1MASK0U = 0xFF;
+    C1MASK0T = 0x5F;
+    C1FLTCON0L = 0x81; 
+    
 }
 
 static void CAN1_TX_FIFO_Configuration(void)

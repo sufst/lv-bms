@@ -42,7 +42,7 @@ void can_recieve_handler() {
 
 void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) { 
     CAN_MSG_OBJ tx_msg;
-    tx_msg.msgId = CAN_NODE_BASE_ID + offset;
+    tx_msg.msgId = CAN_EID + offset;
     tx_msg.field.formatType = CAN_2_0_FORMAT;
     tx_msg.field.brs = CAN_NON_BRS_MODE;
     tx_msg.field.dlc = len;
@@ -135,7 +135,7 @@ void can_init() {
     while (CAN1_OperationModeGet() != CAN_NORMAL_2_0_MODE) {
         CAN_OP_MODE_STATUS status = CAN1_OperationModeSet(CAN_NORMAL_2_0_MODE);
         if (CAN_OP_MODE_REQUEST_SUCCESS != status) {
-            printf("error initialising the can interface\n");
+            log_err("error initialising the can interface\n");
             delay(1000);
         }
     }

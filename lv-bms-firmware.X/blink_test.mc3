@@ -5236,19 +5236,19 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter Option"/>
-         <value>Filter2</value>
+         <value>Filter1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Exide"/>
-         <value>disabled</value>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Fifo Pointer Name"/>
-         <value>NA</value>
+         <value>FIFO1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Filter EID "/>
-         <value>0</value>
+         <value>1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Filter SID "/>
@@ -5260,23 +5260,23 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Mask EID "/>
-         <value>0</value>
+         <value>262143</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Mask SID "/>
-         <value>0</value>
+         <value>2047</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Message ID"/>
-         <value></value>
+         <value> 0x0000001x</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Mide"/>
-         <value>disabled</value>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter0 Permissible ID"/>
-         <value></value>
+         <value>0b 0 0000 0000 0000 0000 0000 0000 0001</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter1 Exide"/>
@@ -5359,8 +5359,44 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Message ID"/>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Exide"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Fifo Pointer Name"/>
+         <value>NA</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Filter EID "/>
          <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Filter SID "/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Invalid Message ID"/>
+         <value></value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Mask EID "/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Mask SID "/>
+         <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Message ID"/>
+         <value></value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Mide"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter2 Permissible ID"/>
+         <value></value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="CAN FD1" name="Filter20 Message ID"/>
@@ -15296,15 +15332,15 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CFLTOBJ0H"/>
-         <value>0</value>
+         <value>9</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CFLTOBJ0L"/>
-         <value>2</value>
+         <value>12</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CFLTOBJ0T"/>
-         <value>0</value>
+         <value>64</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CFLTOBJ0U"/>
@@ -15504,7 +15540,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CMASK0H"/>
-         <value>7</value>
+         <value>255</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CMASK0L"/>
@@ -15512,11 +15548,11 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CMASK0T"/>
-         <value>64</value>
+         <value>95</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CMASK0U"/>
-         <value>0</value>
+         <value>255</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="CAN1" registerAlias="CMASK10H"/>
@@ -16620,7 +16656,7 @@
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CAN1" registerAlias="CFLTOBJ0T" settingAlias="EXIDE"/>
-         <value>disabled</value>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="CAN1" registerAlias="CFLTOBJ0T" settingAlias="SID11"/>
@@ -58026,7 +58062,7 @@
       </entry>
       <entry>
          <file>mcc_generated_files\can1.c</file>
-         <hash>6bca018262274aa4bd998d1fa6d61c41626622a708babc69de879e760c18b3a8</hash>
+         <hash>29a9cc71994f50342562167d4ae979197a7cf32aa3f163fc5f1563df68532ca1</hash>
       </entry>
       <entry>
          <file>mcc_generated_files\dma1.c</file>
