@@ -57,13 +57,13 @@
         <itemPath>mcc_generated_files/device_config.c</itemPath>
         <itemPath>mcc_generated_files/pin_manager.c</itemPath>
         <itemPath>mcc_generated_files/interrupt_manager.c</itemPath>
-        <itemPath>mcc_generated_files/can1.c</itemPath>
         <itemPath>mcc_generated_files/adc.c</itemPath>
         <itemPath>mcc_generated_files/memory.c</itemPath>
         <itemPath>mcc_generated_files/tmr0.c</itemPath>
         <itemPath>mcc_generated_files/uart2.c</itemPath>
         <itemPath>mcc_generated_files/uart4.c</itemPath>
         <itemPath>mcc_generated_files/dma1.c</itemPath>
+        <itemPath>mcc_generated_files/can1.c</itemPath>
       </logicalFolder>
       <logicalFolder name="Project Source"
                      displayName="Project Source"

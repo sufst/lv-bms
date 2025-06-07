@@ -129,10 +129,11 @@ void locked_out_main() {
         can_update();
         disp_update();
     
-//        if (unlock command sent) {
-//            // clear lock
-//            // reset mcu
-//        }
+        if (get_lockout_clear_message_rxed()) {
+            save_lockout_reason(LOCKOUT_NONE, 0, 0);
+            delay(1);
+            RESET();
+        }
     }
 }
 

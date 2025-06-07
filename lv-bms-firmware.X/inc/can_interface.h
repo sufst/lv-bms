@@ -58,7 +58,7 @@ enum {
     CAN_CRITICAL_WARNING_OFFSET = 0x05,
     CAN_LOCKOUT_OFFSET = 0x06,
     
-    CAN_LOCKOUT_CLEAR_OFFSET = 0xff,
+    CAN_LOCKOUT_CLEAR_OFFSET = 0x0f,
 } CAN_MESSAGE_ID_OFFSETS;
     
 typedef enum  {
@@ -106,6 +106,8 @@ void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_i
 // enabled the lockout message
 void can_set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
 void can_clear_lockout();
+
+bool get_lockout_clear_message_rxed();
 
 #ifdef	__cplusplus
 }

@@ -22,9 +22,11 @@ temp_t* temps_p;
 current_t* curr_p;
 uint8_t* SOC_p;
 
+// status
 can_status_byte_t status_byte;
 bool sensor_sending_en;
 
+// lockout parameters
 lockout_reason_t lockout_reason;
 bool lockout_set;
 uint8_t lockout_cell_index;
@@ -32,12 +34,27 @@ uint16_t lockout_cell_value;
 
 uint16_t charge_cycles, shutdown_count, lockout_count;
 
+// rx stuff
+bool lockout_clear_msg_rxed = false; 
+
 void can_recieve_handler() {
     CAN_MSG_OBJ rx_msg;
     CAN1_ReceiveFrom(FIFO1, &rx_msg);
     
     log_info("can message recieved");
     // TODO some kind of command interface - emulate the ORION BMS for the LV battery
+    
+    switch (rx_msg.msgId) {
+        case CAN_LOCKOUT_CLEAR_OFFSET + CAN_EID:
+            if(rx_msg.field.dlc == 2 && rx_msg.data[0] == 0xAB && rx_msg.data[1] == 0xCD) {
+                log_info("clear_lockout received");
+                lockout_clear_msg_rxed = true;
+            }
+            break;
+        
+        default:
+            break;
+    }
 }
 
 void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) { 
@@ -217,4 +234,10 @@ void can_set_lockdout(lockout_reason_t new_lockout_reason, uint8_t new_cell_inde
 
 void can_clear_lockout() {
     lockout_set = false;
+}
+
+bool get_lockout_clear_message_rxed() {
+    bool ret = lockout_clear_msg_rxed;
+    lockout_clear_msg_rxed = false;
+    return ret;
 }
