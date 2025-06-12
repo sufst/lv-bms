@@ -81,7 +81,8 @@ bool bq_setup() {
 // gathers the 3 voltages
 void bq_get_voltages(voltage_t* voltages) {
     for(uint8_t cell = 1; cell <= 3; cell++) {
-        voltages[cell-1] = (voltage_t)(get_cell_voltage(1, cell) * V_LSB_ADC * VOLTAGE_MULTIPLIER);
+        int16_t voltage = (voltage_t)(get_cell_voltage(1, cell) * V_LSB_ADC * VOLTAGE_MULTIPLIER);
+        voltages[cell-1] = (voltage >= 0) ? voltage : 0; // it can do -ve voltages, but seeing as the voltage_t type can't handle that, limiting  it to 0 makes the most sense
     }
 }
 

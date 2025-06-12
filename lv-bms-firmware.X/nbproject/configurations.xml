@@ -13,7 +13,6 @@
         <itemPath>mcc_generated_files/can1.h</itemPath>
         <itemPath>mcc_generated_files/can_types.h</itemPath>
         <itemPath>mcc_generated_files/interrupt_manager.h</itemPath>
-        <itemPath>mcc_generated_files/adc.h</itemPath>
         <itemPath>mcc_generated_files/memory.h</itemPath>
         <itemPath>mcc_generated_files/tmr0.h</itemPath>
         <itemPath>mcc_generated_files/uart2.h</itemPath>
@@ -57,7 +56,6 @@
         <itemPath>mcc_generated_files/device_config.c</itemPath>
         <itemPath>mcc_generated_files/pin_manager.c</itemPath>
         <itemPath>mcc_generated_files/interrupt_manager.c</itemPath>
-        <itemPath>mcc_generated_files/adc.c</itemPath>
         <itemPath>mcc_generated_files/memory.c</itemPath>
         <itemPath>mcc_generated_files/tmr0.c</itemPath>
         <itemPath>mcc_generated_files/uart2.c</itemPath>
@@ -570,7 +568,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programmerToGoFilePath"
                   value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
@@ -658,7 +656,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programmerToGoFilePath"
                   value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
@@ -917,7 +915,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="3.3"/>
+        <property key="voltagevalue" value="5"/>
       </Tool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
@@ -1005,7 +1003,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="3.3"/>
+        <property key="voltagevalue" value="5"/>
       </pk4hybrid>
       <item path="src/bms_main.c" ex="true" overriding="false">
         <HI-TECH-COMP>
@@ -1608,7 +1606,7 @@
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
         <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
+                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/error_load_store_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>

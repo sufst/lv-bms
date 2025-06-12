@@ -16,10 +16,6 @@
 #include "error_load_store.h"
 
 void millis_hook (uint64_t uptime) {
-    if ((uptime % 64) == 0) {
-        disp_update();
-        can_update();
-    }
 }
 
 uint8_t SOC;
@@ -48,16 +44,25 @@ void bms_main(void) {
     can_set_lockout_count(6);
     can_set_shutdown_count(2093);
     
-    set_lockdout(LOCKOUT_OVERVOLT, 3, V(2.8));
+    can_set_lockdout(LOCKOUT_OVERVOLT, 3, V(2.8));
     
-    can_sending_enable(true);
+    can_sensor_sending_enable(true);
+    disp_update();
+    can_update();
+    
+    uint64_t last_update = millis();
     while(1) {
+        uint64_t now = millis();
+        if ((now - last_update > 100)){
+            last_update = now;
+            SOC = (SOC < 100) ? SOC+1 : 0;
+            disp_set_soc(SOC);
+            printf("SOC: %d\n", SOC);
+            can_send_critical_warning(CAN_CRITICAL_TEMP, 2, 70);
+            disp_update();
+            can_update();
+        }
         CLRWDT();
-        SOC = (SOC < 100) ? SOC+1 : 0;
-        disp_set_soc(SOC);
-        printf("SOC: %d\n", SOC);
-        send_critical_warning(CAN_CRITICAL_TEMP, 2, 70);
-        delay(100);
     }
     
     while(1){

@@ -82,7 +82,7 @@ void can_init();
 // updates can interface
 void can_update();
 
-void send_sensor_message();
+void can_send_sensor_message();
 
 // these give the can interface pointers to the variables 
 // that it will read to build the can messages
@@ -107,7 +107,7 @@ void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_i
 void can_set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
 void can_clear_lockout();
 
-bool get_lockout_clear_message_rxed();
+bool can_get_lockout_clear_message_rxed();
 
 #ifdef	__cplusplus
 }

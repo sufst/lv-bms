@@ -53,12 +53,11 @@
 #include <stdbool.h>
 #include <conio.h>
 #include "interrupt_manager.h"
-#include "adc.h"
 #include "dma1.h"
-#include "tmr0.h"
 #include "memory.h"
-#include "uart2.h"
+#include "tmr0.h"
 #include "uart4.h"
+#include "uart2.h"
 #include "can1.h"
 
 

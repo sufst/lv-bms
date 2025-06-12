@@ -81,7 +81,7 @@ void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) {
     
 }
 
-void send_sensor_message() {
+void can_send_sensor_message() {
     // voltage 
     uint8_t voltage_message[6];
     for (int i = 0; i < 3; i++) {
@@ -109,7 +109,7 @@ void send_sensor_message() {
     tx_message(CAN_CURR_MESSAGE_OFFSET, current_message, 2);
 }
 
-void send_status_message() {
+void can_send_status_message() {
     uint8_t status_message[8];
     status_message[0] = (uint8_t)status_byte;
     status_message[1] = *SOC_p;
@@ -122,12 +122,12 @@ void send_status_message() {
     tx_message(CAN_STATUS_MESSAGE_OFFSET, status_message, 8);
 }
 
-void send_empty_warning() {
+void can_send_empty_warning() {
     uint8_t empty_message[0];
     tx_message(CAN_EMPTY_MESSAGE_OFFSET, empty_message, 0);
 }
 
-void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value){
+void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value){
     uint8_t critical_message[4];
     critical_message[0] = (uint8_t)critical_byte;
     critical_message[1] = cell_index;
@@ -136,7 +136,7 @@ void send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index
     tx_message(CAN_CRITICAL_WARNING_OFFSET, critical_message, 4);
 }
 
-void send_lockout_message() {
+void can_send_lockout_message() {
     uint8_t lockout_message[4];
     lockout_message[0] = (uint8_t)lockout_reason;
     lockout_message[1] = lockout_cell_index;
@@ -165,22 +165,22 @@ void can_update() {
     // sensor message sending
     if((now - sending_timer) > CAN_SENSOR_SENDING_INTERVAL && sensor_sending_en) {
         sending_timer = now;
-        send_sensor_message();
+        can_send_sensor_message();
         delay(1);
-        send_status_message();
+        can_send_status_message();
 
         // empty warning sending
         if(*SOC_p < CAN_EMPTY_WARNING_THRESHOLD) {
-            send_empty_warning();
+            can_send_empty_warning();
         }
     }
     
     // lockout
     if((now - lockout_message_timer) > CAN_LOCKOUT_SENDING_INTERVAL && lockout_set) {
         lockout_message_timer = now;
-        send_lockout_message();
+        can_send_lockout_message();
         delay(1);
-        send_status_message();
+        can_send_status_message();
     }
 }
 
@@ -236,7 +236,7 @@ void can_clear_lockout() {
     lockout_set = false;
 }
 
-bool get_lockout_clear_message_rxed() {
+bool can_get_lockout_clear_message_rxed() {
     bool ret = lockout_clear_msg_rxed;
     lockout_clear_msg_rxed = false;
     return ret;

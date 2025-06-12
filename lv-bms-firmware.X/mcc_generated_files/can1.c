@@ -205,21 +205,21 @@ static void CAN1_TX_FIFO_Configuration(void)
     // TXAT 3; TXPRI 1; 
     C1TXQCONU = 0x60;
     
-    // PLSIZE 8; FSIZE 2; 
-    C1TXQCONT = 0x01;
+    // PLSIZE 8; FSIZE 6; 
+    C1TXQCONT = 0x05;
     
 }
 
 static void CAN1_BitRateConfiguration(void)
 {
-    // SJW 23; 
-    C1NBTCFGL = 0x17;
+    // SJW 25; 
+    C1NBTCFGL = 0x19;
     
-    // TSEG2 23; 
-    C1NBTCFGH = 0x17;
+    // TSEG2 25; 
+    C1NBTCFGH = 0x19;
     
-    // TSEG1 102; 
-    C1NBTCFGU = 0x66;
+    // TSEG1 100; 
+    C1NBTCFGU = 0x64;
     
     // BRP 0; 
     C1NBTCFGT = 0x00;

@@ -594,10 +594,10 @@ int ReadReg(uint8_t bID,                   // device id
         }
     }
     
-    if (!correctly_rxed) {
-        bq_log_err("failed after 5 tries to rx, reset needed");
-        while(1);
-    }
+//    if (!correctly_rxed) {
+//        bq_log_err("failed after 5 tries to rx, reset needed");
+//        while(1);
+//    }
     
     return bRes;
 }

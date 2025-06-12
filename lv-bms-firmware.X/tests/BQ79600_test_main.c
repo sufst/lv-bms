@@ -17,10 +17,6 @@
 #include "bq796xx.h"
 
 void millis_hook(uint64_t uptime) {
-    if ((uptime % 64) == 0) {
-        disp_update();
-        can_update();
-    }
 }
 
 uint8_t SOC;
@@ -35,22 +31,9 @@ void bms_main(void) {
     can_init();
     INTERRUPT_GlobalInterruptEnable();
     
-    printf("\nCAN tests \n");
+    printf("\nBQ tests \n");
     disp_set_number(0x55);
 //    delay(1000);
-    
-    // initialise can interface
-    can_register_SOC(&SOC);
-    can_register_voltages(voltages);
-    can_register_temps(temps);
-    can_register_current(&current);
-    
-    can_set_status(CAN_POWERED_DOWN);
-    can_set_charge_cycles(123);
-    can_set_lockout_count(6);
-    can_set_shutdown_count(2093);
-    
-    can_sending_enable(true);
     
     HWRST796XX();
     
@@ -81,24 +64,28 @@ void bms_main(void) {
     delay(1);
     get_tsref_voltage(1);
     
-    OVUV_config(1, OV_THRESH_4200mV, UV_THRESH_3100mV, 3);
-    OVUV_start(1);
-    get_OVUV_running(1);
-    get_ovuv_faults(1);
+    set_fault_msk(1, 0);
+    reset_faults(1, MSK_ALL);
     
-    OTUT_config(1, 10, 80);
-    OTUT_start(1);
-    get_otut_faults(1);
-    get_OTUT_running(1);
+    
+//    OVUV_config(1, OV_THRESH_4200mV, UV_THRESH_3100mV, 3);
+//    OVUV_start(1);
+//    get_OVUV_running(1);
+//    get_ovuv_faults(1);
+//    
+//    OTUT_config(1, 10, 80);
+//    OTUT_start(1);
+//    get_otut_faults(1);
+//    get_OTUT_running(1);
     
     
 //    for(int i = 100; i ; i--) {
-////        int v0 = get_cell_voltage(1,1);
-////        get_cell_voltage_aux(1, 1);
+//        int v0 = get_cell_voltage(1,1);
+//        get_cell_voltage_aux(1, 1);
 //        get_tsref_voltage(1);
 //        get_gpio_voltage(1, 1);
-////        get_die_temp_1(1);
-////        get_die_temp_2(1);
+//        get_die_temp_1(1);
+//        get_die_temp_2(1);
 //        delay(500);
 //        CLRWDT();
 //    }
@@ -122,7 +109,7 @@ void bms_main(void) {
 
 
     delay(5000);
-    SD796XX();
+//    SD796XX();
             
     while(1){
         CLRWDT();

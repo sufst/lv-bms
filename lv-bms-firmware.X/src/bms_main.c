@@ -80,7 +80,7 @@ uint64_t power_button_press_duration(uint64_t max_duration){
     uint64_t now = millis();
     
     // main button checking loop
-    if(!PowerButton_GetValue()) { // pressed
+    if(MasterSwitch_GetValue()) { // pressed
         if (prev_pulse_unfinished) {
             // waiting for release to end the previous pulse
         }
@@ -129,7 +129,7 @@ void locked_out_main() {
         can_update();
         disp_update();
     
-        if (get_lockout_clear_message_rxed()) {
+        if (can_get_lockout_clear_message_rxed()) {
             save_lockout_reason(LOCKOUT_NONE, 0, 0);
             delay(1);
             RESET();
@@ -195,8 +195,12 @@ void charging_main() {
         bq_get_temperatures(temps);
         bq_get_current(&current);
         
+        log_dbg("voltages: %d, %d, %d", voltages[0], voltages[1], voltages[2]);
+        log_dbg("temps: %d, %d, %d", temps[0], temps[1], temps[2]);
+        log_dbg("current: %d", current);
+        
         // check for going to sleep
-        if (power_button_press_duration(2000) >= 2000) {
+        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             break;
         }
         
@@ -256,7 +260,7 @@ void discharging_main() {
         bq_get_current(&current);
         
         // check for going to sleep
-        if (power_button_press_duration(2000) >= 2000) {
+        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             break;
         }
         
@@ -269,12 +273,13 @@ void discharging_main() {
     }
     
     log_info("exiting discharging");
-    can_set_status(CAN_POWERED_DOWN);
 }
 
 void powered_on_main() {
     // power on setup
     log_info("powering on");
+    
+    RelayCtrl_SetHigh();
     
     // power up and check connection to BQ79616
     bq_wake();
@@ -298,8 +303,11 @@ void powered_on_main() {
     // power off shutdown
     log_info("powering off");
     
+    can_set_status(CAN_POWERED_DOWN);
     can_sensor_sending_enable(false);
     bq_shutdown();
+    
+    RelayCtrl_SetLow();
 }
 
 /*
@@ -308,7 +316,7 @@ void powered_on_main() {
 void bms_main(void) {   
     // Initialize the device
     SYSTEM_Initialize();
-    bool button_pressed_on_start = PowerButton_GetValue();
+    bool button_pressed_on_start = MasterSwitch_GetValue();
     
     millis_setup();
     INTERRUPT_GlobalInterruptEnable();
@@ -319,6 +327,8 @@ void bms_main(void) {
     can_register_temps(temps);
     can_register_current(&current);
     can_register_SOC(&SOC);
+    
+    
     
     // set default lockout value
     
