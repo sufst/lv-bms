@@ -18,10 +18,10 @@
 #define BQ_VOLTAGE_LPF_FREQ LPF_6_5Hz
 #define BQ_CURRENT_LPF_FREQ LPF_6_5Hz
 
-#define BB_CURRENT_SENSE_R 2.035e-3 // ohms
+#define BB_CURRENT_SENSE_R 4e-3 // ohms
 // derived by testing
-#define CURRENT_OFFSET -29 // -31 steps; -31 * V_LSB_BB volts
-#define CURRENT_MULTIPLER  0.86 // ratio multiplied to make it correct
+#define CURRENT_OFFSET -29 // in stepssteps; * V_LSB_BB is volts
+#define CURRENT_MULTIPLER  0.85 // ratio multiplied to make it correct
 
 
 void bq_wake();
