@@ -259,16 +259,18 @@ void discharging_main() {
         bq_get_temperatures(temps);
         bq_get_current(&current);
         
-        // check for going to sleep
-        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
-            break;
-        }
         
         //-------------------------- ANALYSE --------------------------
         
         //-------------------------- ACT --------------------------
         can_update();
         disp_update();
+        
+        // check for going to sleep
+        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
+            break;
+        }
+        
         loop_counter++;
     }
     

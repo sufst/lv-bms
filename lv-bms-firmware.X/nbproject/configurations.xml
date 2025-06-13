@@ -278,7 +278,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="5.0"/>
+        <property key="voltagevalue" value="3.3"/>
       </Tool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
@@ -336,8 +336,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/Full_firmware/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -366,7 +364,7 @@
                   value="toolpack.updateoptions.uselatestoolpack"/>
         <property key="toolpack.updateoptions.packversion"
                   value="Press to select which tool pack to use"/>
-        <property key="voltagevalue" value="5.0"/>
+        <property key="voltagevalue" value="3.3"/>
       </pk4hybrid>
       <snap>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
@@ -657,8 +655,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -973,8 +969,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/CAN_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -1289,8 +1283,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/BQ79600_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -1605,8 +1597,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/error_load_store_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
