@@ -20,9 +20,8 @@
 
 #define BB_CURRENT_SENSE_R 4e-3 // ohms
 // derived by testing
-#define CURRENT_OFFSET -29 // in stepssteps; * V_LSB_BB is volts
-#define CURRENT_MULTIPLER  0.85 // ratio multiplied to make it correct
-
+#define CURRENT_OFFSET -41 // in stepssteps; * V_LSB_BB is volts
+#define CURRENT_CAL_RATIO  0.85 // ratio multiplied to make it correct
 
 void bq_wake();
 void bq_shutdown();

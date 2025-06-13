@@ -99,7 +99,7 @@ void bq_get_temperatures(temp_t* temps) {
 
 // gathers the current
 void bq_get_current(current_t* current) {
-    int16_t shunt_voltage = (get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_MULTIPLER; // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
-    log_dbg("main adc bus bar: %d = %fV", shunt_voltage, shunt_voltage * V_LSB_BB);
+    int16_t shunt_voltage = (get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_CAL_RATIO; // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
     *current = CURRENT_MULTIPLIER * (shunt_voltage * V_LSB_BB) / BB_CURRENT_SENSE_R;
+
 }

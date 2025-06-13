@@ -53,6 +53,8 @@
 #include "can_interface.h"
 
 #define CELL_COUNT 3
+#define RELAY_COIL_R 160 // ohms
+#define IDLE_CURRENT -A(0)
 
 #ifndef min
 #define min(a,b) ((a<b) ?a:b)
@@ -145,7 +147,7 @@ void sleep_main() {
     uint64_t loop_count = 0;
     while(1){
         // exiting sleep
-        uint64_t press = power_button_press_duration(1000);
+        uint64_t press = power_button_press_duration(UINT64_MAX);
         if (press == 0) {
             // nothing
         } else if(press < 1000) {
@@ -198,6 +200,10 @@ void charging_main() {
         log_dbg("voltages: %d, %d, %d", voltages[0], voltages[1], voltages[2]);
         log_dbg("temps: %d, %d, %d", temps[0], temps[1], temps[2]);
         log_dbg("current: %d", current);
+        
+        current_t relay_current =  ((float)((voltages[0] + voltages[1] + voltages[2]) / VOLTAGE_MULTIPLIER ) / RELAY_COIL_R ) * CURRENT_MULTIPLIER;
+        current_t cells_current = current - relay_current - IDLE_CURRENT ;
+        log_dbg("relay current: %fA, cell current: %fA", (float)relay_current/CURRENT_MULTIPLIER, (float)cells_current/CURRENT_MULTIPLIER);
         
         // check for going to sleep
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
