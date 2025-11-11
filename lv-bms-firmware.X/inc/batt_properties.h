@@ -32,13 +32,23 @@
 #define	BATT_PROPERTIES_H
 
 #include "units.h"
+//                                                                          Possible values based on datasheet: https://cdn03.plentymarkets.com/i9a0e0hd8l6w/frontend/Datenblaeter/Molicell/INR21700P45B/p45b-datasheet.pdf
+// exceeding these values will produce a warn
+#define DISCHARGE_CURRENT_MAX A(25) // TODO: replace with actual values     | 45.0A "Maximum continuous charging current" 
+#define CHARGE_CURRENT_MAX A(25) // TODO: replace with actual values        | 9.00A "Maximum continuous discharging current"
+#define CELL_VOLTAGE_MAX V(4.3) // TODO: replace with actual values         | 4.25V "End of charge voltage: 2.30 +/- 0.05"
+#define CELL_VOLTAGE_MIN V(3.2) // TODO: replace with actual values         | 2.50V "End of discharge voltage"
+#define CELL_TEMP_MAX 60 // TODO: replace with actual values                | 60.0C
+#define CELL_TEMP_MIN 0 // TODO: replace with actual values                 | 0.00C "Charging" -40.0C "Discharging"
 
-#define DISCHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
-#define CHARGE_CURRENT_MAX A(25) // TODO: replace with actual values
-#define CELL_VOLTAGE_MAX V(4.3) // TODO: replace with actual values
-#define CELL_VOLTAGE_MIN V(3.2) // TODO: replace with actual values
-#define CELL_TEMP_MAX 60 // TODO: replace with actual values
-#define CELL_TEMP_MIN 0 // TODO: replace with actual values
+// TODO Replace with actual values (Current values have been "vibed")
+// exceeding these values will shutdown the battery
+#define DISCHARGE_CURRENT_MAX_CUTOFF A(50)
+#define CHARGE_CURRENT_MAX_CUTOFF A(12)
+#define CELL_VOLTAGE_MAX_CUTOFF V(4.4)
+#define CELL_VOLTAGE_MIN_CUTOFF V(2.4)
+#define CELL_TEMP_MAX_CUTOFF 70
+#define CELL_TEMP_MIN_CUTOFF -15
 
 #define BALANCE_START_TH V(0.2)
 #define BALANCE_END_TH V(0.05)
