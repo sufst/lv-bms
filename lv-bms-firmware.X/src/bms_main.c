@@ -270,10 +270,12 @@ void discharging_main() {
         // take it with a grain of salt..
 
         // send critical warnings
+        // manage cutoff
+        bool cutoff = false;
 
-        // warn current
         // cell index is irrelevant. default to cell index -1 (==255)
         if (check_over_current_discharge(current)) can_send_critical_warning(CAN_CRITICAL_CURRENT, -1, current);
+        if (current > CHARGE_CURRENT_MAX_CUTOFF) cutoff = true;
 
         voltage_t cell_v;
         temp_t cell_t;
@@ -283,12 +285,20 @@ void discharging_main() {
             cell_v = voltages[i];
             cell_t = temps[i];
 
-            // warn voltage
             if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
             if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
-            // warn temp
+            if (cell_v > CELL_VOLTAGE_MAX_CUTOFF) cutoff = true;
+            if (cell_v < CELL_VOLTAGE_MIN_CUTOFF) cutoff = true;
+
             if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
             if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+            if (cell_v > CELL_TEMP_MAX_CUTOFF) cutoff = true;
+            if (cell_v < CELL_TEMP_MIN_CUTOFF) cutoff = true;
+        }
+
+        if (cutoff) {
+            log_err("Battery parameters are outside of acceptable range. Entering cutoff");
+            break;
         }
         
         //-------------------------- ANALYSE --------------------------
