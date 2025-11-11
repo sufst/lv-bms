@@ -71,7 +71,7 @@ typedef enum  {
 } can_status_byte_t;
 
 typedef enum {
-    CAN_CRITICIAL_VOLGAGE = 0x01,
+    CAN_CRITICAL_VOLTAGE = 0x01,
     CAN_CRITICAL_TEMP = 0x02,
     CAN_CRITICAL_CURRENT = 0x03,
 } can_critical_byte_t;

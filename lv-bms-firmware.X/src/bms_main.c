@@ -63,8 +63,8 @@
 typedef enum {WAKEUP_DISCHARGE, WAKEUP_CHARGE} wakeup_mode_t;
 wakeup_mode_t wakeup_mode;
 
-voltage_t voltages[3];
-temp_t temps[3];
+voltage_t voltages[CELL_COUNT];
+temp_t temps[CELL_COUNT];
 current_t current;
 int8_t SOC = 50;
 
@@ -265,6 +265,31 @@ void discharging_main() {
         bq_get_temperatures(temps);
         bq_get_current(&current);
         
+        // for review
+        // done by a first year
+        // take it with a grain of salt..
+
+        // send critical warnings
+
+        // warn current
+        // cell index is irrelevant. default to cell index -1 (==255)
+        if (check_over_current_discharge(current)) can_send_critical_warning(CAN_CRITICAL_CURRENT, -1, current);
+
+        voltage_t cell_v;
+        temp_t cell_t;
+
+        for (uint8_t i = 0; i < CELL_COUNT; i++) {
+
+            cell_v = voltages[i];
+            cell_t = temps[i];
+
+            // warn voltage
+            if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+            if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+            // warn temp
+            if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+            if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+        }
         
         //-------------------------- ANALYSE --------------------------
         
