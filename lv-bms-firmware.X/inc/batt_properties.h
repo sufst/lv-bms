@@ -50,6 +50,12 @@
 #define CELL_TEMP_MAX_CUTOFF 70
 #define CELL_TEMP_MIN_CUTOFF -15
 
+// TODO Replace with actual values
+// exceeding these values damages the system so enter lockout
+#define OVERVOLT_LOCKOUT V(4.8)
+#define UNDERVOLT_LOCKOUT V(2.0)
+#define OVERTEMP_LOCKOUT 120
+
 #define BALANCE_START_TH V(0.2)
 #define BALANCE_END_TH V(0.05)
 

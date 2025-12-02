@@ -63,10 +63,102 @@
 typedef enum {WAKEUP_DISCHARGE, WAKEUP_CHARGE} wakeup_mode_t;
 wakeup_mode_t wakeup_mode;
 
+typedef enum {NONE, CUTOFF, LOCKOUT} cell_issue_level_t;
+
 voltage_t voltages[CELL_COUNT];
 temp_t temps[CELL_COUNT];
 current_t current;
 int8_t SOC = 50;
+
+typedef struct {
+    cell_issue_level_t issue_level;
+    shutdown_reason_t shutdown_reason;
+    lockout_reason_t lockout_reason;
+} cell_report;
+
+cell_report get_cell_report(uint8_t cell_index, wakeup_mode_t mode) {
+    voltage_t cell_v = voltages[cell_index];
+    temp_t cell_t = temps[cell_index];
+    
+    cell_report r;
+
+    // function will return after an error is reached
+    // so it's important that lockouts are checked first
+    // as they are higher priority
+
+    if (cell_v > OVERVOLT_LOCKOUT) {
+        r.issue_level = LOCKOUT;
+        r.lockout_reason = LOCKOUT_OVERVOLT;
+        return r;
+    }
+    if (cell_v < UNDERVOLT_LOCKOUT) {
+        r.issue_level = LOCKOUT;
+        r.lockout_reason = LOCKOUT_UNDERVOLT;
+        return r;
+    }
+    if (cell_t > OVERTEMP_LOCKOUT) {
+        r.issue_level = LOCKOUT;
+        r.lockout_reason = LOCKOUT_OVERTEMP;
+        return r;
+    }
+
+    // check cutoff conditions
+
+    if (cell_v > CELL_VOLTAGE_MAX_CUTOFF) {
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_OVER_V;
+        return r;
+    }
+    if (cell_v < CELL_VOLTAGE_MIN_CUTOFF) {
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_UNDER_V;
+        return r;
+    }
+    if (cell_t > CELL_TEMP_MAX_CUTOFF) {
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_OVER_TEMP;
+        return r;
+    }
+    if (cell_t < CELL_TEMP_MIN_CUTOFF) {
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_UNDER_TEMP;
+        return r;
+    }
+
+    if (mode == WAKEUP_CHARGE && current > CHARGE_CURRENT_MAX_CUTOFF) { // for charging
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
+        return r;
+    }
+    if (mode == WAKEUP_DISCHARGE && current > DISCHARGE_CURRENT_MAX_CUTOFF) { // for discharging
+        r.issue_level = CUTOFF;
+        r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
+        return r;
+    }
+    
+    // control flow reaches here if no errors
+
+    r.issue_level = NONE;
+    return r;
+}
+
+void send_cell_warnings(uint8_t cell_index, wakeup_mode_t mode) {
+    // check current
+    if (mode == WAKEUP_CHARGE && check_over_current_charge(current)) { // for charging
+        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
+    }
+    if (mode == WAKEUP_DISCHARGE && check_over_current_discharge(current)) { // for discharging
+        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
+    }
+
+    // check voltage
+    if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+    if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+
+    // check temp
+    if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+    if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+}
 
 // milli second timer hook
 void millis_hook (uint64_t uptime) {
@@ -204,7 +296,34 @@ void charging_main() {
         current_t relay_current =  ((float)((voltages[0] + voltages[1] + voltages[2]) / VOLTAGE_MULTIPLIER ) / RELAY_COIL_R ) * CURRENT_MULTIPLIER;
         current_t cells_current = current - relay_current - IDLE_CURRENT ;
         log_dbg("relay current: %fA, cell current: %fA", (float)relay_current/CURRENT_MULTIPLIER, (float)cells_current/CURRENT_MULTIPLIER);
-        
+
+        bool lockout = false;
+        bool cutoff = false;
+
+        for (uint8_t i = 0; i < CELL_COUNT; i++) {
+            send_cell_warnings(i, WAKEUP_CHARGE);
+            cell_report r get_cell_report(i, WAKEUP_CHARGE);
+            if (r.issue_level == LOCKOUT) {
+                save_lockout_reason(r.lockout_reason);
+                lockout = true;
+                break;
+            }
+            else if (r.issue_level == CUTOFF) {
+                save_shutdown_reason(r.shutdown_reason);
+                cutoff = true;
+                break;
+            }
+        }
+        if (lockout) {
+            locked_out_main();
+            // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
+            break;
+        }
+        else if (cutoff) {
+            // break to shutdown
+            break;
+        }
+
         // check for going to sleep
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             break;
@@ -264,40 +383,31 @@ void discharging_main() {
         bq_get_voltages(voltages);
         bq_get_temperatures(temps);
         bq_get_current(&current);
-        
-        // for review
-        // done by a first year
-        // take it with a grain of salt..
 
-        // send critical warnings
-        // manage cutoff
+        bool lockout = false;
         bool cutoff = false;
 
-        // cell index is irrelevant. default to cell index -1 (==255)
-        if (check_over_current_discharge(current)) can_send_critical_warning(CAN_CRITICAL_CURRENT, -1, current);
-        if (current > CHARGE_CURRENT_MAX_CUTOFF) cutoff = true;
-
-        voltage_t cell_v;
-        temp_t cell_t;
-
         for (uint8_t i = 0; i < CELL_COUNT; i++) {
-
-            cell_v = voltages[i];
-            cell_t = temps[i];
-
-            if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
-            if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
-            if (cell_v > CELL_VOLTAGE_MAX_CUTOFF) cutoff = true;
-            if (cell_v < CELL_VOLTAGE_MIN_CUTOFF) cutoff = true;
-
-            if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
-            if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
-            if (cell_v > CELL_TEMP_MAX_CUTOFF) cutoff = true;
-            if (cell_v < CELL_TEMP_MIN_CUTOFF) cutoff = true;
+            send_cell_warnings(i, WAKEUP_DISCHARGE);
+            cell_report r get_cell_report(i, WAKEUP_DISCHARGE);
+            if (r.issue_level == LOCKOUT) {
+                save_lockout_reason(r.lockout_reason);
+                lockout = true;
+                break;
+            }
+            else if (r.issue_level == CUTOFF) {
+                save_shutdown_reason(r.shutdown_reason);
+                cutoff = true;
+                break;
+            }
         }
-
-        if (cutoff) {
-            log_err("Battery parameters are outside of acceptable range. Entering cutoff");
+        if (lockout) {
+            locked_out_main();
+            // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
+            break;
+        }
+        else if (cutoff) {
+            // break to shutdown
             break;
         }
         
