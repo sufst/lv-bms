@@ -63,6 +63,7 @@ bool bq_check_measuring() {
 
 bool bq_setup() {
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
+    set_long_comm_timeout(1, TIMEOUT_2S, LONG_T_O_SHUTDOWN);
     set_active_cells(1, 3);
     enable_LPF_cells(1, BQ_VOLTAGE_LPF_FREQ);
     enable_LPF_BB(1, BQ_CURRENT_LPF_FREQ);
@@ -73,7 +74,6 @@ bool bq_setup() {
     delay(1);
     main_ADC_start(1);
     aux_ADC_start(1);
-    
     
     return true;
 }

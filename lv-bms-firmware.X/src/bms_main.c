@@ -56,6 +56,9 @@
 #define RELAY_COIL_R 160 // ohms
 #define IDLE_CURRENT -A(0)
 
+#define CHARGING_END_CURRENT A(0.03)
+#define CHARGING_END_TIME_MS 300e3 // seconds
+
 #ifndef min
 #define min(a,b) ((a<b) ?a:b)
 #endif
@@ -261,16 +264,17 @@ void sleep_main() {
 }
 
 void charging_main() {
+    uint64_t charge_end_timer_start_time = 0; // time at which the current first drops below the charge end current
+    uint32_t loop_counter = 0;
+    
     log_info("charging main");
     disp_set_charging(true);
     disp_set_soc(70);
     can_set_status(CAN_CHARGING);
     can_sensor_sending_enable(true);
-    // check pack is happy
-    // close relay
     
-    uint32_t loop_counter = 0;
     while(1) {
+        uint64_t now = millis();
         //-------------------------- MEASURE --------------------------
         // check connection
         if(loop_counter % 100 == 0) {
@@ -293,6 +297,9 @@ void charging_main() {
         log_dbg("temps: %d, %d, %d", temps[0], temps[1], temps[2]);
         log_dbg("current: %d", current);
         
+        
+        //-------------------------- ANALYSE --------------------------
+        // estimate current through the cells
         current_t relay_current =  ((float)((voltages[0] + voltages[1] + voltages[2]) / VOLTAGE_MULTIPLIER ) / RELAY_COIL_R ) * CURRENT_MULTIPLIER;
         current_t cells_current = current - relay_current - IDLE_CURRENT ;
         log_dbg("relay current: %fA, cell current: %fA", (float)relay_current/CURRENT_MULTIPLIER, (float)cells_current/CURRENT_MULTIPLIER);
@@ -332,18 +339,32 @@ void charging_main() {
         //-------------------------- ANALYSE --------------------------
         
         //-------------------------- ACT --------------------------   
+        disp_set_soc(SOC);
         can_update();
         disp_update();
         
-        bool charge_done = false;
-        if(charge_done) {
+        // charge done detection; the cell current drops below the end current threshold for a set time
+        if (cells_current < CHARGING_END_CURRENT) {
+            if(charge_end_timer_start_time == 0){
+                charge_end_timer_start_time = now;
+            }
+            if((now - charge_end_timer_start_time) > CHARGING_END_TIME_MS) {
+                break;
+            }
+        } else {
+            charge_end_timer_start_time = 0;
+        }
+        
+        // go back to sleep if discharging - we don't want the battery to discharge any more
+        if (current < A(0)) {
             break;
         }
         
-        if(power_button_press_duration(2000) >= 2000) {
+        // check for going to sleep by button
+        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             break;
         }
-        
+
         loop_counter++;
     }
     
@@ -352,17 +373,13 @@ void charging_main() {
     // indicate charging done
     
     log_info("exiting charging");
-    can_set_status(CAN_FULL);
     disp_set_charging(false);
 }
 
 void discharging_main() {
     log_info("discharging main");
-    disp_set_soc(70);
     can_set_status(CAN_DISCHARGING);
     can_sensor_sending_enable(true);
-    // check pack is happy
-    // close relay
     
     uint32_t loop_counter = 0;
     while(1) {
@@ -414,6 +431,7 @@ void discharging_main() {
         //-------------------------- ANALYSE --------------------------
         
         //-------------------------- ACT --------------------------
+        disp_set_soc(SOC);
         can_update();
         disp_update();
         

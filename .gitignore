@@ -1,3 +1,4 @@
 /lv-bms-firmware.X/dist/*
 /lv-bms-firmware.X/debug/*
 /lv-bms-firmware.X/build/*
+.vscode/*

@@ -50,6 +50,7 @@
 #include "uart4.h"
 #include "mcc.h"
 #include "BQ796XXA0_reg.h"
+#include "logging.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -454,6 +455,20 @@ void daisy_chain_dll_sync() {
     ReadReg(0, OTP_ECC_DATAIN8, response_frame2, 1, 0, FRMWRT_STK_R);
     
     bq_log_dbg("daisy chain dll sync done");
+}
+
+void set_long_comm_timeout(uint8_t bID, TIMEOUT_t time, LONG_TIMEOUT_ACTION_t action) {
+    if(time < 0 || time > TIMEOUT_1HR) {
+        log_err("tried to set long communication timeout with invalid time: %d ", time);
+    }
+    if(action < 0 || action > LONG_T_O_SHUTDOWN) {
+        log_err("tried to set long communication timeout action with invalid action: %d", action);
+    }
+    
+    uint8_t timeout_conf_reg = get_reg_value(bID, COMM_TIMEOUT_CONF);
+    timeout_conf_reg &= 0xf0;
+    timeout_conf_reg |= time | action << 3;
+    set_reg_value(bID, COMM_TIMEOUT_CONF, timeout_conf_reg);
 }
 
 // *****************************************************************************
