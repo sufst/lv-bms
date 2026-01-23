@@ -25,7 +25,7 @@ extern "C" {
     bool _critical = false;
     bool _empty = false;
     
-    uint64_t _init_start_time = 0;
+    timer_t init_start_timer;
     bool init = false;
     
     void set_led(int led_no, bool val) {
@@ -167,19 +167,16 @@ extern "C" {
         SOC5_SetHigh();
         
         init = true;
-        _init_start_time = millis();
+        timer_init_count_down(&init_start_timer, 1000);
+        timer_start(&init_start_timer);
     }
     
     // updates the display's animations
     void disp_update() {
-        uint64_t now = millis();
-        
         // on init illuminate all for a brief period, the turn off, then 
         //start displaying
-        if(init) {
-            if((now - _init_start_time) > 1000) {
-                init = false;
-            } else if((now - _init_start_time) > 500) {
+        if(!timer_get_done(&init_start_timer)) {
+            if(timer_get_time_left(&init_start_timer) < 500) {
                 for(int i=0; i < NUM_LEDS; i++){
                     set_led(i, false);
                 }
@@ -188,7 +185,6 @@ extern "C" {
                     set_led(i, true);
                 }
             }
-
         } else {
             uint8_t led_bars = 0x00; // is being used like an array, but bit stuffing allows anding masks
             switch (_mode) {

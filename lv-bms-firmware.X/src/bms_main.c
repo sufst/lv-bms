@@ -63,8 +63,6 @@
 #define min(a,b) ((a<b) ?a:b)
 #endif
 
-typedef enum {WAKEUP_DISCHARGE, WAKEUP_CHARGE} wakeup_mode_t;
-wakeup_mode_t wakeup_mode;
 
 typedef enum {NONE, CUTOFF, LOCKOUT} cell_issue_level_t;
 
@@ -79,7 +77,7 @@ typedef struct {
     lockout_reason_t lockout_reason;
 } cell_report;
 
-cell_report get_cell_report(uint8_t cell_index, wakeup_mode_t mode) {
+cell_report get_cell_report(uint8_t cell_index) {
     voltage_t cell_v = voltages[cell_index];
     temp_t cell_t = temps[cell_index];
     
@@ -128,16 +126,16 @@ cell_report get_cell_report(uint8_t cell_index, wakeup_mode_t mode) {
         return r;
     }
 
-    if (mode == WAKEUP_CHARGE && current > CHARGE_CURRENT_MAX_CUTOFF) { // for charging
-        r.issue_level = CUTOFF;
-        r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
-        return r;
-    }
-    if (mode == WAKEUP_DISCHARGE && current > DISCHARGE_CURRENT_MAX_CUTOFF) { // for discharging
-        r.issue_level = CUTOFF;
-        r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
-        return r;
-    }
+    // if (mode == WAKEUP_CHARGE && current > CHARGE_CURRENT_MAX_CUTOFF) { // for charging
+    //     r.issue_level = CUTOFF;
+    //     r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
+    //     return r;
+    // }
+    // if (mode == WAKEUP_DISCHARGE && current > DISCHARGE_CURRENT_MAX_CUTOFF) { // for discharging
+    //     r.issue_level = CUTOFF;
+    //     r.shutdown_reason = SHUTDOWN_REASON_OVER_CURR;
+    //     return r;
+    // }
     
     // control flow reaches here if no errors
 
@@ -145,26 +143,26 @@ cell_report get_cell_report(uint8_t cell_index, wakeup_mode_t mode) {
     return r;
 }
 
-void send_cell_warnings(uint8_t cell_index, wakeup_mode_t mode) {
-    // check current
-    if (mode == WAKEUP_CHARGE && check_over_current_charge(current)) { // for charging
-        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
-    }
-    if (mode == WAKEUP_DISCHARGE && check_over_current_discharge(current)) { // for discharging
-        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
-    }
+// void send_cell_warnings(uint8_t cell_index, wakeup_mode_t mode) {
+//    // check current
+//    if (mode == WAKEUP_CHARGE && check_over_current_charge(current)) { // for charging
+//        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
+//    }
+//    if (mode == WAKEUP_DISCHARGE && check_over_current_discharge(current)) { // for discharging
+//        can_send_critical_warning(CAN_CRITICAL_CURRENT, i, cell_v);
+//    }
 
-    // check voltage
-    if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
-    if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+//    // check voltage
+//    if (check_over_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
+//    if (check_under_volt(cell_v)) can_send_critical_warning(CAN_CRITICAL_VOLTAGE, i, cell_v);
 
-    // check temp
-    if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
-    if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
-}
+//    // check temp
+//    if (check_over_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+//    if (check_under_temp(cell_t)) can_send_critical_warning(CAN_CRITICAL_TEMP, i, cell_t);
+// }
 
 // milli second timer hook
-void millis_hook (uint64_t uptime) {
+void millis_hook (time_t uptime) {
 
 }
 
@@ -245,11 +243,7 @@ void sleep_main() {
         uint64_t press = power_button_press_duration(UINT64_MAX);
         if (press == 0) {
             // nothing
-        } else if(press < 1000) {
-            wakeup_mode = WAKEUP_DISCHARGE;
-            break;
         } else {
-            wakeup_mode = WAKEUP_CHARGE;
             break;
         }
         
@@ -263,19 +257,37 @@ void sleep_main() {
     log_info("exiting sleep");
 }
 
-void charging_main() {
+
+void powered_on_main() {
     uint64_t charge_end_timer_start_time = 0; // time at which the current first drops below the charge end current
     uint32_t loop_counter = 0;
+
+    // power on setup
+    log_info("powering on");
     
-    log_info("charging main");
-    disp_set_charging(true);
+    RelayCtrl_SetHigh();
+    
+    // power up and check connection to BQ79616
+    bq_hw_reset(); // TODO: double check the consequences of this - this seems to be needed for the communication to start back up correctly.
+    bq_wake();
+    delay(100);
+    if (bq_check_connection() == false) {
+        log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
+        hard_fault_handler(LOCKOUT_COMM_FAULT);
+    }
+    bq_setup();
+    
+    disp_set_charging(false);
     disp_set_soc(70);
-    can_set_status(CAN_CHARGING);
+    can_set_status(CAN_DISCHARGING);
     can_sensor_sending_enable(true);
     
+    //==================================================================================================================
+    //  Main LOOP
+    //==================================================================================================================
     while(1) {
         uint64_t now = millis();
-        //-------------------------- MEASURE --------------------------
+        //---------------------------------------------------- MEASURE -------------------------------------------------
         // check connection
         if(loop_counter % 100 == 0) {
             if (bq_check_connection() == false) {
@@ -297,68 +309,62 @@ void charging_main() {
         log_dbg("temps: %d, %d, %d", temps[0], temps[1], temps[2]);
         log_dbg("current: %d", current);
         
-        
-        //-------------------------- ANALYSE --------------------------
+        //---------------------------------------------------- ANALYSE -------------------------------------------------
         // estimate current through the cells
         current_t relay_current =  ((float)((voltages[0] + voltages[1] + voltages[2]) / VOLTAGE_MULTIPLIER ) / RELAY_COIL_R ) * CURRENT_MULTIPLIER;
         current_t cells_current = current - relay_current - IDLE_CURRENT ;
         log_dbg("relay current: %fA, cell current: %fA", (float)relay_current/CURRENT_MULTIPLIER, (float)cells_current/CURRENT_MULTIPLIER);
 
-        bool lockout = false;
-        bool cutoff = false;
 
-        for (uint8_t i = 0; i < CELL_COUNT; i++) {
-            send_cell_warnings(i, WAKEUP_CHARGE);
-            cell_report r get_cell_report(i, WAKEUP_CHARGE);
-            if (r.issue_level == LOCKOUT) {
-                save_lockout_reason(r.lockout_reason);
-                lockout = true;
-                break;
-            }
-            else if (r.issue_level == CUTOFF) {
-                save_shutdown_reason(r.shutdown_reason);
-                cutoff = true;
-                break;
-            }
-        }
-        if (lockout) {
-            locked_out_main();
-            // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
-            break;
-        }
-        else if (cutoff) {
-            // break to shutdown
-            break;
-        }
+        // bool lockout = false;
+        // bool cutoff = false;
+
+        // for (uint8_t i = 0; i < CELL_COUNT; i++) {
+        //     send_cell_warnings(i, WAKEUP_CHARGE);
+        //     cell_report r get_cell_report(i, WAKEUP_CHARGE);
+        //     if (r.issue_level == LOCKOUT) {
+        //         save_lockout_reason(r.lockout_reason);
+        //         lockout = true;
+        //         break;
+        //     }
+        //     else if (r.issue_level == CUTOFF) {
+        //         save_shutdown_reason(r.shutdown_reason);
+        //         cutoff = true;
+        //         break;
+        //     }
+        // }
+        // if (lockout) {
+        //     locked_out_main();
+        //     // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
+        //     break;
+        // }
+        // else if (cutoff) {
+        //     // break to shutdown
+        //     break;
+        // }
 
         // check for going to sleep
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             break;
         }
         
-        //-------------------------- ANALYSE --------------------------
-        
-        //-------------------------- ACT --------------------------   
+        //---------------------------------------------------- ACT -----------------------------------------------------
         disp_set_soc(SOC);
         can_update();
         disp_update();
         
-        // charge done detection; the cell current drops below the end current threshold for a set time
-        if (cells_current < CHARGING_END_CURRENT) {
-            if(charge_end_timer_start_time == 0){
-                charge_end_timer_start_time = now;
-            }
-            if((now - charge_end_timer_start_time) > CHARGING_END_TIME_MS) {
-                break;
-            }
-        } else {
-            charge_end_timer_start_time = 0;
-        }
+        // // charge done detection; the cell current drops below the end current threshold for a set time
+        // if (cells_current < CHARGING_END_CURRENT) {
+        //     if(charge_end_timer_start_time == 0){
+        //         charge_end_timer_start_time = now;
+        //     }
+        //     if((now - charge_end_timer_start_time) > CHARGING_END_TIME_MS) {
+        //         break;
+        //     }
+        // } else {
+        //     charge_end_timer_start_time = 0;
+        // }
         
-        // go back to sleep if discharging - we don't want the battery to discharge any more
-        if (current < A(0)) {
-            break;
-        }
         
         // check for going to sleep by button
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
@@ -367,110 +373,7 @@ void charging_main() {
 
         loop_counter++;
     }
-    
-    // open relay
-    
-    // indicate charging done
-    
-    log_info("exiting charging");
-    disp_set_charging(false);
-}
 
-void discharging_main() {
-    log_info("discharging main");
-    can_set_status(CAN_DISCHARGING);
-    can_sensor_sending_enable(true);
-    
-    uint32_t loop_counter = 0;
-    while(1) {
-        //-------------------------- MEASURE --------------------------
-        // check connection
-        if(loop_counter % 100 == 0) {
-            if (bq_check_connection() == false) {
-                log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
-                hard_fault_handler(LOCKOUT_COMM_FAULT);
-            }
-            
-            if(bq_check_measuring() == false) {
-                log_err("a measurement system on the BQ79616 has failed, locking out and going to sleep");
-                hard_fault_handler(LOCKOUT_MEASURE_FAULT);
-            }
-        }
-        
-        bq_get_voltages(voltages);
-        bq_get_temperatures(temps);
-        bq_get_current(&current);
-
-        bool lockout = false;
-        bool cutoff = false;
-
-        for (uint8_t i = 0; i < CELL_COUNT; i++) {
-            send_cell_warnings(i, WAKEUP_DISCHARGE);
-            cell_report r get_cell_report(i, WAKEUP_DISCHARGE);
-            if (r.issue_level == LOCKOUT) {
-                save_lockout_reason(r.lockout_reason);
-                lockout = true;
-                break;
-            }
-            else if (r.issue_level == CUTOFF) {
-                save_shutdown_reason(r.shutdown_reason);
-                cutoff = true;
-                break;
-            }
-        }
-        if (lockout) {
-            locked_out_main();
-            // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
-            break;
-        }
-        else if (cutoff) {
-            // break to shutdown
-            break;
-        }
-        
-        //-------------------------- ANALYSE --------------------------
-        
-        //-------------------------- ACT --------------------------
-        disp_set_soc(SOC);
-        can_update();
-        disp_update();
-        
-        // check for going to sleep
-        if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
-            break;
-        }
-        
-        loop_counter++;
-    }
-    
-    log_info("exiting discharging");
-}
-
-void powered_on_main() {
-    // power on setup
-    log_info("powering on");
-    
-    RelayCtrl_SetHigh();
-    
-    // power up and check connection to BQ79616
-    bq_wake();
-    delay(10);
-    if (bq_check_connection() == false) {
-        log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
-        hard_fault_handler(LOCKOUT_COMM_FAULT);
-    }
-    
-    bq_setup();
-    
-    switch (wakeup_mode) {
-        case WAKEUP_DISCHARGE:
-            discharging_main();
-            break;
-        case WAKEUP_CHARGE:
-            charging_main();
-            break;
-    }
-    
     // power off shutdown
     log_info("powering off");
     
@@ -478,6 +381,7 @@ void powered_on_main() {
     can_sensor_sending_enable(false);
     bq_shutdown();
     
+    // open relay
     RelayCtrl_SetLow();
 }
 
@@ -499,11 +403,6 @@ void bms_main(void) {
     can_register_current(&current);
     can_register_SOC(&SOC);
     
-    
-    
-    // set default lockout value
-    
-    wakeup_mode = WAKEUP_DISCHARGE;
     log_info("bms powered up");
     
     // lockout takes precedence

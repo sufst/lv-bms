@@ -99,7 +99,7 @@
         <targetDevice>PIC18F47Q84</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>pk4hybrid</platformTool>
+        <platformTool>snap</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>3.00</languageToolchainVersion>
         <platform>3</platform>
@@ -420,7 +420,7 @@
         <targetDevice>PIC18F47Q84</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>pk4hybrid</platformTool>
+        <platformTool>snap</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>3.00</languageToolchainVersion>
         <platform>3</platform>
@@ -1606,7 +1606,7 @@
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="poweroptions.powerenable" value="true"/>
         <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/error_load_store_test/lv-bms-firmware_ptg"/>
+                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/indicator_test/lv-bms-firmware_ptg"/>
         <property key="programmerToGoImageName" value="lv-bms-firmware_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
