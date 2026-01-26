@@ -81,8 +81,9 @@ bool bq_setup() {
 // gathers the 3 voltages
 void bq_get_voltages(voltage_t* voltages) {
     for(uint8_t cell = 1; cell <= 3; cell++) {
-        int16_t voltage = (voltage_t)(get_cell_voltage(1, cell) * V_LSB_ADC * VOLTAGE_MULTIPLIER);
-        voltages[cell-1] = (voltage >= 0) ? voltage : 0; // it can do -ve voltages, but seeing as the voltage_t type can't handle that, limiting  it to 0 makes the most sense
+        int16_t voltage = get_cell_voltage(1, cell);
+        voltage = (voltage >= 0) ? voltage : 0; // it can do -ve voltages, but seeing as the voltage_t type can't handle that, limiting  it to 0 makes the most sense
+        voltages[cell-1] = (voltage_t)(voltage * V_LSB_ADC * VOLTAGE_MULTIPLIER);
     }
 }
 
@@ -99,7 +100,7 @@ void bq_get_temperatures(temp_t* temps) {
 
 // gathers the current
 void bq_get_current(current_t* current) {
-    int16_t shunt_voltage = (get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_CAL_RATIO; // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
-    *current = CURRENT_MULTIPLIER * (shunt_voltage * V_LSB_BB) / BB_CURRENT_SENSE_R;
+    int16_t shunt_voltage = (int16_t)((get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_CAL_RATIO); // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
+    *current = (int16_t)(CURRENT_MULTIPLIER * (shunt_voltage * V_LSB_BB) / BB_CURRENT_SENSE_R);
 
 }

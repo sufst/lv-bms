@@ -115,7 +115,7 @@ time_t timer_get_time_last_checked(timer_t* timer) {
 }
 
 bool timer_get_done(timer_t* timer) {
-    return timer_get_time_left(timer) == 0;
+    return (timer_get_time_left(timer) == 0) && timer->running;
 }
 
 void _update_timers () {

@@ -9,7 +9,7 @@
 #define	LOGGING_H
 
 typedef enum {LOG_ERR, LOG_WARN, LOG_INFO, LOG_DBG} log_level_t;
-log_level_t log_level = LOG_WARN;
+log_level_t log_level = LOG_INFO;
 
 void log_dbg( const char* format, ... );
 void log_info( const char* format, ... );

@@ -28,28 +28,34 @@
 
 // This is a guard condition so that contents of this file are not included
 // more than once.  
-#ifndef UNITS_H
-#define	UNITS_H
+#ifndef BATT_CHECKS_H
+#define	BATT_CHECKS_H
 
-#include <xc.h> // include processor files - each processor file is guarded.  
+#include "units.h"
+#include "batt_properties.h"
 
-#define VOLTAGE_MULTIPLIER (uint16_t)1024
-#define CURRENT_MULTIPLIER (uint16_t)512
-#define TEMP_MULTIPLIER 1
 
-#define V(volt) (voltage_t)(volt * VOLTAGE_MULTIPLIER)
-#define A(curr) (current_t)(curr * CURRENT_MULTIPLIER)
-#define C(temp) (temp_t)(temp * TEMP_MULTIPLIER)
+uint8_t check_condition(condition_t cond, unit_value_u value, timer_t *timer);
 
-typedef uint16_t voltage_t; 
-typedef int16_t current_t; 
-typedef int8_t temp_t;
+uint8_t check_condition_per_cell(condition_t cond, unit_value_u *values, timer_t *timers, uint8_t n_values);
 
-typedef union v {
-        voltage_t v_value;
-        current_t c_value;
-        temp_t    t_value;
-    } unit_value_u;
+//======================================================================================================================
+// -------------------------------------------------- Current ----------------------------------------------------------
+//======================================================================================================================
+/**
+ * checks if the a cell current is a reasonable  
+ * @param cell_curr
+ * @return true if too much charge current false otherwise
+ */
+bool check_over_current(current_t cell_curr, bool charging);
 
-#endif	/* UNITS_H */
+/**
+ * checks if the a cell is charging 
+ * @param cell_curr
+ * @return true if charging
+ */
+bool check_charging(current_t cell_curr);
+
+
+#endif	/* BATT_CHECKS_H */
 

@@ -9,7 +9,7 @@
 #define	MILLIS_H
 
 #ifndef MAX_TIMERS
-#define MAX_TIMERS 10
+#define MAX_TIMERS 20
 #endif
 
 typedef uint64_t time_t;

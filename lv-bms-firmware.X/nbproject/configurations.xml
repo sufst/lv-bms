@@ -68,7 +68,6 @@
                      projectFiles="true">
         <logicalFolder name="f1" displayName="New Folder 1" projectFiles="true">
         </logicalFolder>
-        <itemPath>src/batt_properties.c</itemPath>
         <itemPath>src/indicator_lights.c</itemPath>
         <itemPath>src/error_load_store.c</itemPath>
         <itemPath>src/millis.c</itemPath>
@@ -77,6 +76,7 @@
         <itemPath>src/bms_main.c</itemPath>
         <itemPath>src/logging.c</itemPath>
         <itemPath>src/bq_interface.c</itemPath>
+        <itemPath>src/batt_checks.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
@@ -371,7 +371,7 @@
       <snap>
         <property key="memories.programmemory.ranges" value="0-1ffff"/>
         <property key="programmerToGoFilePath"
-                  value="C:/Users/alexl/MPLABXProjects/blink_test.X/debug/default/blink_test_ptg"/>
+                  value="C:/Users/alexl/Documents/Sufst/lv-bms/lv-bms-firmware.X/debug/Full_firmware/lv-bms-firmware_ptg"/>
       </snap>
       <item path="tests/BQ79600_test_main.c" ex="true" overriding="false">
         <HI-TECH-COMP>
