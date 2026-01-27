@@ -39,32 +39,42 @@
 typedef enum  { UNIT_VOLTAGE, UNIT_CURRENT, UNIT_TEMP } unit_e;
 typedef enum  { BOUND_UPPER, BOUND_LOWER } bound_e;
 typedef struct {
-    unit_e unit;
-    bound_e bound;
-    unit_value_u v; 
-    time_t duration; 
-} condition_t;
+  bound_e bound;
+  voltage_t value;
+  time_t duration;
+} voltage_condition_t;
+
+typedef struct {
+  bound_e bound;
+  current_t value;
+  time_t duration;
+} current_condition_t;
+
+typedef struct {
+  bound_e bound;
+  temp_t value;
+  time_t duration;
+} temp_condition_t;
 
 
 //                                                                          Possible values based on datasheet: https://cdn03.plentymarkets.com/i9a0e0hd8l6w/frontend/Datenblaeter/Molicell/INR21700P45B/p45b-datasheet.pdf
 // Critical values - cause a warning
-condition_t CRITICAL_OVER_CURRENT = { .unit = UNIT_CURRENT, .bound = BOUND_UPPER, .v.c_value = A(30), .duration = 500 };
-condition_t CRITICAL_OVER_VOLTAGE = { .unit = UNIT_VOLTAGE, .bound = BOUND_UPPER, .v.v_value = V(4.2), .duration = 500 };
-condition_t CRITICAL_UNDER_VOLTAGE = { .unit = UNIT_VOLTAGE, .bound = BOUND_LOWER, .v.v_value = V(2.9), .duration = 500 };
-condition_t CRITICAL_CHARGING_OVER_TEMP = { .unit = UNIT_TEMP, .bound = BOUND_UPPER, .v.t_value = 50, .duration = 1000 };
-condition_t CRITICAL_CHARGING_UNDER_TEMP = { .unit = UNIT_TEMP, .bound = BOUND_LOWER, .v.t_value = 10, .duration = 1000 };
-condition_t CRITICAL_DISCHARGING_OVER_TEMP = { .unit = UNIT_TEMP, .bound = BOUND_UPPER, .v.t_value = 55, .duration = 1000 };
-condition_t CRITICAL_DISCHARGING_UNDER_TEMP = { .unit = UNIT_TEMP, .bound = BOUND_LOWER, .v.t_value = -30, .duration = 1000 };
+current_condition_t CRITICAL_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(30), .duration = 500 };
+voltage_condition_t CRITICAL_OVER_VOLTAGE = { .bound = BOUND_UPPER, .value = V(4.2), .duration = 500 };
+voltage_condition_t CRITICAL_UNDER_VOLTAGE = { .bound = BOUND_LOWER, .value = V(2.9), .duration = 500 };
+temp_condition_t CRITICAL_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 30, .duration = 1000 };
+temp_condition_t CRITICAL_CHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = 10, .duration = 1000 };
+temp_condition_t CRITICAL_DISCHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 30, .duration = 1000 };
+temp_condition_t CRITICAL_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = -30, .duration = 1000 };
 
 // Shutdown values - cause battery to power off
-condition_t SHUTDOWN_OVER_CURRENT = { .unit = UNIT_CURRENT, .bound = BOUND_UPPER, .v.c_value = A(35), .duration = 500 };
-condition_t SHUTDOWN_OVER_VOLTAGE = { .unit = UNIT_VOLTAGE, .bound = BOUND_UPPER, .v.v_value = V(4.25), .duration = 500 };
-condition_t SHUTDOWN_UNDER_VOLTAGE = { .unit = UNIT_VOLTAGE, .bound = BOUND_LOWER, .v.v_value = V(2.7), .duration = 500 };
-condition_t SHUTDOWN_CHARGING_OVER_TEMP = { .unit = UNIT_TEMP,    .bound = BOUND_UPPER, .v.t_value = 55, .duration = 1000 };
-condition_t SHUTDOWN_CHARGING_UNDER_TEMP = { .unit = UNIT_TEMP,    .bound = BOUND_LOWER, .v.t_value = 5, .duration = 1000 };
-condition_t SHUTDOWN_DISCHARGING_OVER_TEMP = { .unit = UNIT_TEMP,    .bound = BOUND_UPPER, .v.t_value = 60, .duration = 1000 };
-condition_t SHUTDOWN_DISCHARGING_UNDER_TEMP = { .unit = UNIT_TEMP,    .bound = BOUND_LOWER, .v.t_value = -35, .duration = 1000 };
-
+current_condition_t SHUTDOWN_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(35), .duration = 500 };
+voltage_condition_t SHUTDOWN_OVER_VOLTAGE = { .bound = BOUND_UPPER, .value = V(4.25), .duration = 500 };
+voltage_condition_t SHUTDOWN_UNDER_VOLTAGE = { .bound = BOUND_LOWER, .value = V(2.7), .duration = 500 };
+temp_condition_t SHUTDOWN_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 55, .duration = 1000 };
+temp_condition_t SHUTDOWN_CHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = 5, .duration = 1000 };
+temp_condition_t SHUTDOWN_DISCHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 60, .duration = 1000 };
+temp_condition_t SHUTDOWN_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = -35, .duration = 1000 };
 // TODO Replace with actual values
 // exceeding these values damages the system so enter lockout
 #define LOCKOUT_OVER_VOLTAGE                    V(4.3)

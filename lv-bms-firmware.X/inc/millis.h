@@ -15,7 +15,7 @@
 typedef uint64_t time_t;
 typedef struct 
 {
-    bool configured, running, auto_restart;
+    bool configured, running, auto_restart, done;
     time_t start;
     time_t duration;
     time_t last_checked;
@@ -38,6 +38,7 @@ void timer_cancel(timer_t *timer);
 
 time_t timer_get_time_left(timer_t *timer);
 time_t timer_get_time_last_checked(timer_t* timer); // timestamp where the timer was last checked
+bool timer_get_running(timer_t *timer);
 bool timer_get_done(timer_t *timer);
 
 

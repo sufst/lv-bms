@@ -34,10 +34,17 @@
 #include "units.h"
 #include "batt_properties.h"
 
+uint8_t check_condition_voltage(voltage_condition_t cond, voltage_t value, timer_t *timer); 
 
-uint8_t check_condition(condition_t cond, unit_value_u value, timer_t *timer);
+uint8_t check_condition_current(current_condition_t cond, current_t value, timer_t *timer); 
 
-uint8_t check_condition_per_cell(condition_t cond, unit_value_u *values, timer_t *timers, uint8_t n_values);
+uint8_t check_condition_temp(temp_condition_t cond, temp_t value, timer_t *timer); 
+
+uint8_t check_condition_voltage_per_cell(voltage_condition_t cond, voltage_t *values, timer_t *timers, uint8_t n_values); 
+
+uint8_t check_condition_current_per_cell(current_condition_t cond, current_t *values, timer_t *timers, uint8_t n_values); 
+
+uint8_t check_condition_temp_per_cell(temp_condition_t cond, temp_t *values, timer_t *timers, uint8_t n_values); 
 
 //======================================================================================================================
 // -------------------------------------------------- Current ----------------------------------------------------------

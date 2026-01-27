@@ -5,6 +5,7 @@
 #include "batt_checks.h"
 #include "batt_properties.h"
 #include "millis.h"
+#include "logging.h"
 
 bool _check_condition_for_time(timer_t* timer, bool trigger_condition, time_t trigger_time) {
     if (!timer->configured) {
@@ -12,8 +13,10 @@ bool _check_condition_for_time(timer_t* timer, bool trigger_condition, time_t tr
     }
 
     if (trigger_condition) {
-        timer->duration = trigger_time;
-        timer_start(timer);
+        if(!timer->running && !timer->done) {
+            timer_start(timer);   
+            timer->duration = trigger_time;
+        } 
     }
     else {
         timer_cancel(timer);
@@ -23,39 +26,59 @@ bool _check_condition_for_time(timer_t* timer, bool trigger_condition, time_t tr
 }
 
 
-uint8_t check_condition(condition_t cond, unit_value_u value, timer_t *timer) {
+uint8_t check_condition_voltage(voltage_condition_t cond, voltage_t value, timer_t *timer) {
     bool comparison_result = false;
-    switch (cond.unit)
-    {
-    case UNIT_VOLTAGE:
-        if(cond.bound == BOUND_UPPER) {
-            comparison_result = value.v_value > cond.v.v_value;
-        } else {
-            comparison_result = value.v_value < cond.v.v_value;
-        }
-        break;
-    case UNIT_CURRENT:
-        if(cond.bound == BOUND_UPPER) {
-            comparison_result = value.c_value > cond.v.c_value;
-        } else {
-            comparison_result = value.c_value < cond.v.c_value;
-        }
-    case UNIT_TEMP:
-        if(cond.bound == BOUND_UPPER) {
-            comparison_result = value.t_value > cond.v.t_value;
-        } else {
-            comparison_result = value.t_value < cond.v.t_value;
-        }
-    default:
-        break;
+    if(cond.bound == BOUND_UPPER) {
+        comparison_result = value > cond.value;
+    } else {
+        comparison_result = value < cond.value;
     }
     return _check_condition_for_time(timer, comparison_result, cond.duration);
 }
 
-uint8_t check_condition_per_cell(condition_t cond, unit_value_u *values, timer_t *timers, uint8_t n_values) {
+uint8_t check_condition_current(current_condition_t cond, current_t value, timer_t *timer) {
+    bool comparison_result = false;
+    if(cond.bound == BOUND_UPPER) {
+        comparison_result = value > cond.value;
+    } else {
+        comparison_result = value < cond.value;
+    }
+    return _check_condition_for_time(timer, comparison_result, cond.duration);
+}
+
+uint8_t check_condition_temp(temp_condition_t cond, temp_t value, timer_t *timer) {
+    bool comparison_result = false;
+    if(cond.bound == BOUND_UPPER) {
+        comparison_result = value > cond.value;
+    } else {
+        comparison_result = value < cond.value;
+    }
+    return _check_condition_for_time(timer, comparison_result, cond.duration);
+}
+
+
+uint8_t check_condition_voltage_per_cell(voltage_condition_t cond, voltage_t *values, timer_t *timers, uint8_t n_values) {
     for(uint8_t cell_i = 0; cell_i < n_values; cell_i++) {
-        if(check_condition(cond, values[cell_i], &timers[cell_i])) {
-            return cell_i;
+        if(check_condition_voltage(cond, values[cell_i], &timers[cell_i])) {
+            return cell_i+1;
+        }
+    }
+    return 0;
+}
+
+uint8_t check_condition_current_per_cell(current_condition_t cond, current_t *values, timer_t *timers, uint8_t n_values) {
+    for(uint8_t cell_i = 0; cell_i < n_values; cell_i++) {
+        if(check_condition_current(cond, values[cell_i], &timers[cell_i])) {
+            return cell_i+1;
+        }
+    }
+    return 0;
+}
+
+uint8_t check_condition_temp_per_cell(temp_condition_t cond, temp_t *values, timer_t *timers, uint8_t n_values) {
+    for(uint8_t cell_i = 0; cell_i < n_values; cell_i++) {
+        if(check_condition_temp(cond, values[cell_i], &timers[cell_i])) {
+            return cell_i+1;
         }
     }
     return 0;

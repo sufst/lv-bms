@@ -233,31 +233,37 @@ bool check_critical_warnings() {
         timer_start(&crit_msgs_timer);
     }
 
-    if (timer_get_done(&crit_msgs_timer)) {
+    if (true){//timer_get_done(&crit_msgs_timer)) {
+        log_dbg("Testing for critical values");
         uint8_t crit_cell = 0;
         // critical warning timers
         // check OC
-        if ((crit_cell = check_condition(CRITICAL_OVER_CURRENT, (unit_value_u)current, &crit_OC_timer))) {
-            can_send_critical_warning(CAN_CRITICAL_CURRENT, 0, current);
-        }
+        // if ((crit_cell = check_condition_current(CRITICAL_OVER_CURRENT, current, &crit_OC_timer))) {
+        //     log_warn("Critical Over Current: %fA", (float)current/CURRENT_MULTIPLIER);
+        //     can_send_critical_warning(CAN_CRITICAL_CURRENT, 0, current);
+        // }
         // check OV
-        if ((crit_cell = check_condition_per_cell(CRITICAL_OVER_VOLTAGE, voltages, crit_OV_timers, CELL_COUNT))) {
-            can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell]);
+        if (crit_cell = check_condition_voltage_per_cell(CRITICAL_OVER_VOLTAGE, voltages, crit_OV_timers, CELL_COUNT)) {
+            log_warn("Critical Over Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
+            can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell-1]);
         }
         // check UV 
-        if ((crit_cell = check_condition_per_cell(CRITICAL_UNDER_VOLTAGE, voltages, crit_UV_timers, CELL_COUNT))) {
-            can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell]);
+        if ((crit_cell = check_condition_voltage_per_cell(CRITICAL_UNDER_VOLTAGE, voltages, crit_UV_timers, CELL_COUNT))) {
+            log_warn("Critical Under Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
+            can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell-1]);
         }
         // check OT
-        condition_t ot_cond = (charging) ? CRITICAL_CHARGING_OVER_TEMP : CRITICAL_DISCHARGING_OVER_TEMP;
-        if ((crit_cell = check_condition_per_cell(ot_cond, temps, crit_OT_timers, CELL_COUNT))){
-           can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell]);
-        }
+        temp_condition_t ot_cond = charging ? CRITICAL_CHARGING_OVER_TEMP : CRITICAL_DISCHARGING_OVER_TEMP;
+         if ((crit_cell = check_condition_temp_per_cell(ot_cond, temps, crit_OT_timers, CELL_COUNT))){
+             log_warn("Critical Over Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
+             can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell-1]);
+         }
         // check UT
-        condition_t ut_cond = charging ? CRITICAL_CHARGING_UNDER_TEMP : CRITICAL_DISCHARGING_UNDER_TEMP;
-        if ((crit_cell = check_condition_per_cell(ut_cond, temps, crit_UT_timers, CELL_COUNT))) {
-            can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell]);
-        }
+        temp_condition_t ut_cond = charging ? CRITICAL_CHARGING_UNDER_TEMP : CRITICAL_DISCHARGING_UNDER_TEMP;
+         if ((crit_cell = check_condition_temp_per_cell(ut_cond, temps, crit_UT_timers, CELL_COUNT))) {
+             log_warn("Critical Under Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
+             can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell-1]);
+         }
 
         timer_start(&crit_msgs_timer);
     }
@@ -312,7 +318,6 @@ void sleep_main() {
     log_info("exiting sleep");
 }
 
-
 void powered_on_main() {
     uint32_t loop_counter = 0;
 
@@ -343,12 +348,27 @@ void powered_on_main() {
         // check connection
         if (loop_counter % 100 == 0) {
             if (bq_check_connection() == false) {
-                log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
-                hard_fault_handler(LOCKOUT_COMM_FAULT);
+                log_err("failed to communicate with BQ79616 BMS chip, resetting and retrying");
+                bq_hw_reset();
+                bq_wake();
+                delay(10);
+                bq_setup();
+                if(bq_check_connection() == false) {
+                    log_err("failed to communicate with BQ79616 BMS chip after reset, locking out and going to sleep");
+                    hard_fault_handler(LOCKOUT_COMM_FAULT);
+                }
             }
 
             if (bq_check_measuring() == false) {
-                log_err("a measurement system on the BQ79616 has failed, locking out and going to sleep");
+                log_err("a measurement system on the BQ79616 has failed, resetting and retrying");
+                bq_hw_reset();
+                bq_wake();
+                delay(10);
+                bq_setup();
+                if(bq_check_measuring() == false) {
+                    log_err("a measurement system on the BQ79616 is still broken after reset, locking out and going to sleep");
+                    hard_fault_handler(LOCKOUT_MEASURE_FAULT);
+                }
                 hard_fault_handler(LOCKOUT_MEASURE_FAULT);
             }
         }
