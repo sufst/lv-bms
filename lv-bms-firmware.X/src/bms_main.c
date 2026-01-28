@@ -57,6 +57,9 @@
 
 #define CRITICAL_WARNING_INTERVAL 64
 
+#define LOG_CRITICAL_WARNINGS 0
+#define LOG_SHUTDOWN 1
+
 #ifndef min
 #define min(a,b) ((a<b) ?a:b)
 #endif
@@ -74,6 +77,7 @@ bool charging = false;
 // timers to track time based changes
 timer_t charge_start_timer;
 timer_t charge_end_timer;
+timer_t sleep_timer;
 
 
 // typedef struct {
@@ -220,6 +224,18 @@ uint64_t power_button_press_duration(uint64_t max_duration) {
 }
 
 
+void initialise_bq() {
+    bq_hw_reset(); // TODO: double check the consequences of this - this seems to be needed for the communication to start back up correctly.
+    bq_wake();
+    delay(10);
+    if (bq_check_connection() == false) {
+        log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
+        hard_fault_handler(LOCKOUT_COMM_FAULT);
+    }
+    bq_setup();
+}
+
+
 bool check_critical_warnings() {
     static timer_t crit_msgs_timer; // tracks when to next check values and output critical warnings
 
@@ -233,39 +249,90 @@ bool check_critical_warnings() {
         timer_start(&crit_msgs_timer);
     }
 
-    if (true){//timer_get_done(&crit_msgs_timer)) {
+    if (timer_get_done(&crit_msgs_timer)) {
         log_dbg("Testing for critical values");
         uint8_t crit_cell = 0;
         // critical warning timers
         // check OC
-        // if ((crit_cell = check_condition_current(CRITICAL_OVER_CURRENT, current, &crit_OC_timer))) {
-        //     log_warn("Critical Over Current: %fA", (float)current/CURRENT_MULTIPLIER);
-        //     can_send_critical_warning(CAN_CRITICAL_CURRENT, 0, current);
-        // }
+        if ((crit_cell = check_condition_current(CRITICAL_OVER_CURRENT, current, &crit_OC_timer))) {
+            if(LOG_CRITICAL_WARNINGS) log_warn("Critical Over Current: %fA", (float)current/CURRENT_MULTIPLIER);
+            can_send_critical_warning(CAN_CRITICAL_CURRENT, 0, current);
+        }
         // check OV
         if (crit_cell = check_condition_voltage_per_cell(CRITICAL_OVER_VOLTAGE, voltages, crit_OV_timers, CELL_COUNT)) {
-            log_warn("Critical Over Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
+            if(LOG_CRITICAL_WARNINGS) log_warn("Critical Over Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
             can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell-1]);
         }
         // check UV 
         if ((crit_cell = check_condition_voltage_per_cell(CRITICAL_UNDER_VOLTAGE, voltages, crit_UV_timers, CELL_COUNT))) {
-            log_warn("Critical Under Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
+            if(LOG_CRITICAL_WARNINGS) log_warn("Critical Under Voltage: cell %d, %fV", crit_cell, (float)voltages[crit_cell-1]/VOLTAGE_MULTIPLIER);
             can_send_critical_warning(CAN_CRITICAL_VOLTAGE, crit_cell, voltages[crit_cell-1]);
         }
         // check OT
         temp_condition_t ot_cond = charging ? CRITICAL_CHARGING_OVER_TEMP : CRITICAL_DISCHARGING_OVER_TEMP;
          if ((crit_cell = check_condition_temp_per_cell(ot_cond, temps, crit_OT_timers, CELL_COUNT))){
-             log_warn("Critical Over Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
+             if(LOG_CRITICAL_WARNINGS) log_warn("Critical Over Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
              can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell-1]);
          }
         // check UT
         temp_condition_t ut_cond = charging ? CRITICAL_CHARGING_UNDER_TEMP : CRITICAL_DISCHARGING_UNDER_TEMP;
          if ((crit_cell = check_condition_temp_per_cell(ut_cond, temps, crit_UT_timers, CELL_COUNT))) {
-             log_warn("Critical Under Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
+             if(LOG_CRITICAL_WARNINGS) log_warn("Critical Under Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell-1]/TEMP_MULTIPLIER);
              can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell-1]);
          }
 
         timer_start(&crit_msgs_timer);
+    }
+}
+
+void enter_shutdown(shutdown_reason_t reason) {
+    log_info("Entering Shutdown, reason: %d", reason);
+    save_shutdown_reason(reason);
+    bq_shutdown();
+    can_sensor_sending_enable(false);
+    disp_set_number(0);
+    RelayCtrl_SetLow();
+    while(1) { // may lose power in this loop, if battery is power source
+        // if it doesn't loose power (ie charging), then reset using the power button
+        if(power_button_press_duration(UINT64_MAX)) {
+            Reset();
+        }
+    }
+}
+
+bool check_shutdown_conditions() {
+    static timer_t  sd_OC_timer,
+                    sd_OV_timers[CELL_COUNT], sd_UV_timers[CELL_COUNT],
+                    sd_OT_timers[CELL_COUNT], sd_UT_timers[CELL_COUNT];
+
+    log_dbg("Testing for shutdown conditions");
+    uint8_t sd_cell = 0;
+    // check OC
+    if ((sd_cell = check_condition_current(SHUTDOWN_OVER_CURRENT, current, &sd_OC_timer))) {
+        if(LOG_SHUTDOWN) log_err("Shutdown Over Current: %fA", (float)current/CURRENT_MULTIPLIER);
+        enter_shutdown(SHUTDOWN_REASON_OVER_CURR);
+    }
+    // check OV
+    if (sd_cell = check_condition_voltage_per_cell(SHUTDOWN_OVER_VOLTAGE, voltages, sd_OV_timers, CELL_COUNT)) {
+        if(LOG_SHUTDOWN) log_err("Shutdown Over Voltage: cell %d, %fV", sd_cell, (float)voltages[sd_cell-1]/VOLTAGE_MULTIPLIER);
+        enter_shutdown(SHUTDOWN_REASON_OVER_V);
+    }
+    // check UV 
+    if ((sd_cell = check_condition_voltage_per_cell(SHUTDOWN_UNDER_VOLTAGE, voltages, sd_UV_timers, CELL_COUNT))) {
+        if(LOG_SHUTDOWN) log_err("Shutdown Under Voltage: cell %d, %fV", sd_cell, (float)voltages[sd_cell-1]/VOLTAGE_MULTIPLIER);
+        enter_shutdown(SHUTDOWN_REASON_UNDER_V);
+    }
+    // check OT
+    temp_condition_t ot_cond = charging ? SHUTDOWN_CHARGING_OVER_TEMP : SHUTDOWN_DISCHARGING_OVER_TEMP;
+    if ((sd_cell = check_condition_temp_per_cell(ot_cond, temps, sd_OT_timers, CELL_COUNT))){
+        if(LOG_SHUTDOWN) log_err("Shutdown Over Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell-1]/TEMP_MULTIPLIER);
+        enter_shutdown(SHUTDOWN_REASON_OVER_TEMP);
+    }
+    // check UT
+    temp_condition_t ut_cond = charging ? SHUTDOWN_CHARGING_UNDER_TEMP : SHUTDOWN_DISCHARGING_UNDER_TEMP;
+    if ((sd_cell = check_condition_temp_per_cell(ut_cond, temps, sd_UT_timers, CELL_COUNT))) {
+        if(LOG_SHUTDOWN) log_err("Shutdown Under Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell-1]/TEMP_MULTIPLIER);
+        enter_shutdown(SHUTDOWN_REASON_UNDER_TEMP);
     }
 }
 
@@ -297,14 +364,14 @@ void sleep_main() {
     disp_set_number(0);
     can_sensor_sending_enable(false);
 
+    // enter low power mode that:
+    // - still checks power button
+    // - periodically powers up for a split section to check for current
+
     uint64_t loop_count = 0;
     while (1) {
         // exiting sleep
-        uint64_t press = power_button_press_duration(UINT64_MAX);
-        if (press == 0) {
-            // nothing
-        }
-        else {
+        if(power_button_press_duration(UINT64_MAX)) {
             break;
         }
 
@@ -325,14 +392,7 @@ void powered_on_main() {
     log_info("powering on");
 
     // power up and check connection to BQ79616
-    bq_hw_reset(); // TODO: double check the consequences of this - this seems to be needed for the communication to start back up correctly.
-    bq_wake();
-    delay(10);
-    if (bq_check_connection() == false) {
-        log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
-        hard_fault_handler(LOCKOUT_COMM_FAULT);
-    }
-    bq_setup();
+    initialise_bq();
 
     disp_set_charging(false);
     disp_set_soc(70);
@@ -349,27 +409,16 @@ void powered_on_main() {
         if (loop_counter % 100 == 0) {
             if (bq_check_connection() == false) {
                 log_err("failed to communicate with BQ79616 BMS chip, resetting and retrying");
-                bq_hw_reset();
-                bq_wake();
-                delay(10);
-                bq_setup();
-                if(bq_check_connection() == false) {
-                    log_err("failed to communicate with BQ79616 BMS chip after reset, locking out and going to sleep");
-                    hard_fault_handler(LOCKOUT_COMM_FAULT);
-                }
+                initialise_bq(); 
             }
 
             if (bq_check_measuring() == false) {
                 log_err("a measurement system on the BQ79616 has failed, resetting and retrying");
-                bq_hw_reset();
-                bq_wake();
-                delay(10);
-                bq_setup();
+                initialise_bq();
                 if(bq_check_measuring() == false) {
                     log_err("a measurement system on the BQ79616 is still broken after reset, locking out and going to sleep");
                     hard_fault_handler(LOCKOUT_MEASURE_FAULT);
                 }
-                hard_fault_handler(LOCKOUT_MEASURE_FAULT);
             }
         }
 
@@ -421,23 +470,6 @@ void powered_on_main() {
         disp_update();
 
         // charge / discharge timers
-
-        check_critical_warnings();
-
-        // shutdown timers
-            // check OC
-            // check OV
-            // check UV 
-            // check OT
-            // check UT
-
-        // lockout detection
-            // check OC
-            // check OV
-            // check UV 
-            // check OT
-            // check UT
-
         // // charge done detection; the cell current drops below the end current threshold for a set time
         // if (cells_current < CHARGING_END_CURRENT) {
         //     if(charge_end_timer_start_time == 0){
@@ -450,10 +482,34 @@ void powered_on_main() {
         //     charge_end_timer_start_time = 0;
         // }
 
+        check_critical_warnings();
 
-        // check for going to sleep by button
+        check_shutdown_conditions();
+
+        // lockout detection
+            // check OC
+            // check OV
+            // check UV 
+            // check OT
+            // check UT
+
+        // check for sleep
+        if(!charging && (abs(current) < SLEEP_CURRENT_THRESH)) {
+            if(!timer_get_running(&sleep_timer)) {
+                timer_start(&sleep_timer);
+            }
+
+            if(timer_get_done(&sleep_timer)) {
+                break; // go to sleep
+            }
+        } else {
+            timer_cancel(&sleep_timer);
+        }
+
+        // check for shutdown by button press
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
-            break;
+            log_info("Shutting down");
+            enter_shutdown(SHUTDOWN_REASON_NONE);
         }
 
         loop_counter++;
@@ -462,13 +518,12 @@ void powered_on_main() {
         // log_warn("loop duration: %d ms", loop_duration);
     }
 
-    // power off shutdown
-    log_info("powering off");
+    // power off to go to sleep
+    log_info("Going to sleep");
 
     can_set_status(CAN_POWERED_DOWN);
     can_sensor_sending_enable(false);
-    bq_shutdown();
-
+    bq_shutdown(); // disable bq to minimise power in sleep mode
 }
 
 /*
@@ -485,13 +540,16 @@ void bms_main(void) {
     disp_init();
     can_init();
 
+    // timer setup
+    timer_init_count_down(&charge_start_timer, CHARGING_STATE_CHANGE_TIME);
+    timer_init_count_down(&charge_end_timer, CHARGING_STATE_CHANGE_TIME);
+    timer_init_count_down(&sleep_timer, SLEEP_WAIT_TIME);
+
     // register can data
     can_register_voltages(voltages);
     can_register_temps(temps);
     can_register_current(&current);
     can_register_SOC(&SOC);
-
-
 
     log_info("bms powered up");
 
@@ -501,6 +559,13 @@ void bms_main(void) {
     }
 
     RelayCtrl_SetHigh();
+
+    // check if there was a shutdown reason
+    shutdown_reason_t sd_reason = load_shutdown_reason();
+    if(sd_reason != SHUTDOWN_REASON_NONE) {
+        log_info("Previous shutdown reason: %d", sd_reason);
+        save_shutdown_reason(SHUTDOWN_REASON_NONE);
+    }
 
     while (1) {
         powered_on_main();

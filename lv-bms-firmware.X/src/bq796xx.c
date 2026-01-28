@@ -1637,7 +1637,7 @@ bool get_OTCB_enabled(uint8_t bID) {
 // *****************************************************************************
 int16_t get_cell_voltage(uint8_t bID, uint8_t cell_number) {
     if(cell_number == 0 || cell_number > 16) {
-        bq_log_err("tried to read aux voltage from non existent cell : %d", cell_number);
+        bq_log_err("tried to read voltage from non existent cell : %d", cell_number);
         return INT16_MIN;
     }
     

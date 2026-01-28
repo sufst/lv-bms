@@ -39,9 +39,9 @@ uint8_t check_condition_voltage(voltage_condition_t cond, voltage_t value, timer
 uint8_t check_condition_current(current_condition_t cond, current_t value, timer_t *timer) {
     bool comparison_result = false;
     if(cond.bound == BOUND_UPPER) {
-        comparison_result = value > cond.value;
+        comparison_result = abs(value) > cond.value;
     } else {
-        comparison_result = value < cond.value;
+        comparison_result = abs(value) < cond.value;
     }
     return _check_condition_for_time(timer, comparison_result, cond.duration);
 }
