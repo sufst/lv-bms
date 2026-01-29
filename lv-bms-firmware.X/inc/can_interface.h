@@ -41,7 +41,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 // sets the tx base address ; for RX, check the filters for MCC
-#define CAN_EID 0x4321000
+#define CAN_ID 0x000
     
 #define CAN_EMPTY_WARNING_THRESHOLD 5 //%
     
@@ -57,6 +57,7 @@ enum {
     CAN_EMPTY_MESSAGE_OFFSET = 0x04,
     CAN_CRITICAL_WARNING_OFFSET = 0x05,
     CAN_LOCKOUT_OFFSET = 0x06,
+    CAN_SHUTDOWN_REASON_OFFSET = 0x07,
     
     CAN_LOCKOUT_CLEAR_OFFSET = 0x0f,
 } CAN_MESSAGE_ID_OFFSETS;
@@ -100,11 +101,14 @@ void can_set_lockout_count(uint16_t lockout_count);
 // turns on and off the data sending
 void can_sensor_sending_enable(bool enabled);
 
-// sends a critical warning
-void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value);
+// sends a critical 
+void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, int16_t critical_value);
+
+// sends a shutdown reason message
+void can_send_shutdown_reason(shutdown_reason_t shutdown_reason, uint8_t cell_index, int16_t shutdown_value);
 
 // enabled the lockout message
-void can_set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, uint16_t dire_value);
+void can_set_lockdout(lockout_reason_t lockout_reason, uint8_t cell_index, int16_t dire_value);
 void can_clear_lockout();
 
 bool can_get_lockout_clear_message_rxed();

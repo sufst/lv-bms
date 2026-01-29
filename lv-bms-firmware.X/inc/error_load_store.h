@@ -18,7 +18,7 @@
  * 
  *  Saves the a shutdown reason to flash
  */
-void save_shutdown_reason(shutdown_reason_t sd_reason);
+void save_shutdown_reason(shutdown_reason_t sd_reason, uint8_t cell, int16_t fault_value);
 
 /**
  * load_shutdown_reason
@@ -26,6 +26,8 @@ void save_shutdown_reason(shutdown_reason_t sd_reason);
  * gets the shutdown reason that is stored in flash
  */
 shutdown_reason_t load_shutdown_reason(void);
+uint8_t load_shutdown_cell(void);
+int16_t load_shutdown_value(void);
 
 /**
  * save_lockout_reason
@@ -38,9 +40,8 @@ void save_lockout_reason(lockout_reason_t lo_reason, uint8_t cell, int16_t fault
  * @returns last saved lockout reason
  */
 lockout_reason_t load_lockout_reason(void);
-
-int16_t load_lockout_value(void);
 uint8_t load_lockout_cell(void);
+int16_t load_lockout_value(void);
 
 
 // deals with if there is an unrecoverable error

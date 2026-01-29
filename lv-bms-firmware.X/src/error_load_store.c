@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   shutdown_reason.c
  * Author: Alex Mills am9g22
  *
@@ -13,23 +13,43 @@
 #include "memory.h"
 
 #define shutdown_reason_addr 0x00
-#define lockout_reason_addr 0x01
-#define lockout_cell_addr 0x02
-#define lockout_value_addr 0x03
+#define shutdown_cell_addr 0x01
+#define shutdown_value_addr 0x02
 
+#define lockout_reason_addr 0x04
+#define lockout_cell_addr 0x05
+#define lockout_value_addr 0x06
 
-void save_shutdown_reason(shutdown_reason_t sd_reason) {
+void save_shutdown_reason(shutdown_reason_t sd_reason, uint8_t cell, int16_t fault_value) {
+    uint8_t fault_value_hi = (uint8_t)(fault_value >> 8);
+    uint8_t fault_value_lo = fault_value & 0xff;
+
     DATAEE_WriteByte(shutdown_reason_addr, (uint8_t)sd_reason);
+    DATAEE_WriteByte(shutdown_cell_addr, cell);
+    DATAEE_WriteByte(shutdown_value_addr, fault_value_hi);
+    DATAEE_WriteByte(shutdown_value_addr + 1, fault_value_lo);
 }
 
 shutdown_reason_t load_shutdown_reason(void) {
     return DATAEE_ReadByte(shutdown_reason_addr);
 }
 
+uint8_t load_shutdown_cell(void) {
+    return DATAEE_ReadByte(shutdown_cell_addr);
+}
+
+int16_t load_shutdown_value(void) {
+    uint8_t fault_value_hi = DATAEE_ReadByte(shutdown_value_addr);
+    uint8_t fault_value_lo = DATAEE_ReadByte(shutdown_value_addr + 1);
+
+    return fault_value_hi << 8 | fault_value_lo;
+}
+
+
 void save_lockout_reason(lockout_reason_t lo_reason, uint8_t cell, int16_t fault_value) {
     uint8_t fault_value_hi = (uint8_t)(fault_value >> 8);
     uint8_t fault_value_lo = fault_value & 0xff;
-    
+
     DATAEE_WriteByte(lockout_reason_addr, (uint8_t)lo_reason);
     DATAEE_WriteByte(lockout_cell_addr, cell);
     DATAEE_WriteByte(lockout_value_addr, fault_value_hi);
@@ -47,7 +67,7 @@ uint8_t load_lockout_cell(void) {
 int16_t load_lockout_value(void) {
     uint8_t fault_value_hi = DATAEE_ReadByte(lockout_value_addr);
     uint8_t fault_value_lo = DATAEE_ReadByte(lockout_value_addr + 1);
-    
+
     return fault_value_hi << 8 | fault_value_lo;
 }
 

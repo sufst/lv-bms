@@ -41,6 +41,16 @@
     SOFTWARE.
 */
 
+/*****************************************************************************
+__        ___    ____  _   _ ___ _   _  ____ _  
+\ \      / / \  |  _ \| \ | |_ _| \ | |/ ___| | 
+ \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| | 
+  \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_| 
+   \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_) 
+ * cell and thermistor indexes are 1 based - beware when indexing the voltages
+ * and temps arrays
+******************************************************************************/
+
 #include <xc.h>
 #include "mcc.h"
 #include "units.h"
@@ -285,9 +295,9 @@ bool check_critical_warnings() {
     }
 }
 
-void enter_shutdown(shutdown_reason_t reason) {
+void enter_shutdown(shutdown_reason_t reason, uint8_t cell, int16_t fault_value) {
     log_info("Entering Shutdown, reason: %d", reason);
-    save_shutdown_reason(reason);
+    save_shutdown_reason(reason, cell, fault_value);
     bq_shutdown();
     can_sensor_sending_enable(false);
     disp_set_number(0);
@@ -310,29 +320,29 @@ bool check_shutdown_conditions() {
     // check OC
     if ((sd_cell = check_condition_current(SHUTDOWN_OVER_CURRENT, current, &sd_OC_timer))) {
         if(LOG_SHUTDOWN) log_err("Shutdown Over Current: %fA", (float)current/CURRENT_MULTIPLIER);
-        enter_shutdown(SHUTDOWN_REASON_OVER_CURR);
+        enter_shutdown(SHUTDOWN_REASON_OVER_CURR, 0, current);
     }
     // check OV
     if (sd_cell = check_condition_voltage_per_cell(SHUTDOWN_OVER_VOLTAGE, voltages, sd_OV_timers, CELL_COUNT)) {
         if(LOG_SHUTDOWN) log_err("Shutdown Over Voltage: cell %d, %fV", sd_cell, (float)voltages[sd_cell-1]/VOLTAGE_MULTIPLIER);
-        enter_shutdown(SHUTDOWN_REASON_OVER_V);
+        enter_shutdown(SHUTDOWN_REASON_OVER_V, sd_cell, voltages[sd_cell-1]);
     }
     // check UV 
     if ((sd_cell = check_condition_voltage_per_cell(SHUTDOWN_UNDER_VOLTAGE, voltages, sd_UV_timers, CELL_COUNT))) {
         if(LOG_SHUTDOWN) log_err("Shutdown Under Voltage: cell %d, %fV", sd_cell, (float)voltages[sd_cell-1]/VOLTAGE_MULTIPLIER);
-        enter_shutdown(SHUTDOWN_REASON_UNDER_V);
+        enter_shutdown(SHUTDOWN_REASON_UNDER_V, sd_cell, voltages[sd_cell-1]);
     }
     // check OT
     temp_condition_t ot_cond = charging ? SHUTDOWN_CHARGING_OVER_TEMP : SHUTDOWN_DISCHARGING_OVER_TEMP;
     if ((sd_cell = check_condition_temp_per_cell(ot_cond, temps, sd_OT_timers, CELL_COUNT))){
         if(LOG_SHUTDOWN) log_err("Shutdown Over Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell-1]/TEMP_MULTIPLIER);
-        enter_shutdown(SHUTDOWN_REASON_OVER_TEMP);
+        enter_shutdown(SHUTDOWN_REASON_OVER_TEMP, sd_cell, temps[sd_cell-1]);
     }
     // check UT
     temp_condition_t ut_cond = charging ? SHUTDOWN_CHARGING_UNDER_TEMP : SHUTDOWN_DISCHARGING_UNDER_TEMP;
     if ((sd_cell = check_condition_temp_per_cell(ut_cond, temps, sd_UT_timers, CELL_COUNT))) {
         if(LOG_SHUTDOWN) log_err("Shutdown Under Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell-1]/TEMP_MULTIPLIER);
-        enter_shutdown(SHUTDOWN_REASON_UNDER_TEMP);
+        enter_shutdown(SHUTDOWN_REASON_UNDER_TEMP, sd_cell, temps[sd_cell-1]);
     }
 }
 
@@ -436,34 +446,6 @@ void powered_on_main() {
         current_t cells_current = current - relay_current - IDLE_CURRENT;
         log_dbg("relay current: %fA, cell current: %fA", (float)relay_current / CURRENT_MULTIPLIER, (float)cells_current / CURRENT_MULTIPLIER);
 
-
-        // bool lockout = false;
-        // bool cutoff = false;
-
-        // for (uint8_t i = 0; i < CELL_COUNT; i++) {
-        //     send_cell_warnings(i, WAKEUP_CHARGE);
-        //     cell_report r get_cell_report(i, WAKEUP_CHARGE);
-        //     if (r.issue_level == LOCKOUT) {
-        //         save_lockout_reason(r.lockout_reason);
-        //         lockout = true;
-        //         break;
-        //     }
-        //     else if (r.issue_level == CUTOFF) {
-        //         save_shutdown_reason(r.shutdown_reason);
-        //         cutoff = true;
-        //         break;
-        //     }
-        // }
-        // if (lockout) {
-        //     locked_out_main();
-        //     // locked_out_main should be blocking, but just in case, enter shutdown if the function terminates
-        //     break;
-        // }
-        // else if (cutoff) {
-        //     // break to shutdown
-        //     break;
-        // }
-
         //---------------------------------------------------- ACT -----------------------------------------------------
         disp_set_soc(SOC);
         can_update();
@@ -509,7 +491,7 @@ void powered_on_main() {
         // check for shutdown by button press
         if (power_button_press_duration(2000) >= 2000 || !OffButton_GetValue()) {
             log_info("Shutting down");
-            enter_shutdown(SHUTDOWN_REASON_NONE);
+            enter_shutdown(SHUTDOWN_REASON_NONE, 0 ,0);
         }
 
         loop_counter++;
@@ -563,8 +545,12 @@ void bms_main(void) {
     // check if there was a shutdown reason
     shutdown_reason_t sd_reason = load_shutdown_reason();
     if(sd_reason != SHUTDOWN_REASON_NONE) {
-        log_info("Previous shutdown reason: %d", sd_reason);
-        save_shutdown_reason(SHUTDOWN_REASON_NONE);
+        uint8_t sd_cell = load_shutdown_cell();
+        int16_t sd_value = load_shutdown_value();
+
+        log_info("Previous shutdown reason: %d - cell: %d - value: %d", sd_reason, sd_cell, sd_value);
+        can_send_shutdown_reason(sd_reason, sd_cell, sd_value);
+        save_shutdown_reason(SHUTDOWN_REASON_NONE, 0, 0);
     }
 
     while (1) {

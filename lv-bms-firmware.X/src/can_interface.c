@@ -30,7 +30,7 @@ bool sensor_sending_en;
 lockout_reason_t lockout_reason;
 bool lockout_set;
 uint8_t lockout_cell_index;
-uint16_t lockout_cell_value;
+int16_t lockout_cell_value;
 
 uint16_t charge_cycles, shutdown_count, lockout_count;
 
@@ -45,7 +45,7 @@ void can_recieve_handler() {
     // TODO some kind of command interface - emulate the ORION BMS for the LV battery
     
     switch (rx_msg.msgId) {
-        case CAN_LOCKOUT_CLEAR_OFFSET + CAN_EID:
+        case CAN_LOCKOUT_CLEAR_OFFSET + CAN_ID:
             if(rx_msg.field.dlc == 2 && rx_msg.data[0] == 0xAB && rx_msg.data[1] == 0xCD) {
                 log_info("clear_lockout received");
                 lockout_clear_msg_rxed = true;
@@ -59,12 +59,12 @@ void can_recieve_handler() {
 
 void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) { 
     CAN_MSG_OBJ tx_msg;
-    tx_msg.msgId = CAN_EID + offset;
+    tx_msg.msgId = CAN_ID + offset;
     tx_msg.field.formatType = CAN_2_0_FORMAT;
     tx_msg.field.brs = CAN_NON_BRS_MODE;
     tx_msg.field.dlc = len;
     tx_msg.field.frameType = CAN_FRAME_DATA;
-    tx_msg.field.idType = CAN_FRAME_EXT;
+    tx_msg.field.idType = CAN_FRAME_STD;
     tx_msg.data = message_body;
     
     int trys;
@@ -127,21 +127,31 @@ void can_send_empty_warning() {
     tx_message(CAN_EMPTY_MESSAGE_OFFSET, empty_message, 0);
 }
 
-void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, uint16_t critical_value){
+void can_send_critical_warning(can_critical_byte_t critical_byte, uint8_t cell_index, int16_t critical_value){
     uint8_t critical_message[4];
     critical_message[0] = (uint8_t)critical_byte;
     critical_message[1] = cell_index;
-    critical_message[2] = critical_value & 0xff;
-    critical_message[3] = critical_value >> 8;
+    critical_message[2] = (uint8_t)(critical_value & 0xff);
+    critical_message[3] = (uint8_t)(critical_value >> 8);
     tx_message(CAN_CRITICAL_WARNING_OFFSET, critical_message, 4);
 }
+
+void can_send_shutdown_reason(shutdown_reason_t shutdown_reason, uint8_t cell_index, int16_t shutdown_value) {
+    uint8_t shutdown_message[4];
+    shutdown_message[0] = (uint8_t)shutdown_reason;
+    shutdown_message[1] = cell_index;
+    shutdown_message[2] = (uint8_t)(shutdown_value & 0xff);
+    shutdown_message[3] = (uint8_t)(shutdown_value >> 8);
+    tx_message(CAN_SHUTDOWN_REASON_OFFSET, shutdown_message, 4);
+}
+
 
 void can_send_lockout_message() {
     uint8_t lockout_message[4];
     lockout_message[0] = (uint8_t)lockout_reason;
     lockout_message[1] = lockout_cell_index;
-    lockout_message[2] = lockout_cell_value >> 8;
-    lockout_message[3] = lockout_cell_value & 0xff;
+    lockout_message[2] = (uint8_t)(lockout_cell_value & 0xff);
+    lockout_message[3] = (uint8_t)(lockout_cell_value >> 8);
     tx_message(CAN_LOCKOUT_OFFSET, lockout_message, 4);
 }
 
@@ -225,7 +235,7 @@ void can_sensor_sending_enable(bool enabled) {
 }
 
 // enabled the lockout message
-void can_set_lockdout(lockout_reason_t new_lockout_reason, uint8_t new_cell_index, uint16_t new_dire_value) {
+void can_set_lockdout(lockout_reason_t new_lockout_reason, uint8_t new_cell_index, int16_t new_dire_value) {
     lockout_reason = new_lockout_reason;
     lockout_cell_index = new_cell_index;
     lockout_cell_value = new_dire_value;
