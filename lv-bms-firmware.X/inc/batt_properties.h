@@ -62,9 +62,9 @@ typedef struct {
 current_condition_t CRITICAL_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(2), .duration = 500 };
 voltage_condition_t CRITICAL_OVER_VOLTAGE = { .bound = BOUND_UPPER, .value = V(4.2), .duration = 500 };
 voltage_condition_t CRITICAL_UNDER_VOLTAGE = { .bound = BOUND_LOWER, .value = V(2.9), .duration = 500 };
-temp_condition_t CRITICAL_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 30, .duration = 1000 };
+temp_condition_t CRITICAL_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 50, .duration = 1000 };
 temp_condition_t CRITICAL_CHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = 10, .duration = 1000 };
-temp_condition_t CRITICAL_DISCHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 30, .duration = 1000 };
+temp_condition_t CRITICAL_DISCHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 55, .duration = 1000 };
 temp_condition_t CRITICAL_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = -30, .duration = 1000 };
 
 // Shutdown values - cause battery to power off

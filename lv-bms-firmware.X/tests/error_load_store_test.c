@@ -17,7 +17,7 @@ void millis_hook (uint64_t uptime) {
 }
 
 void store_reasons() {
-    save_lockout_reason(LOCKOUT_COMM_FAULT, 2, 12345);
+    save_lockout_reason(LOCKOUT_REASON_COMM_FAULT, 2, 12345);
     save_shutdown_reason(SHUTDOWN_REASON_CHARGE_DONE);
     printf("saved lockout and shutdown reasons\n");
 }

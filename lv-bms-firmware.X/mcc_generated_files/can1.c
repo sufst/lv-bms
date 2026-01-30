@@ -182,12 +182,12 @@ static void CAN1_RX_FIFO_Configuration(void)
 static void CAN1_RX_FIFO_FilterMaskConfiguration(void)
 {
     // FLTEN0 enabled; F0BP FIFO 1; 
-    C1FLTOBJ0L = 0x0C;
-    C1FLTOBJ0H = 0x01;
-    C1FLTOBJ0U = 0x80;
-    C1FLTOBJ0T = 0x50;
+    C1FLTOBJ0L = 0x0F;
+    C1FLTOBJ0H = 0x87;
+    C1FLTOBJ0U = 0x03;
+    C1FLTOBJ0T = 0x00;
     C1MASK0L = 0xFF;
-    C1MASK0H = 0x87;
+    C1MASK0H = 0xFF;
     C1MASK0U = 0xFF;
     C1MASK0T = 0x5F;
     C1FLTCON0L = 0x81; 

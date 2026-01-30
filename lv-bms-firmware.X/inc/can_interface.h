@@ -41,7 +41,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 // sets the tx base address ; for RX, check the filters for MCC
-#define CAN_ID 0x000
+#define CAN_ID 0x700
     
 #define CAN_EMPTY_WARNING_THRESHOLD 5 //%
     

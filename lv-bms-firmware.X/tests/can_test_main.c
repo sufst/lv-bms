@@ -44,7 +44,7 @@ void bms_main(void) {
     can_set_lockout_count(6);
     can_set_shutdown_count(2093);
     
-    can_set_lockdout(LOCKOUT_OVERVOLT, 3, V(2.8));
+    can_set_lockdout(LOCKOUT_REASON_OVERVOLT, 3, V(2.8));
     
     can_sensor_sending_enable(true);
     disp_update();
