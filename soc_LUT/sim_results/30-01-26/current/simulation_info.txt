@@ -1,0 +1,52 @@
+# Voltt Simulation Export
+# ========================
+
+Simulation ID: 24ecdda6-6fbe-4286-a35d-1e5369f87eaf
+Exported by: tml1g25@soton.ac.uk
+
+Configurations: 1
+Export Date: 1/27/2026, 7:23:56 PM
+
+# Configuration Details
+# ---------------------
+
+Configuration 1: STAG 12 Pack (Pack 3S4P)
+  Cell: Molicel P45B
+
+Output Levels: Cell and Pack (both included)
+
+Note: CSV filenames include _cell or _pack suffix to indicate the output level:
+  - _cell: Raw cell-level values (single cell simulation)
+  - _pack: Pack-level values (scaled by series/parallel configuration)
+
+Warnings:
+  1. STAG 12 Pack @ 1.00: Reached minimum voltage limit (2.50V) at t=65130.0s
+  2. STAG 12 Pack @ 5.00: Reached minimum voltage limit (2.50V) at t=13004.3s
+  3. STAG 12 Pack @ 10.0: Reached minimum voltage limit (2.50V) at t=6488.6s
+  4. STAG 12 Pack @ 20.0: Reached minimum voltage limit (2.50V) at t=3228.8s
+  5. STAG 12 Pack @ 30.0: Reached minimum voltage limit (2.50V) at t=2139.6s
+
+# Simulation Inputs
+# -----------------
+
+## Load Profile
+Profile Type: Fixed Rate
+Load Type: current
+Operation: discharge
+Rate: 1
+
+## Environment Conditions
+Ambient Temperature: 25 °C
+Heat Transfer Coefficient: 10000 W/m²K
+
+## Initial Conditions
+Initial SOC: 100 %
+Initial Temperature: 25 °C
+
+## Termination Conditions
+Min. Voltage [V]: 2.5 V
+Max Temperature: 80 °C
+
+
+# Each CSV file contains data for one simulation.
+# Column headers use the format: name [unit]

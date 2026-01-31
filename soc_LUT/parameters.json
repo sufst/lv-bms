@@ -1,0 +1,17 @@
+{
+    "voltage_min": 7.50,
+    "voltage_max": 12.557323,
+
+    "soc_scale": 32767,
+    "soc_base_type": "uint16_t",
+    
+    "point_count_current": 256,
+    "point_count_temperature": 256,
+
+    "reference_temperature_deg": 25,
+    "reference_current_amps": 20,
+
+    "make_pretty": true,
+
+    "save_old": true
+}
