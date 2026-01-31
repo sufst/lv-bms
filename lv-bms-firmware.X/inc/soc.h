@@ -5,7 +5,7 @@
 #define SOC_VMIN V(SOC_DSVMIN)
 
 /*
-    State of charge
-    Returns an integer in the range 0 to SOC_SCALE
+    State of charge in terms of pack voltage, current and temperature
+    Returns an integer in the range 0 to `SOC_SCALE`
 */
-state_of_charge_t state_of_charge(voltage_t V, current_t I, temp_t T)
+state_of_charge_t state_of_charge(voltage_t V, current_t I, temp_t T);

@@ -298,7 +298,8 @@ template_dict = {
 
     "SCRIPT_PATH" : __file__,
     "TIMESTAMP" : datetime.now().strftime('%m-%d-%Y %H:%M'),
-    "SCRIPT_VERSION" : str(format_version)
+    "SCRIPT_VERSION" : str(format_version),
+    "DATA_SOURCE" : f'{input_path}/{data_path}'
 }
 
 for i, line in enumerate(template) :

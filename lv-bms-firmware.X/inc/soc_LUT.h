@@ -1,7 +1,8 @@
 
 /*
-    File generated with     c:\Users\trist\OneDrive\Personal\Documents\SUFST\soc_LUT\update_lookup_table.py
-    Version date            01-31-2026 14:04
+    File generated with     c:\Users\trist\OneDrive\Personal\Documents\SUFST\soc_LUT\update_soc_LUT.py
+    Data source             sim_results/data-30-01-26
+    Date created            01-31-2026 14:52
     Format version          1.0.0
 
     GENERATED FILE **DO NOT MODIFY DIRECTLY**

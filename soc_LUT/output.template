@@ -1,7 +1,8 @@
 
 /*
     File generated with     ${SCRIPT_PATH}
-    Version date            ${TIMESTAMP}
+    Data source             ${DATA_SOURCE}
+    Date created            ${TIMESTAMP}
     Format version          ${SCRIPT_VERSION}
 
     GENERATED FILE **DO NOT MODIFY DIRECTLY**
