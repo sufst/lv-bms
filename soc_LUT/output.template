@@ -1,0 +1,47 @@
+
+/*
+    File generated with     ${SCRIPT_PATH}
+    Data source             ${DATA_SOURCE}
+    Date created            ${TIMESTAMP}
+    Format version          ${SCRIPT_VERSION}
+
+    GENERATED FILE **DO NOT MODIFY DIRECTLY**
+*/
+
+#ifndef SOC_LOOKUP_H
+#define SOC_LOOKUP_H
+
+#include <stdint.h>
+
+typedef ${SOC_TYPE} state_of_charge_t;
+
+// (unscaled) voltage corresponding to index 0 of the dataset
+#define SOC_DSVMAX ${VMAX}
+// (unscaled) voltage corresponding to last index of dataset
+#define SOC_DSVMIN ${VMIN}
+// index of current data matching the current that temperature SOC graphs assume
+#define SOC_CURR_REF_INDEX ${I_REF_INDEX}
+// index of temperature data matching the temperature that the current SOC graphs assume
+#define SOC_TEMP_REF_INDEX ${T_REF_INDEX}
+// number of data points in voltage(soc, current) lookup table
+#define SOC_CURR_POINT_COUNT ${I_POINT_COUNT}
+// number of data points in voltage(soc, temperature) lookup table
+#define SOC_TEMP_POINT_COUNT ${T_POINT_COUNT}
+// number of traces in sov V/I table
+#define SOC_CURR_TRACE_COUNT ${I_TRACE_COUNT}
+// number of traces in sov V/T table
+#define SOC_TEMP_TRACE_COUNT ${T_TRACE_COUNT}
+// integer value corresponding to 100% SOC
+#define SOC_SCALE ${SOC_SCALE}
+
+// represents (scaled) SOC as a function of voltage for a set of constant current sources
+state_of_charge_t soc_vi[SOC_CURR_TRACE_COUNT][SOC_CURR_POINT_COUNT] = ${SOC_VI};
+// represents (scaled) SOC as a function of voltage for a set of constant cell pack temperatures
+state_of_charge_t soc_vt[SOC_TEMP_TRACE_COUNT][SOC_TEMP_POINT_COUNT] = ${SOC_VT};
+
+// (unscaled) current values corresponding to soc lookup table index
+uint16_t soc_current_key[SOC_CURR_TRACE_COUNT] = ${SOC_I_KEY};
+// (unscaled) temperature values corresponding to soc lookup table index
+uint16_t soc_temperature_key[SOC_TEMP_TRACE_COUNT] = ${SOC_T_KEY};
+
+#endif
