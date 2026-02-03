@@ -185,6 +185,11 @@ void millis_hook(time_t uptime) {
 
 }
 
+// ISR for handling button press - mostly for wakeup from sleep
+void MasterSwitch_pressed_ISR() {
+    log_dbg("MasterSwitch pressed");
+}
+
 // how long has the power button been pressed (capped at a maximum duration)
 uint64_t power_button_press_duration(uint64_t max_duration) {
     static uint64_t press_start_time;
@@ -385,6 +390,7 @@ void check_lockouts() {
         }
     }
 }
+
 //======================================================================================================================
 // ---------------------------------------------- Main functions -------------------------------------------------------
 //======================================================================================================================
@@ -398,12 +404,22 @@ void locked_out_main() {
     disp_set_soc(0); // enables animations
     can_set_status(CAN_LOCKED_OUT);
     can_set_lockdout(lo_reason, lo_cell, lo_value);
+    can_sensor_sending_enable(true);
+
+    initialise_bq();
 
     while (1) {
-        // send locked out message
+        // measure
+        if(bq_check_connection()) {
+            bq_get_voltages(voltages);
+            bq_get_temperatures(temps);
+            bq_get_current(&current);
+        }
+        
+        // act
         can_update();
         disp_update();
-
+        
         if (can_get_lockout_clear_message_rxed()) {
             save_lockout_reason(LOCKOUT_REASON_NONE, 0, 0);
             delay(1);
@@ -423,15 +439,23 @@ void sleep_main() {
 
     uint64_t loop_count = 0;
     while (1) {
+        // sleep stall here for 1 second
+        delay(1000);
+
         // exiting sleep
-        if (power_button_press_duration(UINT64_MAX)) {
+        if (MasterSwitch_GetValue()) {
             break;
         }
 
-        if (loop_count % 1000 == 0) {
-            log_info("sleeping");
+        // wake if there is current
+        initialise_bq();
+        bq_get_current(&current);
+        if(current > SLEEP_EXIT_CURRENT) {
+            break;
         }
+        bq_shutdown();
 
+        log_info("sleeping");
         loop_count++;
     }
 
@@ -554,6 +578,7 @@ void bms_main(void) {
     // Initialize the device
     SYSTEM_Initialize();
     bool button_pressed_on_start = MasterSwitch_GetValue();
+    IOCBF3_SetInterruptHandler(&MasterSwitch_pressed_ISR);
 
     // setups
     millis_setup();

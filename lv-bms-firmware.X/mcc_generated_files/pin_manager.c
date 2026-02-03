@@ -51,6 +51,8 @@
 
 
 
+void (*IOCBF3_InterruptHandler)(void);
+
 
 void PIN_MANAGER_Initialize(void)
 {
@@ -118,10 +120,23 @@ void PIN_MANAGER_Initialize(void)
     INLVLE = 0x0F;
 
 
+    /**
+    IOCx registers 
+    */
+    //interrupt on change for group IOCBF - flag
+    IOCBFbits.IOCBF3 = 0;
+    //interrupt on change for group IOCBN - negative
+    IOCBNbits.IOCBN3 = 0;
+    //interrupt on change for group IOCBP - positive
+    IOCBPbits.IOCBP3 = 1;
 
 
 
+    // register default IOC callback functions at runtime; use these methods to register a custom function
+    IOCBF3_SetInterruptHandler(IOCBF3_DefaultInterruptHandler);
    
+    // Enable IOCI interrupt 
+    PIE0bits.IOCIE = 1; 
     
 	
     U2RXPPS = 0x09;   //RB1->UART2:RX2;    
@@ -134,6 +149,41 @@ void PIN_MANAGER_Initialize(void)
   
 void PIN_MANAGER_IOC(void)
 {   
+	// interrupt on change for pin IOCBF3
+    if(IOCBFbits.IOCBF3 == 1)
+    {
+        IOCBF3_ISR();  
+    }	
+}
+
+/**
+   IOCBF3 Interrupt Service Routine
+*/
+void IOCBF3_ISR(void) {
+
+    // Add custom IOCBF3 code
+
+    // Call the interrupt handler for the callback registered at runtime
+    if(IOCBF3_InterruptHandler)
+    {
+        IOCBF3_InterruptHandler();
+    }
+    IOCBFbits.IOCBF3 = 0;
+}
+
+/**
+  Allows selecting an interrupt handler for IOCBF3 at application runtime
+*/
+void IOCBF3_SetInterruptHandler(void (* InterruptHandler)(void)){
+    IOCBF3_InterruptHandler = InterruptHandler;
+}
+
+/**
+  Default interrupt handler for IOCBF3
+*/
+void IOCBF3_DefaultInterruptHandler(void){
+    // add your IOCBF3 interrupt custom code
+    // or set custom function using IOCBF3_SetInterruptHandler()
 }
 
 /**

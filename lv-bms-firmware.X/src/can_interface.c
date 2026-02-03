@@ -57,7 +57,7 @@ void can_recieve_handler() {
     }
 }
 
-void tx_message(uint8_t offset, uint8_t* message_body, uint8_t len) { 
+void tx_message(uint16_t offset, uint8_t* message_body, uint8_t len) { 
     CAN_MSG_OBJ tx_msg;
     tx_msg.msgId = CAN_ID + offset;
     tx_msg.field.formatType = CAN_2_0_FORMAT;

@@ -25,6 +25,8 @@ typedef struct
 
 
 void millis_setup(void);
+void millis_stop(void); // disables the millis timer eg for sleep
+
 uint64_t millis(void);
 void delay(uint64_t delay_ms);
 
