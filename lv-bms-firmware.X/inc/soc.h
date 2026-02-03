@@ -1,5 +1,5 @@
 #include "units.h"
-#include "soc_lookup.h"
+#include "soc_LUT.h"
 
 #define SOC_VMAX V(SOC_DSVMAX)
 #define SOC_VMIN V(SOC_DSVMIN)
