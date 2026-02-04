@@ -176,9 +176,15 @@ for dependent in dependent_param :
 
                 soc_value = int(round(csv_lines[soc_index][closest_i]*soc_scale/100.0))
 
+                def sov_range_warn() :
+                    print(f'\tWarning: Clamped bad SOC value {csv_lines[soc_index][closest_i]}% -> ({soc_base_type}){soc_value}')
+
+                warn = False
                 if soc_value > soc_scale :
+                    sov_range_warn()
                     soc_value = soc_scale
                 if soc_value < 0 :
+                    sov_range_warn()
                     soc_value = 0
             
                 if dependent == "Current" :
