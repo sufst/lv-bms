@@ -2,3 +2,7 @@
 /lv-bms-firmware.X/debug/*
 /lv-bms-firmware.X/build/*
 .vscode/*
+
+# ignore unused generated files for soc LUT
+/soc_LUT/*.old
+/soc_LUT/*.h
