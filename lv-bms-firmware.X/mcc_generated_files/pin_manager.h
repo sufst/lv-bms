@@ -165,25 +165,25 @@
 #define Bonus5_SetAnalogMode()      do { ANSELAbits.ANSELA4 = 1; } while(0)
 #define Bonus5_SetDigitalMode()     do { ANSELAbits.ANSELA4 = 0; } while(0)
 
-// get/set Bonus6 aliases
-#define Bonus6_TRIS                 TRISAbits.TRISA5
-#define Bonus6_LAT                  LATAbits.LATA5
-#define Bonus6_PORT                 PORTAbits.RA5
-#define Bonus6_WPU                  WPUAbits.WPUA5
-#define Bonus6_OD                   ODCONAbits.ODCA5
-#define Bonus6_ANS                  ANSELAbits.ANSELA5
-#define Bonus6_SetHigh()            do { LATAbits.LATA5 = 1; } while(0)
-#define Bonus6_SetLow()             do { LATAbits.LATA5 = 0; } while(0)
-#define Bonus6_Toggle()             do { LATAbits.LATA5 = ~LATAbits.LATA5; } while(0)
-#define Bonus6_GetValue()           PORTAbits.RA5
-#define Bonus6_SetDigitalInput()    do { TRISAbits.TRISA5 = 1; } while(0)
-#define Bonus6_SetDigitalOutput()   do { TRISAbits.TRISA5 = 0; } while(0)
-#define Bonus6_SetPullup()          do { WPUAbits.WPUA5 = 1; } while(0)
-#define Bonus6_ResetPullup()        do { WPUAbits.WPUA5 = 0; } while(0)
-#define Bonus6_SetPushPull()        do { ODCONAbits.ODCA5 = 0; } while(0)
-#define Bonus6_SetOpenDrain()       do { ODCONAbits.ODCA5 = 1; } while(0)
-#define Bonus6_SetAnalogMode()      do { ANSELAbits.ANSELA5 = 1; } while(0)
-#define Bonus6_SetDigitalMode()     do { ANSELAbits.ANSELA5 = 0; } while(0)
+// get/set nFAULT aliases
+#define nFAULT_TRIS                 TRISAbits.TRISA5
+#define nFAULT_LAT                  LATAbits.LATA5
+#define nFAULT_PORT                 PORTAbits.RA5
+#define nFAULT_WPU                  WPUAbits.WPUA5
+#define nFAULT_OD                   ODCONAbits.ODCA5
+#define nFAULT_ANS                  ANSELAbits.ANSELA5
+#define nFAULT_SetHigh()            do { LATAbits.LATA5 = 1; } while(0)
+#define nFAULT_SetLow()             do { LATAbits.LATA5 = 0; } while(0)
+#define nFAULT_Toggle()             do { LATAbits.LATA5 = ~LATAbits.LATA5; } while(0)
+#define nFAULT_GetValue()           PORTAbits.RA5
+#define nFAULT_SetDigitalInput()    do { TRISAbits.TRISA5 = 1; } while(0)
+#define nFAULT_SetDigitalOutput()   do { TRISAbits.TRISA5 = 0; } while(0)
+#define nFAULT_SetPullup()          do { WPUAbits.WPUA5 = 1; } while(0)
+#define nFAULT_ResetPullup()        do { WPUAbits.WPUA5 = 0; } while(0)
+#define nFAULT_SetPushPull()        do { ODCONAbits.ODCA5 = 0; } while(0)
+#define nFAULT_SetOpenDrain()       do { ODCONAbits.ODCA5 = 1; } while(0)
+#define nFAULT_SetAnalogMode()      do { ANSELAbits.ANSELA5 = 1; } while(0)
+#define nFAULT_SetDigitalMode()     do { ANSELAbits.ANSELA5 = 0; } while(0)
 
 // get/set RB1 procedures
 #define RB1_SetHigh()            do { LATBbits.LATB1 = 1; } while(0)
@@ -425,25 +425,25 @@
 #define RD5_SetAnalogMode()         do { ANSELDbits.ANSELD5 = 1; } while(0)
 #define RD5_SetDigitalMode()        do { ANSELDbits.ANSELD5 = 0; } while(0)
 
-// get/set nFAULT aliases
-#define nFAULT_TRIS                 TRISDbits.TRISD6
-#define nFAULT_LAT                  LATDbits.LATD6
-#define nFAULT_PORT                 PORTDbits.RD6
-#define nFAULT_WPU                  WPUDbits.WPUD6
-#define nFAULT_OD                   ODCONDbits.ODCD6
-#define nFAULT_ANS                  ANSELDbits.ANSELD6
-#define nFAULT_SetHigh()            do { LATDbits.LATD6 = 1; } while(0)
-#define nFAULT_SetLow()             do { LATDbits.LATD6 = 0; } while(0)
-#define nFAULT_Toggle()             do { LATDbits.LATD6 = ~LATDbits.LATD6; } while(0)
-#define nFAULT_GetValue()           PORTDbits.RD6
-#define nFAULT_SetDigitalInput()    do { TRISDbits.TRISD6 = 1; } while(0)
-#define nFAULT_SetDigitalOutput()   do { TRISDbits.TRISD6 = 0; } while(0)
-#define nFAULT_SetPullup()          do { WPUDbits.WPUD6 = 1; } while(0)
-#define nFAULT_ResetPullup()        do { WPUDbits.WPUD6 = 0; } while(0)
-#define nFAULT_SetPushPull()        do { ODCONDbits.ODCD6 = 0; } while(0)
-#define nFAULT_SetOpenDrain()       do { ODCONDbits.ODCD6 = 1; } while(0)
-#define nFAULT_SetAnalogMode()      do { ANSELDbits.ANSELD6 = 1; } while(0)
-#define nFAULT_SetDigitalMode()     do { ANSELDbits.ANSELD6 = 0; } while(0)
+// get/set old_nFAULT aliases
+#define old_nFAULT_TRIS                 TRISDbits.TRISD6
+#define old_nFAULT_LAT                  LATDbits.LATD6
+#define old_nFAULT_PORT                 PORTDbits.RD6
+#define old_nFAULT_WPU                  WPUDbits.WPUD6
+#define old_nFAULT_OD                   ODCONDbits.ODCD6
+#define old_nFAULT_ANS                  ANSELDbits.ANSELD6
+#define old_nFAULT_SetHigh()            do { LATDbits.LATD6 = 1; } while(0)
+#define old_nFAULT_SetLow()             do { LATDbits.LATD6 = 0; } while(0)
+#define old_nFAULT_Toggle()             do { LATDbits.LATD6 = ~LATDbits.LATD6; } while(0)
+#define old_nFAULT_GetValue()           PORTDbits.RD6
+#define old_nFAULT_SetDigitalInput()    do { TRISDbits.TRISD6 = 1; } while(0)
+#define old_nFAULT_SetDigitalOutput()   do { TRISDbits.TRISD6 = 0; } while(0)
+#define old_nFAULT_SetPullup()          do { WPUDbits.WPUD6 = 1; } while(0)
+#define old_nFAULT_ResetPullup()        do { WPUDbits.WPUD6 = 0; } while(0)
+#define old_nFAULT_SetPushPull()        do { ODCONDbits.ODCD6 = 0; } while(0)
+#define old_nFAULT_SetOpenDrain()       do { ODCONDbits.ODCD6 = 1; } while(0)
+#define old_nFAULT_SetAnalogMode()      do { ANSELDbits.ANSELD6 = 1; } while(0)
+#define old_nFAULT_SetDigitalMode()     do { ANSELDbits.ANSELD6 = 0; } while(0)
 
 // get/set DbgUart aliases
 #define DbgUart_TRIS                 TRISDbits.TRISD7
@@ -488,6 +488,90 @@ void PIN_MANAGER_Initialize (void);
     PIN_MANAGER_IOC();
  */
 void PIN_MANAGER_IOC(void);
+
+
+/**
+ * @Param
+    none
+ * @Returns
+    none
+ * @Description
+    Interrupt on Change Handler for the IOCAF5 pin functionality
+ * @Example
+    IOCAF5_ISR();
+ */
+void IOCAF5_ISR(void);
+
+/**
+  @Summary
+    Interrupt Handler Setter for IOCAF5 pin interrupt-on-change functionality
+
+  @Description
+    Allows selecting an interrupt handler for IOCAF5 at application runtime
+    
+  @Preconditions
+    Pin Manager intializer called
+
+  @Returns
+    None.
+
+  @Param
+    InterruptHandler function pointer.
+
+  @Example
+    PIN_MANAGER_Initialize();
+    IOCAF5_SetInterruptHandler(MyInterruptHandler);
+
+*/
+void IOCAF5_SetInterruptHandler(void (* InterruptHandler)(void));
+
+/**
+  @Summary
+    Dynamic Interrupt Handler for IOCAF5 pin
+
+  @Description
+    This is a dynamic interrupt handler to be used together with the IOCAF5_SetInterruptHandler() method.
+    This handler is called every time the IOCAF5 ISR is executed and allows any function to be registered at runtime.
+    
+  @Preconditions
+    Pin Manager intializer called
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    PIN_MANAGER_Initialize();
+    IOCAF5_SetInterruptHandler(IOCAF5_InterruptHandler);
+
+*/
+extern void (*IOCAF5_InterruptHandler)(void);
+
+/**
+  @Summary
+    Default Interrupt Handler for IOCAF5 pin
+
+  @Description
+    This is a predefined interrupt handler to be used together with the IOCAF5_SetInterruptHandler() method.
+    This handler is called every time the IOCAF5 ISR is executed. 
+    
+  @Preconditions
+    Pin Manager intializer called
+
+  @Returns
+    None.
+
+  @Param
+    None.
+
+  @Example
+    PIN_MANAGER_Initialize();
+    IOCAF5_SetInterruptHandler(IOCAF5_DefaultInterruptHandler);
+
+*/
+void IOCAF5_DefaultInterruptHandler(void);
 
 
 /**

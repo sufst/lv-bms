@@ -951,7 +951,7 @@ prot_fault_t get_prot_faults(uint8_t bID) {
     return pf;
 }
 
-// these are quite big so they're doing to be toggle-able
+// these are quite big so they're toggle-able
 #ifdef BQ796XX_FAULT_PRINTS
 int snprint_fault_summary(char * s, size_t n, fault_summary_t fs) {
     return snprintf(s, n, "fault summary: PROT:%d, COMP_ADC:%d, OTP:%d, COMM:%d, OTUT:%d, OVUV:%d, SYS:%d, PWR:%d ",

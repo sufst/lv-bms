@@ -108,6 +108,8 @@ otp_faults_t get_otp_faults(uint8_t bID);
 comp_adc_faults_t get_comp_adc_faults(uint8_t bID);     
 prot_fault_t get_prot_faults(uint8_t bID);              
 
+// disabled by default, enable by setting:
+// #define BQ796XX_FAULT_PRINTS
 int snprint_fault_summary(char * s, size_t n, fault_summary_t fs);      // len ~~ 85 chars
 int snprint_pwr_faults(char * s, size_t n, pwr_faults_t pf);            // len ~~ 205 chars
 int snprint_sys_faults(char * s, size_t n, sys_faults_t sf);            // len ~~ 70 chars

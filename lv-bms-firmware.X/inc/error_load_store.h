@@ -11,6 +11,13 @@
 #define SHUTDOWN_REASON_ADDR TODO
 
 #include "error_types.h"
+
+/** 
+ * save charge cycles
+ */
+void save_charge_cycles(uint16_t cycles);
+uint16_t load_charge_cycles(void);
+
              
 /**
  * save_shutdown_reason
@@ -28,6 +35,7 @@ void save_shutdown_reason(shutdown_reason_t sd_reason, uint8_t cell, int16_t fau
 shutdown_reason_t load_shutdown_reason(void);
 uint8_t load_shutdown_cell(void);
 int16_t load_shutdown_value(void);
+uint16_t load_shutdown_count(void);
 
 /**
  * save_lockout_reason
@@ -42,6 +50,7 @@ void save_lockout_reason(lockout_reason_t lo_reason, uint8_t cell, int16_t fault
 lockout_reason_t load_lockout_reason(void);
 uint8_t load_lockout_cell(void);
 int16_t load_lockout_value(void);
+uint16_t load_lockout_count(void);
 
 
 // deals with if there is an unrecoverable error

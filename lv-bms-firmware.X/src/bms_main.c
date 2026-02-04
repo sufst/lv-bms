@@ -185,10 +185,7 @@ void millis_hook(time_t uptime) {
 
 }
 
-// ISR for handling button press - mostly for wakeup from sleep
-void MasterSwitch_pressed_ISR() {
-    log_dbg("MasterSwitch pressed");
-}
+
 
 // how long has the power button been pressed (capped at a maximum duration)
 uint64_t power_button_press_duration(uint64_t max_duration) {
@@ -410,7 +407,7 @@ void locked_out_main() {
 
     while (1) {
         // measure
-        if(bq_check_connection()) {
+        if(bq_check_connection() && bq_check_measuring()) {
             bq_get_voltages(voltages);
             bq_get_temperatures(temps);
             bq_get_current(&current);
@@ -472,7 +469,7 @@ void sleep_main() {
         log_info("sleeping");
         loop_count++;
     }
-
+    
     log_info("exiting sleep");
 }
 
@@ -591,8 +588,6 @@ void powered_on_main() {
 void bms_main(void) {
     // Initialise the device
     SYSTEM_Initialize();
-    bool button_pressed_on_start = MasterSwitch_GetValue();
-    IOCBF3_SetInterruptHandler(&MasterSwitch_pressed_ISR);
 
     // disable unused peripherals for power efficiency - change these if changing MCC configuration
     PMD0bits.CRCMD = 1;
@@ -607,6 +602,7 @@ void bms_main(void) {
     
     // setups
     millis_setup();
+    IOCAF5_SetInterruptHandler(&bq_nfault_handler); // 
     INTERRUPT_GlobalInterruptEnable();
     disp_init();
     can_init();
@@ -621,6 +617,9 @@ void bms_main(void) {
     can_register_temps(temps);
     can_register_current(&current);
     can_register_SOC(&SOC);
+    can_set_shutdown_count(load_shutdown_count());
+    can_set_lockout_count(load_lockout_count());
+    can_set_charge_cycles(load_charge_cycles());
 
     log_info("bms powered up");
 

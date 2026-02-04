@@ -11,6 +11,55 @@
 #include "millis.h"
 #include "logging.h"
 
+bool nfault_handler_enabled = false;
+
+fault_summary_t fs; // has to be global for some reason breaks inside nfault handler
+
+void bq_nfault_handler(void) {
+    // avoid handling the interrupt if it's not ready to yet eg masks not configured correctly
+    if (!nfault_handler_enabled) return;
+
+    log_info("nfault triggered");
+    fs = get_fault_summary(1);
+   
+    if(fs.bits.fault_pwr) {
+        log_info("pwr fault");
+        get_pwr_faults(1);
+    }
+    if(fs.bits.fault_sys) {
+        log_info("sys fault");
+        get_sys_faults(1);
+    }
+    if(fs.bits.fault_ovuv) {
+        log_info("ovuv fault");
+        get_ovuv_faults(1);
+    }
+    if(fs.bits.fault_otut) {
+        log_info("otut fault");
+        get_otut_faults(1);
+    }
+    if(fs.bits.fault_comm) {
+        log_info("comm_fault");
+        get_comm_faults(1);
+    }
+    if(fs.bits.fault_otp) {
+        log_info("otp fault");
+        get_otp_faults(1); // these aren't a worry - the otp isn't programmed   
+    }
+    if(fs.bits.fault_comp_adc) {
+        log_info("adc_fault");
+        get_comp_adc_faults(1);
+    }
+    if(fs.bits.fault_prot) {
+        log_info("prot fault");
+        get_prot_faults(1);
+    }
+
+    // clear faults
+    reset_faults(1, MSK_ALL);
+    
+}
+
 temp_t get_temp_from_voltage_ratio(uint16_t voltage_ratio) {
     // binary search the thermistor LUT
     temp_t lower = INT8_MIN;
@@ -33,10 +82,12 @@ void bq_wake() {
 }
 
 void bq_shutdown() {
+    nfault_handler_enabled = false; // clear interrupt handler as masks are incorrect
     SD796XX();
 }
 
 void bq_hw_reset() {
+    nfault_handler_enabled = false; // clear interrupt handler as masks are incorrect
     HWRST796XX();
 }
 
@@ -62,9 +113,17 @@ bool bq_check_measuring() {
 }
 
 bool bq_setup() {
+    nfault_handler_enabled = false;
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_long_comm_timeout(1, TIMEOUT_2S, LONG_T_O_SHUTDOWN);
     set_active_cells(1, 3);
+
+    // setup nfault interrupt 
+    set_fault_msk(1, MSK_OTP_CRC | MSK_OTP_DATA);
+    nfault_handler_enabled = true;
+    // the ISR needs retriggering - there may be error states that haven't been handled
+    bq_nfault_handler();
+
     enable_LPF_cells(1, BQ_VOLTAGE_LPF_FREQ);
     enable_LPF_BB(1, BQ_CURRENT_LPF_FREQ);
     for(uint8_t gpio = 1; gpio <= 3; gpio++) {

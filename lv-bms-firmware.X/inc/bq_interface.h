@@ -23,6 +23,7 @@
 #define CURRENT_OFFSET -41 // in stepssteps; * V_LSB_BB is volts
 #define CURRENT_CAL_RATIO  0.85 // ratio multiplied to make it correct
 
+void bq_nfault_handler();
 void bq_wake();
 void bq_shutdown();
 void bq_hw_reset();
