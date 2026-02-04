@@ -31,6 +31,10 @@ void millis_setup(void) {
     TMR0_StartTimer();
 }
 
+void millis_stop(void) {
+    TMR0_StopTimer();
+}
+
 uint64_t millis(void) {
     INTERRUPT_GlobalInterruptDisable();
     uint64_t ret = uptime;

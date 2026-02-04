@@ -433,24 +433,38 @@ void sleep_main() {
     disp_set_number(0);
     can_sensor_sending_enable(false);
 
+    // low power mode config use doze 256 to run cpu at 1/256 speed
+    CPUDOZEbits.DOZE = 0b111;
+    // and run the millis ISR at full speed
+    CPUDOZEbits.ROI = 1;
+
     // enter low power mode that:
     // - still checks power button
-    // - periodically powers up for a split section to check for current
+    // - periodically powers up for a split second to check for current
 
     uint64_t loop_count = 0;
     while (1) {
-        // sleep stall here for 1 second
-        delay(1000);
+        CPUDOZEbits.DOZEN = 1;
+        for(uint8_t i = 0; i < 100; i++) {
+            // check for exiting sleep - skip the timer
+            if (MasterSwitch_GetValue()) {
+                i = 100;
+            }
+            
+            delay(10);
+        }
+        CPUDOZEbits.DOZEN = 0;   
 
-        // exiting sleep
+        // actually exit sleep
         if (MasterSwitch_GetValue()) {
             break;
         }
 
-        // wake if there is current
+         // wake if there is current
         initialise_bq();
         bq_get_current(&current);
-        if(current > SLEEP_EXIT_CURRENT) {
+        log_dbg("sleep wakeup - checking for current: %f A", (float)current / CURRENT_MULTIPLIER);
+        if(abs(current) > SLEEP_EXIT_CURRENT) {
             break;
         }
         bq_shutdown();
@@ -575,11 +589,22 @@ void powered_on_main() {
                          Main application
  */
 void bms_main(void) {
-    // Initialize the device
+    // Initialise the device
     SYSTEM_Initialize();
     bool button_pressed_on_start = MasterSwitch_GetValue();
     IOCBF3_SetInterruptHandler(&MasterSwitch_pressed_ISR);
 
+    // disable unused peripherals for power efficiency - change these if changing MCC configuration
+    PMD0bits.CRCMD = 1;
+    PMD1 = 0b11111110; // disable all timers but tmr0
+    PMD2 = 0b00000011; // disable TU16
+    PMD3 = 0b11100111; // disable all analogue stuff
+    PMD4 = 0b01111111; // disable all waveform generators
+    PMD5 = 0b11110111; // disable all pwm and capture compare
+    PMD6 = 0b10101111; // disable UARTs 1,3,5, spi and i2c
+    PMD7 = 0b11111111; // disable all clcs
+    PMD8 = 0b11111110; // disable all DMA but channel 1;
+    
     // setups
     millis_setup();
     INTERRUPT_GlobalInterruptEnable();
