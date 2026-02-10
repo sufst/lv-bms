@@ -15,3 +15,9 @@
     Returns an integer in the range 0 to `SOC_SCALE`
 */
 state_of_charge_t state_of_charge(voltage_t V, current_t I, temp_t T);
+
+/*
+    Translate the SOC such that 0% reported SOC is the cutoff SOC
+    Cutoff SOC is defined as SOC_CUTOFF
+*/
+state_of_charge_t reported_soc(state_of_charge_t measured_soc);

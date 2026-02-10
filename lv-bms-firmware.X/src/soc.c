@@ -1,6 +1,8 @@
 
 #include "soc.h"
 
+#define SOC_CUTOFF 1048 // soc at ~2.75V/cell; slightly higher than Vcutoff (2.7V)
+
 // return SOC assuming a constant temperature
 state_of_charge_t soc_vi_const_temp(voltage_t V, current_t I) {
     uint16_t V_index;
@@ -89,4 +91,19 @@ state_of_charge_t soc_temperature_correct(state_of_charge_t soc_ref, temp_t T) {
 
 state_of_charge_t state_of_charge(voltage_t V, current_t I, temp_t T) {
     return soc_temperature_correct(soc_vi_const_temp(V, I), T);
+}
+
+state_of_charge_t reported_soc(state_of_charge_t measured_soc) {
+    // don't translate if no SOC offset
+    if (SOC_CUTOFF == 0)
+        return measured_soc;
+
+    // catch unclamped
+    if (measured_soc <= SOC_CUTOFF)
+        return 0;
+    if (measured_soc > SOC_SCALE)
+        return SOC_SCALE;
+    
+    // translate the measured soc so that 0% soc is when the pack will begin power saving ( @ SOC_CUTOFF)
+    return measured_soc - SOC_CUTOFF + (measured_soc - SOC_CUTOFF) / ((SOC_SCALE/SOC_CUTOFF) - 1);
 }
