@@ -528,8 +528,34 @@ void powered_on_main() {
         disp_set_soc(SOC);
         can_update();
         disp_update();
-
-        // charge / discharge timers
+        
+        // charge / discharge timers to tell if the pack is charging or discharging
+        if(current < 0) {
+            timer_cancel(&charge_start_timer);
+            // stop charging
+            if(charging) {
+                if(timer_get_done(&charge_end_timer)) {
+                    charging = false;
+                    disp_set_charging(false);
+                    can_set_status(CAN_DISCHARGING);
+                } else if(!timer_get_running(&charge_end_timer)) {
+                    timer_start(&charge_end_timer);
+                }
+            }
+        } else {
+            timer_cancel(&charge_end_timer);
+            // start charging
+            if(!charging) {
+                if(timer_get_done(&charge_start_timer)) {
+                    charging = true;
+                    disp_set_charging(true);
+                    can_set_status(CAN_CHARGING);
+                } else if(!timer_get_running(&charge_start_timer)) {
+                    timer_start(&charge_start_timer);
+                }
+            }
+        }
+        
         // // charge done detection; the cell current drops below the end current threshold for a set time
         // if (cells_current < CHARGING_END_CURRENT) {
         //     if(charge_end_timer_start_time == 0){
