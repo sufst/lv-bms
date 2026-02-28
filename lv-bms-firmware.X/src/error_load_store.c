@@ -9,7 +9,7 @@
 #include "mcc.h"
 #include "error_load_store.h"
 #include "logging.h"
-#include "bq_interface.h"
+#include "pack_interface.h"
 #include "memory.h"
 
 #define shutdown_reason_addr 0x00
@@ -115,14 +115,14 @@ uint16_t load_lockout_count(void) {
 
 void hard_fault_handler(lockout_reason_t lo_reason) {
     save_lockout_reason(lo_reason, 0, 0);
-    bq_shutdown();
+    pack_shutdown();
     RelayCtrl_SetLow();
     RESET();
 }
 
 void hard_fault_handler_2(lockout_reason_t lo_reason, uint8_t cell, int16_t value) {
     save_lockout_reason(lo_reason, cell, value);
-    bq_shutdown();
+    pack_shutdown();
     RelayCtrl_SetLow();
     RESET();
 }

@@ -59,7 +59,7 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #include "error_load_store.h"
 #include "indicator_lights.h"
 #include "logging.h"
-#include "bq_interface.h"
+#include "pack_interface.h"
 #include "can_interface.h"
 
 
@@ -231,15 +231,15 @@ uint64_t power_button_press_duration(uint64_t max_duration) {
 }
 
 
-void initialise_bq() {
-    bq_hw_reset(); // TODO: double check the consequences of this - this seems to be needed for the communication to start back up correctly.
-    bq_wake();
+void initialise_pack() {
+    pack_hw_reset(); // TODO: double check the consequences of this - this seems to be needed for the communication to start back up correctly.
+    pack_wake();
     delay(10);
-    if (bq_check_connection() == false) {
+    if (pack_check_connection() == false) {
         log_err("failed to communicate with BQ79616 BMS chip, locking out and going to sleep");
         hard_fault_handler(LOCKOUT_REASON_COMM_FAULT);
     }
-    bq_setup();
+    pack_setup();
 }
 
 
@@ -302,7 +302,7 @@ bool check_critical_warnings() {
 void enter_shutdown(shutdown_reason_t reason, uint8_t cell, int16_t fault_value) {
     log_info("Entering Shutdown, reason: %d", reason);
     save_shutdown_reason(reason, cell, fault_value);
-    bq_shutdown();
+    pack_shutdown();
     can_sensor_sending_enable(false);
     disp_set_number(0);
     RelayCtrl_SetLow();
@@ -389,14 +389,14 @@ void start_charging() {
     charging = true;
     disp_set_charging(true);
     can_set_status(CAN_CHARGING);
-    bq_start_balancing(voltages);
+    pack_start_balancing(voltages);
 }
 
 void stop_charging() {
     charging = false;
     disp_set_charging(false);
     can_set_status(CAN_DISCHARGING);
-    bq_stop_balancing(voltages);
+    pack_stop_balancing(voltages);
 }
 
 //======================================================================================================================
@@ -414,14 +414,14 @@ void locked_out_main() {
     can_set_lockdout(lo_reason, lo_cell, lo_value);
     can_sensor_sending_enable(true);
 
-    initialise_bq();
+    initialise_pack();
 
     while (1) {
         // measure
-        if(bq_check_connection() && bq_check_measuring()) {
-            bq_get_voltages(voltages);
-            bq_get_temperatures(temps);
-            bq_get_current(&current);
+        if(pack_check_connection() && pack_check_measuring()) {
+            pack_get_voltages(voltages);
+            pack_get_temperatures(temps);
+            pack_get_current(&current);
         }
         
         // act
@@ -469,13 +469,13 @@ void sleep_main() {
         }
 
          // wake if there is current
-        initialise_bq();
-        bq_get_current(&current);
+        initialise_pack();
+        pack_get_current(&current);
         log_dbg("sleep wakeup - checking for current: %f A", (float)current / CURRENT_MULTIPLIER);
         if(abs(current) > SLEEP_EXIT_CURRENT) {
             break;
         }
-        bq_shutdown();
+        pack_shutdown();
 
         log_info("sleeping");
         loop_count++;
@@ -491,7 +491,7 @@ void powered_on_main() {
     log_info("powering on");
 
     // power up and check connection to BQ79616
-    initialise_bq();
+    initialise_pack();
 
     disp_set_charging(false);
     disp_set_soc(70);
@@ -506,24 +506,24 @@ void powered_on_main() {
         //---------------------------------------------------- MEASURE -------------------------------------------------
         // check connection
         if (loop_counter % 100 == 0) {
-            if (bq_check_connection() == false) {
+            if (pack_check_connection() == false) {
                 log_err("failed to communicate with BQ79616 BMS chip, resetting and retrying");
-                initialise_bq();
+                initialise_pack();
             }
 
-            if (bq_check_measuring() == false) {
+            if (pack_check_measuring() == false) {
                 log_err("a measurement system on the BQ79616 has failed, resetting and retrying");
-                initialise_bq();
-                if (bq_check_measuring() == false) {
+                initialise_pack();
+                if (pack_check_measuring() == false) {
                     log_err("a measurement system on the BQ79616 is still broken after reset, locking out and going to sleep");
                     hard_fault_handler(LOCKOUT_MEASURE_FAULT);
                 }
             }
         }
 
-        bq_get_voltages(voltages);
-        bq_get_temperatures(temps);
-        bq_get_current(&current);
+        pack_get_voltages(voltages);
+        pack_get_temperatures(temps);
+        pack_get_current(&current);
 
         log_dbg("voltages: %d, %d, %d", voltages[0], voltages[1], voltages[2]);
         log_dbg("temps: %d, %d, %d", temps[0], temps[1], temps[2]);
@@ -540,7 +540,7 @@ void powered_on_main() {
         can_update();
         disp_update();
         if(charging) {
-            bq_balancing_update(voltages);
+            pack_balancing_update(voltages);
         }
         
         // charge / discharge timers to tell if the pack is charging or discharging
@@ -615,7 +615,7 @@ void powered_on_main() {
 
     can_set_status(CAN_POWERED_DOWN);
     can_sensor_sending_enable(false);
-    bq_shutdown(); // disable bq to minimise power in sleep mode
+    pack_shutdown(); // disable bq to minimise power in sleep mode
 }
 
 /*
@@ -638,7 +638,7 @@ void bms_main(void) {
     
     // setups
     millis_setup();
-    IOCAF5_SetInterruptHandler(&bq_nfault_handler); // 
+    IOCAF5_SetInterruptHandler(&pack_nfault_handler); // 
     INTERRUPT_GlobalInterruptEnable();
     disp_init();
     can_init();

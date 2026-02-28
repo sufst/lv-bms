@@ -33,7 +33,7 @@
         <itemPath>inc/bq796xx_fault_types.h</itemPath>
         <itemPath>inc/bq796xx_enums.h</itemPath>
         <itemPath>inc/logging.h</itemPath>
-        <itemPath>inc/bq_interface.h</itemPath>
+        <itemPath>inc/pack_interface.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -75,8 +75,8 @@
         <itemPath>src/bq796xx.c</itemPath>
         <itemPath>src/bms_main.c</itemPath>
         <itemPath>src/logging.c</itemPath>
-        <itemPath>src/bq_interface.c</itemPath>
         <itemPath>src/batt_checks.c</itemPath>
+        <itemPath>src/pack_interface.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>

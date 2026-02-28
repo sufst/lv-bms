@@ -1,5 +1,5 @@
 /* 
- * File:   bq_interface.c
+ * File:   pack_interface.c
  * Author: alexl
  * 
  * functions to interface and work with the BQ79616 in the conext of the lv-Battery
@@ -7,7 +7,7 @@
  * Created on 06 June 2025, 14:28
  */
 
-#include "bq_interface.h"
+#include "pack_interface.h"
 #include "millis.h"
 #include "logging.h"
 #include "batt_properties.h"
@@ -17,7 +17,7 @@ bool balancing = false;
 
 fault_summary_t fs; // has to be global for some reason breaks inside nfault handler
 
-void bq_nfault_handler(void) {
+void pack_nfault_handler(void) {
     // avoid handling the interrupt if it's not ready to yet eg masks not configured correctly
     if (!nfault_handler_enabled) return;
 
@@ -83,21 +83,21 @@ uint16_t get_voltage_ratio_from_temp(temp_t temp) {
     return therm_lut[temp];
 }
 
-void bq_wake() {
+void pack_wake() {
     Wake796XX();
 }
 
-void bq_shutdown() {
+void pack_shutdown() {
     nfault_handler_enabled = false; // clear interrupt handler as masks are incorrect
     SD796XX();
 }
 
-void bq_hw_reset() {
+void pack_hw_reset() {
     nfault_handler_enabled = false; // clear interrupt handler as masks are incorrect
     HWRST796XX();
 }
 
-bool bq_check_connection() {
+bool pack_check_connection() {
     int tries_left = BQ_COMM_TEST_TRIES;
     while (tries_left) {
         if(get_reg_value(1, PARTID) == 0x21) {
@@ -109,7 +109,7 @@ bool bq_check_connection() {
     return tries_left > 0;
 }
 
-bool bq_check_measuring() {
+bool pack_check_measuring() {
     bool running = true;
     running &= get_main_ADC_running(1);
     running &= get_aux_ADC_running(1);
@@ -118,7 +118,7 @@ bool bq_check_measuring() {
     return running;
 }
 
-bool bq_setup() {
+bool pack_setup() {
     nfault_handler_enabled = false;
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_long_comm_timeout(1, TIMEOUT_2S, LONG_T_O_SHUTDOWN);
@@ -128,7 +128,7 @@ bool bq_setup() {
     set_fault_msk(1, MSK_OTP_CRC | MSK_OTP_DATA);
     nfault_handler_enabled = true;
     // the ISR needs retriggering - there may be error states that haven't been handled
-    bq_nfault_handler();
+    pack_nfault_handler();
 
     // enable filtering
     enable_LPF_cells(1, BQ_VOLTAGE_LPF_FREQ);
@@ -148,7 +148,7 @@ bool bq_setup() {
 }
 
 // gathers the 3 voltages
-void bq_get_voltages(voltage_t* voltages) {
+void pack_get_voltages(voltage_t* voltages) {
     for(uint8_t cell = 1; cell <= CELL_COUNT; cell++) {
         int16_t voltage = get_cell_voltage(1, cell);
         voltage = (voltage >= 0) ? voltage : 0; // it can do -ve voltages, but seeing as the voltage_t type can't handle that, limiting  it to 0 makes the most sense
@@ -157,7 +157,7 @@ void bq_get_voltages(voltage_t* voltages) {
 }
 
 // gathers the 3 temps
-void bq_get_temperatures(temp_t* temps) {
+void pack_get_temperatures(temp_t* temps) {
     int16_t tsref = get_tsref_voltage(1);
     
     for(uint8_t therm = 1; therm <= THERM_COUNT; therm++) {       
@@ -168,14 +168,14 @@ void bq_get_temperatures(temp_t* temps) {
 }
 
 // gathers the current
-void bq_get_current(current_t* current) {
+void pack_get_current(current_t* current) {
     int16_t shunt_voltage = (int16_t)((get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_CAL_RATIO); // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
     *current = (int16_t)(CURRENT_MULTIPLIER * (shunt_voltage * V_LSB_BB) / BB_CURRENT_SENSE_R);
 
 }
 
 // balancing
-void bq_start_balancing(voltage_t* voltages) {
+void pack_start_balancing(voltage_t* voltages) {
     return;
     balancing = true;
 
@@ -186,15 +186,15 @@ void bq_start_balancing(voltage_t* voltages) {
     // enable auto balancing (switching between odd and even cells)
     enable_auto_balancing(1, BAL_DUTY_30S);
     // setup and start balancing with the update function
-    bq_balancing_update(voltages);
+    pack_balancing_update(voltages);
 }
 
-void bq_stop_balancing(voltage_t* voltages) {
+void pack_stop_balancing(voltage_t* voltages) {
     balancing = false;
     balancing_stop(1);
 }
 
-void bq_balancing_update(voltage_t* voltages) {
+void pack_balancing_update(voltage_t* voltages) {
     if(!balancing) return;
 
     // check voltages

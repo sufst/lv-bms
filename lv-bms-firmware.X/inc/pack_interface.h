@@ -1,5 +1,5 @@
 /* 
- * File:   bq_interface.h
+ * File:   pack_interface.h
  * Author: alexl
  * 
  * Defines the functions to interface and work with the BQ79616 in the context of the lv-Battery
@@ -23,28 +23,28 @@
 #define CURRENT_OFFSET -41 // in stepssteps; * V_LSB_BB is volts
 #define CURRENT_CAL_RATIO  0.85 // ratio multiplied to make it correct
 
-void bq_nfault_handler();
-void bq_wake();
-void bq_shutdown();
-void bq_hw_reset();
+void pack_nfault_handler();
+void pack_wake();
+void pack_shutdown();
+void pack_hw_reset();
 
-bool bq_check_connection();
-bool bq_check_measuring();
-bool bq_setup();
+bool pack_check_connection();
+bool pack_check_measuring();
+bool pack_setup();
 
 // gathers the 3 voltages
-void bq_get_voltages(voltage_t* voltages);
+void pack_get_voltages(voltage_t* voltages);
 
 // gathers the 3 temps
-void bq_get_temperatures(temp_t* temps);
+void pack_get_temperatures(temp_t* temps);
 
 // gathers the current
-void bq_get_current(current_t* current);
+void pack_get_current(current_t* current);
 
 // balancing
-void bq_start_balancing(voltage_t* voltages);
-void bq_stop_balancing(voltage_t* voltages);
-void bq_balancing_update(voltage_t* voltages);
+void pack_start_balancing(voltage_t* voltages);
+void pack_stop_balancing(voltage_t* voltages);
+void pack_balancing_update(voltage_t* voltages);
 
 #endif	/* BQ_INTERFACE_H */
 
