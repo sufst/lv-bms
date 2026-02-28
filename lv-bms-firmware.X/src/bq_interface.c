@@ -10,8 +10,10 @@
 #include "bq_interface.h"
 #include "millis.h"
 #include "logging.h"
+#include "batt_properties.h"
 
 bool nfault_handler_enabled = false;
+bool balancing = false;
 
 fault_summary_t fs; // has to be global for some reason breaks inside nfault handler
 
@@ -77,6 +79,10 @@ temp_t get_temp_from_voltage_ratio(uint16_t voltage_ratio) {
     return upper;
 }
 
+uint16_t get_voltage_ratio_from_temp(temp_t temp) {
+    return therm_lut[temp];
+}
+
 void bq_wake() {
     Wake796XX();
 }
@@ -116,7 +122,7 @@ bool bq_setup() {
     nfault_handler_enabled = false;
     set_config(1, DEV_CONF_NO_ADJACENT_BALANCING | DEV_CONF_MULTIDROP_EN | DEV_CONF_NFAULT_EN);
     set_long_comm_timeout(1, TIMEOUT_2S, LONG_T_O_SHUTDOWN);
-    set_active_cells(1, 3);
+    set_active_cells(1, CELL_COUNT);
 
     // setup nfault interrupt 
     set_fault_msk(1, MSK_OTP_CRC | MSK_OTP_DATA);
@@ -124,12 +130,16 @@ bool bq_setup() {
     // the ISR needs retriggering - there may be error states that haven't been handled
     bq_nfault_handler();
 
+    // enable filtering
     enable_LPF_cells(1, BQ_VOLTAGE_LPF_FREQ);
     enable_LPF_BB(1, BQ_CURRENT_LPF_FREQ);
-    for(uint8_t gpio = 1; gpio <= 3; gpio++) {
+    // enable thermistors
+    for(uint8_t gpio = 1; gpio <= THERM_COUNT; gpio++) {
         set_gpio_conf(1, gpio, GPIO_CONF_ADC_OTUT_INPUT);
     }
     enable_tsref(1);
+
+    // start measurements
     delay(1);
     main_ADC_start(1);
     aux_ADC_start(1);
@@ -139,7 +149,7 @@ bool bq_setup() {
 
 // gathers the 3 voltages
 void bq_get_voltages(voltage_t* voltages) {
-    for(uint8_t cell = 1; cell <= 3; cell++) {
+    for(uint8_t cell = 1; cell <= CELL_COUNT; cell++) {
         int16_t voltage = get_cell_voltage(1, cell);
         voltage = (voltage >= 0) ? voltage : 0; // it can do -ve voltages, but seeing as the voltage_t type can't handle that, limiting  it to 0 makes the most sense
         voltages[cell-1] = (voltage_t)(voltage * V_LSB_ADC * VOLTAGE_MULTIPLIER);
@@ -150,7 +160,7 @@ void bq_get_voltages(voltage_t* voltages) {
 void bq_get_temperatures(temp_t* temps) {
     int16_t tsref = get_tsref_voltage(1);
     
-    for(uint8_t therm = 1; therm <= 3; therm++) {       
+    for(uint8_t therm = 1; therm <= THERM_COUNT; therm++) {       
         int16_t v = get_gpio_voltage(1, therm);
         uint16_t voltage_ratio = (uint16_t)((v * V_LSB_GPIO * UINT16_MAX) / (tsref * V_LSB_TSREF));
         temps[therm-1] = get_temp_from_voltage_ratio(voltage_ratio);
@@ -162,4 +172,38 @@ void bq_get_current(current_t* current) {
     int16_t shunt_voltage = (int16_t)((get_BB_voltage(1) + CURRENT_OFFSET) * CURRENT_CAL_RATIO); // doesn't seem to quite work as expected in the datasheet, so linearly transform to adjust
     *current = (int16_t)(CURRENT_MULTIPLIER * (shunt_voltage * V_LSB_BB) / BB_CURRENT_SENSE_R);
 
+}
+
+// balancing
+void bq_start_balancing(voltage_t* voltages) {
+    return;
+    balancing = true;
+
+    // enable balancing temperature protection
+    const uint8_t balance_OT_thr_percent = get_voltage_ratio_from_temp(BALANCE_PAUSE_OT) 
+    const uint8_t balance_cooloff_thr_percent 
+    enable_OTCB(1, )
+    // enable auto balancing (switching between odd and even cells)
+    enable_auto_balancing(1, BAL_DUTY_30S);
+    // setup and start balancing with the update function
+    bq_balancing_update(voltages);
+}
+
+void bq_stop_balancing(voltage_t* voltages) {
+    balancing = false;
+    balancing_stop(1);
+}
+
+void bq_balancing_update(voltage_t* voltages) {
+    if(!balancing) return;
+
+    // check voltages
+    // start the balancing on any cells too far above the minimum
+
+    voltage_t min_cell_voltage = V(5);
+    for(uint8_t cell_i=0; cell_i < CELL_COUNT; cell_i++) {
+        min_cell_voltage = min(min_cell_voltage, voltages[cell_i]);
+    }
+
+    balancing_start(1);
 }

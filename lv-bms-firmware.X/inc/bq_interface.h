@@ -41,5 +41,10 @@ void bq_get_temperatures(temp_t* temps);
 // gathers the current
 void bq_get_current(current_t* current);
 
+// balancing
+void bq_start_balancing(voltage_t* voltages);
+void bq_stop_balancing(voltage_t* voltages);
+void bq_balancing_update(voltage_t* voltages);
+
 #endif	/* BQ_INTERFACE_H */
 

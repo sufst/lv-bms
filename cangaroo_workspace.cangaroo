@@ -1,6 +1,6 @@
 <cangaroo-workspace>
  <tabs>
-  <tab mode="aggregated" title="Trace" type="TraceWindow" TimestampMode="2">
+  <tab title="Trace" mode="aggregated" TimestampMode="2" type="TraceWindow">
    <LinearTraceView AutoScroll="0"/>
    <AggregatedTraceView SortColumn="-1"/>
   </tab>
@@ -8,10 +8,10 @@
  <setup>
   <network name="Network 1">
    <interfaces>
-    <interface triple-sampling="0" sample-point-fd="875" listen-only="0" configure="1" type="can" auto-restart="0" driver="CandleAPI" sample-point="875" one-shot="0" auto-restart-time="100" bitrate-fd="4000000" bitrate="500000" can-fd="0" name="candle0"/>
+    <interface listen-only="0" driver="CandleAPI" sample-point="875" auto-restart-time="100" auto-restart="0" bitrate-fd="4000000" triple-sampling="0" bitrate="500000" configure="1" sample-point-fd="875" one-shot="0" name="candle0" type="can" can-fd="0"/>
    </interfaces>
    <databases>
-    <database type="dbc" filename="C:/Users/alexl/Documents/Sufst/lv-bms/LV_BMS.dbc"/>
+    <database filename="C:/Users/alexl/Documents/Sufst/lv-bms/LV_BMS.dbc" type="dbc"/>
    </databases>
   </network>
  </setup>

@@ -32,6 +32,7 @@
 #define	UNITS_H
 
 #include <xc.h> // include processor files - each processor file is guarded.  
+#include "inttypes.h"
 
 #define VOLTAGE_MULTIPLIER (uint16_t)1024
 #define CURRENT_MULTIPLIER (uint16_t)512
@@ -45,11 +46,20 @@ typedef uint16_t voltage_t;
 typedef int16_t current_t; 
 typedef int8_t temp_t;
 
+#define VOLTAGE_MAX UINT16_MAX
+#define CURRENT_MAX INT16_MAX
+#define CURRENT_MIN INT16_MIN
+#define TEMP_MAX INT8_MAX
+
 typedef union v {
         voltage_t v_value;
         current_t c_value;
         temp_t    t_value;
     } unit_value_u;
+
+#ifndef min
+#define min(a,b) ((a<b) ?a:b)
+#endif
 
 #endif	/* UNITS_H */
 

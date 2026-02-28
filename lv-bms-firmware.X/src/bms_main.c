@@ -70,15 +70,10 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #define LOG_CRITICAL_WARNINGS 0
 #define LOG_SHUTDOWN 1
 
-#ifndef min
-#define min(a,b) ((a<b) ?a:b)
-#endif
-
-
 typedef enum { NONE, CUTOFF, LOCKOUT } cell_issue_level_t;
 
 voltage_t voltages[CELL_COUNT];
-temp_t temps[CELL_COUNT];
+temp_t temps[THERM_COUNT];
 current_t current;
 int8_t SOC = 50;
 
@@ -253,7 +248,7 @@ bool check_critical_warnings() {
 
     static timer_t  crit_OC_timer,
         crit_OV_timers[CELL_COUNT], crit_UV_timers[CELL_COUNT],
-        crit_OT_timers[CELL_COUNT], crit_UT_timers[CELL_COUNT];
+        crit_OT_timers[THERM_COUNT], crit_UT_timers[THERM_COUNT];
 
     // initialise and start timer if it's not already
     if (!crit_msgs_timer.configured) {
@@ -286,14 +281,14 @@ bool check_critical_warnings() {
         }
         // check OT
         temp_condition_t ot_cond = charging ? CRITICAL_CHARGING_OVER_TEMP : CRITICAL_DISCHARGING_OVER_TEMP;
-        if ((crit_cell = check_condition_temp_per_cell(ot_cond, temps, crit_OT_timers, CELL_COUNT))) {
+        if ((crit_cell = check_condition_temp_per_cell(ot_cond, temps, crit_OT_timers, THERM_COUNT))) {
             if (LOG_CRITICAL_WARNINGS) log_warn("Critical Over Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell - 1] / TEMP_MULTIPLIER);
             warnings = true;
             can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell - 1]);
         }
         // check UT
         temp_condition_t ut_cond = charging ? CRITICAL_CHARGING_UNDER_TEMP : CRITICAL_DISCHARGING_UNDER_TEMP;
-        if ((crit_cell = check_condition_temp_per_cell(ut_cond, temps, crit_UT_timers, CELL_COUNT))) {
+        if ((crit_cell = check_condition_temp_per_cell(ut_cond, temps, crit_UT_timers, THERM_COUNT))) {
             if (LOG_CRITICAL_WARNINGS) log_warn("Critical Under Temp: cell %d, %f'C", crit_cell, (float)temps[crit_cell - 1] / TEMP_MULTIPLIER);
             warnings = true;
             can_send_critical_warning(CAN_CRITICAL_TEMP, crit_cell, temps[crit_cell - 1]);
@@ -322,7 +317,7 @@ void enter_shutdown(shutdown_reason_t reason, uint8_t cell, int16_t fault_value)
 void check_shutdown_conditions() {
     static timer_t  sd_OC_timer,
         sd_OV_timers[CELL_COUNT], sd_UV_timers[CELL_COUNT],
-        sd_OT_timers[CELL_COUNT], sd_UT_timers[CELL_COUNT];
+        sd_OT_timers[THERM_COUNT], sd_UT_timers[THERM_COUNT];
 
     log_dbg("Testing for shutdown conditions");
     uint8_t sd_cell = 0;
@@ -343,13 +338,13 @@ void check_shutdown_conditions() {
     }
     // check OT
     temp_condition_t ot_cond = charging ? SHUTDOWN_CHARGING_OVER_TEMP : SHUTDOWN_DISCHARGING_OVER_TEMP;
-    if ((sd_cell = check_condition_temp_per_cell(ot_cond, temps, sd_OT_timers, CELL_COUNT))) {
+    if ((sd_cell = check_condition_temp_per_cell(ot_cond, temps, sd_OT_timers, THERM_COUNT))) {
         if (LOG_SHUTDOWN) log_err("Shutdown Over Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell - 1] / TEMP_MULTIPLIER);
         enter_shutdown(SHUTDOWN_REASON_OVER_TEMP, sd_cell, temps[sd_cell - 1]);
     }
     // check UT
     temp_condition_t ut_cond = charging ? SHUTDOWN_CHARGING_UNDER_TEMP : SHUTDOWN_DISCHARGING_UNDER_TEMP;
-    if ((sd_cell = check_condition_temp_per_cell(ut_cond, temps, sd_UT_timers, CELL_COUNT))) {
+    if ((sd_cell = check_condition_temp_per_cell(ut_cond, temps, sd_UT_timers, THERM_COUNT))) {
         if (LOG_SHUTDOWN) log_err("Shutdown Under Temp: cell %d, %f'C", sd_cell, (float)temps[sd_cell - 1] / TEMP_MULTIPLIER);
         enter_shutdown(SHUTDOWN_REASON_UNDER_TEMP, sd_cell, temps[sd_cell - 1]);
     }
@@ -365,27 +360,43 @@ void check_lockouts() {
         if (voltages[cell_i] < LOCKOUT_UNDER_VOLTAGE) {
             hard_fault_handler_2(LOCKOUT_REASON_UNDERVOLT, cell_i + 1, (int16_t)voltages[cell_i]);
         }
+    }
+    for (uint8_t therm_i = 0; therm_i < THERM_COUNT; therm_i++) {
         if (charging) {
             // check OT
-            if (temps[cell_i] > LOCKOUT_CHARGING_OVER_TEMP) {
-                hard_fault_handler_2(LOCKOUT_REASON_OVERTEMP, cell_i + 1, temps[cell_i]);
+            if (temps[therm_i] > LOCKOUT_CHARGING_OVER_TEMP) {
+                hard_fault_handler_2(LOCKOUT_REASON_OVERTEMP, therm_i + 1, temps[therm_i]);
             }
             // check UT
-            if (temps[cell_i] < LOCKOUT_CHARGING_UNDER_TEMP) {
-                hard_fault_handler_2(LOCKOUT_REASON_UNDERTEMP, cell_i + 1, temps[cell_i]);
+            if (temps[therm_i] < LOCKOUT_CHARGING_UNDER_TEMP) {
+                hard_fault_handler_2(LOCKOUT_REASON_UNDERTEMP, therm_i + 1, temps[therm_i]);
             }
         }
         else {
             // check OT
-            if (temps[cell_i] > LOCKOUT_DISCHARGING_OVER_TEMP) {
-                hard_fault_handler_2(LOCKOUT_REASON_OVERTEMP, cell_i + 1, temps[cell_i]);
+            if (temps[therm_i] > LOCKOUT_DISCHARGING_OVER_TEMP) {
+                hard_fault_handler_2(LOCKOUT_REASON_OVERTEMP, therm_i + 1, temps[therm_i]);
             }
             // check UT
-            if (temps[cell_i] < LOCKOUT_DISCHARGING_UNDER_TEMP) {
-                hard_fault_handler_2(LOCKOUT_REASON_UNDERTEMP, cell_i + 1, temps[cell_i]);
+            if (temps[therm_i] < LOCKOUT_DISCHARGING_UNDER_TEMP) {
+                hard_fault_handler_2(LOCKOUT_REASON_UNDERTEMP, therm_i + 1, temps[therm_i]);
             }
         }
     }
+}
+
+void start_charging() {
+    charging = true;
+    disp_set_charging(true);
+    can_set_status(CAN_CHARGING);
+    bq_start_balancing(voltages);
+}
+
+void stop_charging() {
+    charging = false;
+    disp_set_charging(false);
+    can_set_status(CAN_DISCHARGING);
+    bq_stop_balancing(voltages);
 }
 
 //======================================================================================================================
@@ -528,16 +539,17 @@ void powered_on_main() {
         disp_set_soc(SOC);
         can_update();
         disp_update();
+        if(charging) {
+            bq_balancing_update(voltages);
+        }
         
         // charge / discharge timers to tell if the pack is charging or discharging
-        if(current < 0) {
+        if(current < 0 && false) {
             timer_cancel(&charge_start_timer);
             // stop charging
             if(charging) {
                 if(timer_get_done(&charge_end_timer)) {
-                    charging = false;
-                    disp_set_charging(false);
-                    can_set_status(CAN_DISCHARGING);
+                   stop_charging(); 
                 } else if(!timer_get_running(&charge_end_timer)) {
                     timer_start(&charge_end_timer);
                 }
@@ -547,9 +559,7 @@ void powered_on_main() {
             // start charging
             if(!charging) {
                 if(timer_get_done(&charge_start_timer)) {
-                    charging = true;
-                    disp_set_charging(true);
-                    can_set_status(CAN_CHARGING);
+                    start_charging();
                 } else if(!timer_get_running(&charge_start_timer)) {
                     timer_start(&charge_start_timer);
                 }
