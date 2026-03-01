@@ -544,7 +544,7 @@ void powered_on_main() {
         }
         
         // charge / discharge timers to tell if the pack is charging or discharging
-        if(current < 0 && false) {
+        if(current < 0) {
             timer_cancel(&charge_start_timer);
             // stop charging
             if(charging) {

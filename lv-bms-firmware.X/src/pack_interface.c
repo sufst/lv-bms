@@ -13,7 +13,10 @@
 #include "batt_properties.h"
 
 bool nfault_handler_enabled = false;
-bool balancing = false;
+bool balancing_enabled = false;
+bool balancing_running = false;
+bool balancing_cells[CELL_COUNT] = {false}; 
+timer_t balancing_update_wait_timer; // allows the balancing currents to stop before determining which cells to balance next
 
 fault_summary_t fs; // has to be global for some reason breaks inside nfault handler
 
@@ -175,35 +178,80 @@ void pack_get_current(current_t* current) {
 }
 
 // balancing
-void pack_start_balancing(voltage_t* voltages) {
-    return;
-    balancing = true;
-
-    // enable balancing temperature protection
-    const uint8_t balance_OT_thr_percent = get_voltage_ratio_from_temp(BALANCE_PAUSE_OT) 
-    const uint8_t balance_cooloff_thr_percent 
-    enable_OTCB(1, )
-    // enable auto balancing (switching between odd and even cells)
-    enable_auto_balancing(1, BAL_DUTY_30S);
-    // setup and start balancing with the update function
-    pack_balancing_update(voltages);
-}
-
-void pack_stop_balancing(voltage_t* voltages) {
-    balancing = false;
-    balancing_stop(1);
-}
-
-void pack_balancing_update(voltage_t* voltages) {
-    if(!balancing) return;
-
-    // check voltages
-    // start the balancing on any cells too far above the minimum
-
+void update_balancing_timers(voltage_t* voltages) {
+    
+    // find minimum voltage of the pack
     voltage_t min_cell_voltage = V(5);
     for(uint8_t cell_i=0; cell_i < CELL_COUNT; cell_i++) {
         min_cell_voltage = min(min_cell_voltage, voltages[cell_i]);
     }
+    
+    // choose cells that need to be balanced
+    for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) {
+        if(voltages[cell_i] - min_cell_voltage > BALANCE_START_TH) {
+            balancing_cells[cell_i] = true;
+            balancing_running = true;
+        }
+        else if(voltages[cell_i] - min_cell_voltage < BALANCE_END_TH) {
+            balancing_cells[cell_i] = false;
+        }
+    }
+    
+    if(balancing_running) {
+        log_info("updating balancing");
+        balancing_running = false;
+        for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) { 
+            if (balancing_cells[cell_i]) {
+                set_balancing_timer(1, cell_i + 1, BAL_TIME_10S);
+                balancing_running = true;
+            } else {
+                set_balancing_timer(1, cell_i + 1, BAL_TIME_STOP);
+            }
+            log_info("  cell %d: %d", cell_i+1, balancing_cells[cell_i]);
+        }
+        
+        balancing_start(1);
+    }
+}
 
-    balancing_start(1);
+void pack_start_balancing(voltage_t* voltages) {
+    log_info("starting balancing");
+    timer_init_count_down(&balancing_update_wait_timer, BALANCE_UPDATE_WAIT_TIME);
+    balancing_enabled = true;
+    // enable auto balancing (switching between odd and even cells)
+    enable_auto_balancing(1, BAL_DUTY_10S);
+    // setup and start balancing with the update function
+    update_balancing_timers(voltages);
+}
+
+void pack_stop_balancing(voltage_t* voltages) {
+    log_info("stopping balancing");
+    balancing_enabled = false;
+    balancing_running = false;
+    for(uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) {
+        balancing_cells[cell_i] = false;
+    }
+    balancing_stop(1);
+}
+
+void pack_balancing_update(voltage_t* voltages) {
+    if(!balancing_enabled) return;
+
+    // always be looking to start balancing
+    if (!balancing_running) {
+        update_balancing_timers(voltages);
+        log_info("starting balancing immediately");
+    } else {
+        // if one round of balancing has just finished, wait for the balancing current to go before re-evalutating the cell voltages
+        if(get_balancing_done(1) && !timer_get_running(&balancing_update_wait_timer)) {
+            timer_start(&balancing_update_wait_timer);
+            log_info("balancing round finished, waiting");
+        }
+        
+        // the timer has finished, start another round of balancing
+        if(timer_get_done(&balancing_update_wait_timer)) {
+            update_balancing_timers(voltages);
+            timer_cancel(&balancing_update_wait_timer);
+        }
+    } 
 }

@@ -60,7 +60,7 @@ typedef struct {
 
 //                                                                          Possible values based on datasheet: https://cdn03.plentymarkets.com/i9a0e0hd8l6w/frontend/Datenblaeter/Molicell/INR21700P45B/p45b-datasheet.pdf
 // Critical values - cause a warning
-current_condition_t CRITICAL_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(2), .duration = 500 };
+current_condition_t CRITICAL_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(10), .duration = 500 };
 voltage_condition_t CRITICAL_OVER_VOLTAGE = { .bound = BOUND_UPPER, .value = V(4.2), .duration = 500 };
 voltage_condition_t CRITICAL_UNDER_VOLTAGE = { .bound = BOUND_LOWER, .value = V(2.9), .duration = 500 };
 temp_condition_t CRITICAL_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 50, .duration = 1000 };
@@ -69,7 +69,7 @@ temp_condition_t CRITICAL_DISCHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value
 temp_condition_t CRITICAL_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .value = -30, .duration = 1000 };
 
 // Shutdown values - cause battery to power off
-current_condition_t SHUTDOWN_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(2.5), .duration = 500 };
+current_condition_t SHUTDOWN_OVER_CURRENT = { .bound = BOUND_UPPER, .value = A(15), .duration = 500 };
 voltage_condition_t SHUTDOWN_OVER_VOLTAGE = { .bound = BOUND_UPPER, .value = V(4.25), .duration = 500 };
 voltage_condition_t SHUTDOWN_UNDER_VOLTAGE = { .bound = BOUND_LOWER, .value = V(2.7), .duration = 500 };
 temp_condition_t SHUTDOWN_CHARGING_OVER_TEMP = { .bound = BOUND_UPPER, .value = 55, .duration = 1000 };
@@ -93,10 +93,11 @@ temp_condition_t SHUTDOWN_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .valu
 #define RELAY_COIL_R 160 // ohms
 #define IDLE_CURRENT -A(0)
 
-#define BALANCE_START_TH V(0.2)
-#define BALANCE_END_TH V(0.05)
+#define BALANCE_START_TH V(0.05)
+#define BALANCE_END_TH V(0.01)
 #define BALANCE_PAUSE_OT 55
 #define BALANCE_PAUSE_OT_HYSTERESIS 5
+#define BALANCE_UPDATE_WAIT_TIME 1000 // ms
 
 #define CHARGING_END_CURRENT A(0.03)
 #define CHARGING_END_TIME_MS 300e3 // seconds
