@@ -41,8 +41,8 @@ const state_of_charge_t soc_vi[SOC_CURR_TRACE_COUNT][SOC_CURR_POINT_COUNT] = ${S
 const state_of_charge_t soc_vt[SOC_TEMP_TRACE_COUNT][SOC_TEMP_POINT_COUNT] = ${SOC_VT};
 
 // (unscaled) current values corresponding to soc lookup table index
-const uint16_t soc_current_key[SOC_CURR_TRACE_COUNT] = ${SOC_I_KEY};
+const int16_t soc_current_key[SOC_CURR_TRACE_COUNT] = ${SOC_I_KEY};
 // (unscaled) temperature values corresponding to soc lookup table index
-const uint16_t soc_temperature_key[SOC_TEMP_TRACE_COUNT] = ${SOC_T_KEY};
+const int16_t soc_temperature_key[SOC_TEMP_TRACE_COUNT] = ${SOC_T_KEY};
 
 #endif

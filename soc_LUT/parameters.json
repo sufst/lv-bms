@@ -10,7 +10,7 @@
     "point_count_temperature": 256,
 
     "reference_temperature_deg": 25,
-    "reference_current_amps": 20,
+    "reference_current_amps": -20,
 
     "make_pretty": true,
 

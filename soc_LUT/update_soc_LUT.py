@@ -133,7 +133,7 @@ for dependent in dependent_param :
             if dependent == "Current" :
                 trace_count_curr += 1
                 soc_vi.append([])
-                soc_curr_key.append(int(round(-csv_lines[dep_index][-1])))
+                soc_curr_key.append(int(round(csv_lines[dep_index][-1])))
             if dependent == "Temperature" :
                 trace_count_temp += 1
                 soc_vt.append([])
