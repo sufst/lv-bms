@@ -4,6 +4,7 @@
 
     "soc_scale": 32767,
     "soc_base_type": "uint16_t",
+    "double_soc_base_type": "uint32_t",
     
     "point_count_current": 256,
     "point_count_temperature": 256,

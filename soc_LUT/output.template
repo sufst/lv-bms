@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 typedef ${SOC_TYPE} state_of_charge_t;
+typedef ${DOUBLE_SOC_TYPE} double_state_of_charge_t;
 
 // (unscaled) voltage corresponding to index 0 of the dataset
 #define SOC_DSVMAX ${VMAX}
@@ -35,13 +36,13 @@ typedef ${SOC_TYPE} state_of_charge_t;
 #define SOC_SCALE ${SOC_SCALE}
 
 // represents (scaled) SOC as a function of voltage for a set of constant current sources
-state_of_charge_t soc_vi[SOC_CURR_TRACE_COUNT][SOC_CURR_POINT_COUNT] = ${SOC_VI};
+const state_of_charge_t soc_vi[SOC_CURR_TRACE_COUNT][SOC_CURR_POINT_COUNT] = ${SOC_VI};
 // represents (scaled) SOC as a function of voltage for a set of constant cell pack temperatures
-state_of_charge_t soc_vt[SOC_TEMP_TRACE_COUNT][SOC_TEMP_POINT_COUNT] = ${SOC_VT};
+const state_of_charge_t soc_vt[SOC_TEMP_TRACE_COUNT][SOC_TEMP_POINT_COUNT] = ${SOC_VT};
 
 // (unscaled) current values corresponding to soc lookup table index
-uint16_t soc_current_key[SOC_CURR_TRACE_COUNT] = ${SOC_I_KEY};
+const uint16_t soc_current_key[SOC_CURR_TRACE_COUNT] = ${SOC_I_KEY};
 // (unscaled) temperature values corresponding to soc lookup table index
-uint16_t soc_temperature_key[SOC_TEMP_TRACE_COUNT] = ${SOC_T_KEY};
+const uint16_t soc_temperature_key[SOC_TEMP_TRACE_COUNT] = ${SOC_T_KEY};
 
 #endif

@@ -188,11 +188,11 @@ void update_balancing_timers(voltage_t* voltages) {
     
     // choose cells that need to be balanced
     for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++) {
-        if(voltages[cell_i] - min_cell_voltage > BALANCE_START_TH) {
+        if(voltages[cell_i] - min_cell_voltage > BALANCE_START_DIFF) {
             balancing_cells[cell_i] = true;
             balancing_running = true;
         }
-        else if(voltages[cell_i] - min_cell_voltage < BALANCE_END_TH) {
+        else if(voltages[cell_i] - min_cell_voltage < BALANCE_END_DIFF) {
             balancing_cells[cell_i] = false;
         }
     }
@@ -240,7 +240,7 @@ void pack_balancing_update(voltage_t* voltages) {
     // always be looking to start balancing
     if (!balancing_running) {
         update_balancing_timers(voltages);
-        log_info("starting balancing immediately");
+        // log_info("starting balancing immediately");
     } else {
         // if one round of balancing has just finished, wait for the balancing current to go before re-evalutating the cell voltages
         if(get_balancing_done(1) && !timer_get_running(&balancing_update_wait_timer)) {

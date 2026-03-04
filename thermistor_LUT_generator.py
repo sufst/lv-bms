@@ -39,7 +39,7 @@ lut_file_text = f"""
 #include "units.h"
 
 // LUT converts temperatures to the voltage ratio between the thermistor and TSREF
-uint16_t therm_lut[] = {{
+const uint16_t therm_lut[] = {{
 """
 
 for temp, voltage_ratio in lut.items():

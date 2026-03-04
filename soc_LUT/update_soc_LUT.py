@@ -4,7 +4,7 @@ import typing
 
 from datetime import datetime
 
-format_version = "1.0.0"
+format_version = "1.0.1"
 
 # paths
 input_path = "sim_results"
@@ -16,13 +16,14 @@ settings_path = "parameters.json"
 # load parameters
 f_settings = open(settings_path, "r")
 parameters = json.load(f_settings)
-f_settings.close();
+f_settings.close()
 
 v_min = parameters["voltage_min"]
 v_max = parameters["voltage_max"]
 
 soc_scale = parameters["soc_scale"]
 soc_base_type = parameters["soc_base_type"]
+soc_double_base_type = parameters["double_soc_base_type"]
 
 point_count_curr = parameters["point_count_current"]
 point_count_temp = parameters["point_count_temperature"]
@@ -296,6 +297,7 @@ template_dict = {
 
     "SOC_SCALE" : str(int(soc_scale)),
     "SOC_TYPE" : str(soc_base_type),
+    "DOUBLE_SOC_TYPE" : str(soc_double_base_type),
 
     "SOC_VI" : soc_vi_str,
     "SOC_VT" : soc_vt_str,

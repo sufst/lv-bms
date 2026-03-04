@@ -10,8 +10,10 @@ state_of_charge_t soc_vi_const_temp(voltage_t V, current_t I) {
         V_index = SOC_CURR_POINT_COUNT - 1;
     else if (V >= SOC_VMAX)
         V_index = 0;
-    else
-        V_index = ((V-SOC_VMAX)*(SOC_CURR_POINT_COUNT-1))/(SOC_VMIN-SOC_VMAX);
+    else{
+        V_index = ((double_voltage_t)(SOC_VMAX-V) * (double_voltage_t)(SOC_CURR_POINT_COUNT-1)) / (SOC_VMAX-SOC_VMIN);
+    }
+        
     
     // get the nearest two current traces
     uint16_t I_index;
@@ -27,14 +29,14 @@ state_of_charge_t soc_vi_const_temp(voltage_t V, current_t I) {
 
     // interpolate
 
-    state_of_charge_t soc1, soc2;
+    double_state_of_charge_t soc1, soc2;
     current_t i1, i2;
     i1 = A(soc_current_key[I_index-1]); // upper trace
     i2 = A(soc_current_key[I_index]); // lower trace
     soc1 = soc_vi[I_index-1][V_index]; // soc for upper trace 
     soc2 = soc_vi[I_index][V_index]; // soc for lower trace
 
-    state_of_charge_t soc_interp = ( ((I-i2) * soc1) + ((i1-I) * soc2) ) / (i1 - i2);
+    state_of_charge_t soc_interp = ( ((I-i1) * soc1) + ((i2-I) * soc2) ) / (i2 - i1);
     return soc_interp;
 }
 
@@ -45,15 +47,11 @@ state_of_charge_t soc_temperature_correct(state_of_charge_t soc_ref, temp_t T) {
     // don't assume that the V(SOC) is monotonic
 
     uint16_t closest_i = 0;
-    uint16_t closest_difference = 65535; // (uint16_t)-1
+    uint16_t closest_difference = UINT16_MAX;
 
     for (uint16_t i = 1; i < SOC_TEMP_POINT_COUNT; i++) {
         state_of_charge_t new_value = soc_vt[SOC_TEMP_REF_INDEX][i];
-        uint16_t new_difference;
-        if (new_value < soc_ref)
-            new_difference = soc_ref - new_value;
-        else
-            new_difference = new_value - soc_ref;
+        uint16_t new_difference = abs(new_value - soc_ref);
         
         if (new_difference < closest_difference) {
             closest_difference = new_difference;
@@ -76,7 +74,7 @@ state_of_charge_t soc_temperature_correct(state_of_charge_t soc_ref, temp_t T) {
 
     // interpolate
 
-    state_of_charge_t soc1, soc2;
+    double_state_of_charge_t soc1, soc2;
     temp_t t1, t2;
 
     t1 = C(soc_temperature_key[T_index-1]); // upper trace
@@ -84,7 +82,7 @@ state_of_charge_t soc_temperature_correct(state_of_charge_t soc_ref, temp_t T) {
     soc1 = soc_vt[T_index-1][V_index]; // soc for upper trace 
     soc2 = soc_vt[T_index][V_index]; // soc for lower trace
 
-    state_of_charge_t soc_interp = ( ((T-t2) * soc1) + ((t1-T) * soc2) ) / (t1 - t2);
+    state_of_charge_t soc_interp = ( ((T-t1) * soc2) + ((t2-T) * soc1) ) / (t2 - t1);
 
     return soc_interp;
 }

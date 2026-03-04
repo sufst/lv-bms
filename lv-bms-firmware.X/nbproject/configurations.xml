@@ -34,6 +34,7 @@
         <itemPath>inc/bq796xx_enums.h</itemPath>
         <itemPath>inc/logging.h</itemPath>
         <itemPath>inc/pack_interface.h</itemPath>
+        <itemPath>inc/soc.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -66,8 +67,6 @@
       <logicalFolder name="Project Source"
                      displayName="Project Source"
                      projectFiles="true">
-        <logicalFolder name="f1" displayName="New Folder 1" projectFiles="true">
-        </logicalFolder>
         <itemPath>src/indicator_lights.c</itemPath>
         <itemPath>src/error_load_store.c</itemPath>
         <itemPath>src/millis.c</itemPath>
@@ -77,6 +76,7 @@
         <itemPath>src/logging.c</itemPath>
         <itemPath>src/batt_checks.c</itemPath>
         <itemPath>src/pack_interface.c</itemPath>
+        <itemPath>src/soc.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>

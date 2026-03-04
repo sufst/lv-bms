@@ -47,8 +47,9 @@ __        ___    ____  _   _ ___ _   _  ____ _
  \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _| |
   \ V  V / ___ \|  _ <| |\  || || |\  | |_| |_|
    \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____(_)
- * cell and thermistor indexes are 1 based - beware when indexing the voltages
- * and temps arrays
+ * cell and thermistor indexes are 1 based in the driver code for the BQ chip
+ * beware when indexing the voltages and temps arrays, which are still zero 
+ * based.
 ******************************************************************************/
 
 #include <xc.h>
@@ -61,7 +62,7 @@ __        ___    ____  _   _ ___ _   _  ____ _
 #include "logging.h"
 #include "pack_interface.h"
 #include "can_interface.h"
-
+#include "soc.h"
 
 #include "batt_properties.h" // properties for the battery
 
@@ -72,10 +73,15 @@ __        ___    ____  _   _ ___ _   _  ____ _
 
 typedef enum { NONE, CUTOFF, LOCKOUT } cell_issue_level_t;
 
+// raw values
 voltage_t voltages[CELL_COUNT];
 temp_t temps[THERM_COUNT];
 current_t current;
-int8_t SOC = 50;
+
+// pack summary numbers
+uint8_t soc = 50;
+voltage_t min_voltage, avg_voltage, max_voltage, total_voltage;
+temp_t min_temp, avg_temp, max_temp;
 
 bool charging = false;
 
@@ -399,6 +405,41 @@ void stop_charging() {
     pack_stop_balancing(voltages);
 }
 
+void update_soc() {
+        // TODO - testing - as we have 3sp1, it's usually 4x the current measured , but 8x seems to work better at 75% - requires more testing
+    state_of_charge_t raw_soc = state_of_charge(total_voltage, 8*abs(current), avg_temp);
+    state_of_charge_t real_soc = reported_soc(raw_soc);
+    soc = SOC_PERCENT(real_soc);
+
+    log_info("raw soc:%f", (float)raw_soc / SOC_SCALE);
+}
+
+void update_summary_numbers() {
+    total_voltage = 0;
+    min_voltage = VOLTAGE_MAX;
+    max_voltage = 0;    
+    for (uint8_t cell_i = 0; cell_i < CELL_COUNT; cell_i++)
+    {
+        total_voltage += voltages[cell_i];
+        min_voltage = min(min_voltage, voltages[cell_i]);
+        max_voltage = max(max_voltage, voltages[cell_i]);
+    }
+    avg_voltage = total_voltage / 3;
+    
+    int16_t temp_sum = 0; // temp_t is only 8 bit
+    min_temp = TEMP_MAX;
+    max_temp = TEMP_MIN;
+    for (uint8_t therm_i = 0; therm_i < THERM_COUNT; therm_i++) {
+        temp_sum += (int16_t)temps[therm_i];
+        min_temp = min(min_temp, temps[therm_i]);
+        max_temp = max(max_temp, temps[therm_i]);
+    }
+    avg_temp = (temp_t)(temp_sum / 3);
+
+    update_soc();
+}
+
+
 //======================================================================================================================
 // ---------------------------------------------- Main functions -------------------------------------------------------
 //======================================================================================================================
@@ -422,6 +463,7 @@ void locked_out_main() {
             pack_get_voltages(voltages);
             pack_get_temperatures(temps);
             pack_get_current(&current);
+            update_summary_numbers();
         }
         
         // act
@@ -535,10 +577,13 @@ void powered_on_main() {
         current_t cells_current = current - relay_current - IDLE_CURRENT;
         log_dbg("relay current: %fA, cell current: %fA", (float)relay_current / CURRENT_MULTIPLIER, (float)cells_current / CURRENT_MULTIPLIER);
 
+        update_summary_numbers();
+
         //---------------------------------------------------- ACT -----------------------------------------------------
-        disp_set_soc(SOC);
+        disp_set_soc(soc);
         can_update();
         disp_update();
+
         if(charging) {
             pack_balancing_update(voltages);
         }
@@ -652,7 +697,7 @@ void bms_main(void) {
     can_register_voltages(voltages);
     can_register_temps(temps);
     can_register_current(&current);
-    can_register_SOC(&SOC);
+    can_register_SOC(&soc);
     can_set_shutdown_count(load_shutdown_count());
     can_set_lockout_count(load_lockout_count());
     can_set_charge_cycles(load_charge_cycles());

@@ -19,7 +19,7 @@
 void millis_hook(uint64_t uptime) {
 }
 
-uint8_t SOC;
+uint8_t soc;
 voltage_t voltages[3] ;
 temp_t temps[3] ;
 current_t current ;

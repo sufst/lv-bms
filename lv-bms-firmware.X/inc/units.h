@@ -35,7 +35,7 @@
 #include "inttypes.h"
 
 #define VOLTAGE_MULTIPLIER (uint16_t)1024
-#define CURRENT_MULTIPLIER (uint16_t)512
+#define CURRENT_MULTIPLIER (int16_t)512
 #define TEMP_MULTIPLIER 1
 
 #define V(volt) (voltage_t)(volt * VOLTAGE_MULTIPLIER)
@@ -46,10 +46,16 @@ typedef uint16_t voltage_t;
 typedef int16_t current_t; 
 typedef int8_t temp_t;
 
-#define VOLTAGE_MAX UINT16_MAX
-#define CURRENT_MAX INT16_MAX
-#define CURRENT_MIN INT16_MIN
-#define TEMP_MAX INT8_MAX
+// used to avoid overflows
+typedef uint32_t double_voltage_t;
+typedef int32_t double_current_t;
+typedef int16_t double_temp_t;
+
+#define VOLTAGE_MAX UINT16_MAX // ~65V
+#define CURRENT_MAX INT16_MAX  // ~+64A
+#define CURRENT_MIN INT16_MIN  // ~-64A
+#define TEMP_MAX INT8_MAX       // 127C
+#define TEMP_MIN INT8_MIN       // -128C
 
 typedef union v {
         voltage_t v_value;
@@ -59,6 +65,10 @@ typedef union v {
 
 #ifndef min
 #define min(a,b) ((a<b) ?a:b)
+#endif
+
+#ifndef max
+#define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 #endif	/* UNITS_H */

@@ -37,7 +37,6 @@
 #define CELL_COUNT 3
 #define THERM_COUNT CELL_COUNT // current pack has as many therms as cells
 
-typedef enum  { UNIT_VOLTAGE, UNIT_CURRENT, UNIT_TEMP } unit_e;
 typedef enum  { BOUND_UPPER, BOUND_LOWER } bound_e;
 typedef struct {
   bound_e bound;
@@ -85,7 +84,6 @@ temp_condition_t SHUTDOWN_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .valu
 #define LOCKOUT_DISCHARGING_OVER_TEMP           80
 #define LOCKOUT_DISCHARGING_UNDER_TEMP          -40
 
-// const condition_t LOCKOUT_OVER_VOLTAGE = {.unit = UNIT_VOLTAGE, .bound = BOUND_UPPER, .v.v}
 #define SLEEP_CURRENT_THRESH A(0.2)
 #define SLEEP_EXIT_CURRENT A(0.25)
 #define SLEEP_WAIT_TIME 5000000 // ms
@@ -93,11 +91,12 @@ temp_condition_t SHUTDOWN_DISCHARGING_UNDER_TEMP = { .bound = BOUND_LOWER, .valu
 #define RELAY_COIL_R 160 // ohms
 #define IDLE_CURRENT -A(0)
 
-#define BALANCE_START_TH V(0.05)
-#define BALANCE_END_TH V(0.01)
+#define BALANCE_START_DIFF V(0.05)
+#define BALANCE_END_DIFF V(0.01)
 #define BALANCE_PAUSE_OT 55
 #define BALANCE_PAUSE_OT_HYSTERESIS 5
 #define BALANCE_UPDATE_WAIT_TIME 1000 // ms
+#define BALANCE_START_THRESHOLD V(4) // balancing will only run above this voltage 
 
 #define CHARGING_END_CURRENT A(0.03)
 #define CHARGING_END_TIME_MS 300e3 // seconds
